@@ -1,0 +1,20 @@
+name: "🐛 Bug Report"
+description: "Report a problem or unexpected behavior"
+labels: ["bug"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: "Describe the bug"
+      description: "What is the issue?"
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: "Steps to Reproduce"
+      description: "How can we reproduce this?"
+      placeholder: "- Step 1\n- Step 2\n- Step 3"
+    validations:
+      required: true
