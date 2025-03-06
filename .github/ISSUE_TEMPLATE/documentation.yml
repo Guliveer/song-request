@@ -1,0 +1,11 @@
+name: "📖 Documentation"
+description: "Report issues or suggest improvements to the documentation"
+labels: ["documentation"]
+body:
+  - type: textarea
+    id: doc_description
+    attributes:
+      label: "What needs to be updated?"
+      description: "Describe the missing or incorrect documentation."
+    validations:
+      required: true
