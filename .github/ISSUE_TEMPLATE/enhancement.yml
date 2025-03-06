@@ -1,0 +1,47 @@
+name: "🔧 Enhancement"
+description: "Suggest an improvement for an existing feature"
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: "## 🔧 Enhancement Request\nDescribe an improvement for an existing feature."
+
+  - type: textarea
+    id: description
+    attributes:
+      label: "Description"
+      description: "Clearly describe what should be improved and why."
+    validations:
+      required: true
+
+  - type: textarea
+    id: current_behavior
+    attributes:
+      label: "Current Behavior"
+      description: "Describe how the feature currently works."
+  
+  - type: textarea
+    id: proposed_change
+    attributes:
+      label: "Proposed Change"
+      description: "Explain what should be changed or improved."
+    validations:
+      required: true
+
+  - type: textarea
+    id: benefits
+    attributes:
+      label: "Benefits"
+      description: "Why would this enhancement be useful?"
+  
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: "Alternatives Considered"
+      description: "Have you considered other ways to achieve this?"
+  
+  - type: textarea
+    id: additional
+    attributes:
+      label: "Additional Context"
+      description: "Any other relevant details or screenshots?"
