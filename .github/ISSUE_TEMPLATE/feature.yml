@@ -1,0 +1,11 @@
+name: "✨ Feature Request"
+description: "Suggest a new feature or improvement"
+labels: ["feature"]
+body:
+  - type: textarea
+    id: feature_description
+    attributes:
+      label: "Describe the feature"
+      description: "What do you want to be added?"
+    validations:
+      required: true
