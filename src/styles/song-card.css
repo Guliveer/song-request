@@ -1,0 +1,75 @@
+.song-card {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    align-items: stretch;
+
+    width: 100%;
+    max-width: 800px;
+
+    border: 2px solid gray;
+    border-radius: 10px;
+}
+
+.song-card a {
+    text-decoration: underline;
+    color: inherit;
+    padding: 0;
+}
+
+.song-card * {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: center;
+    align-items: center;
+
+    padding: 0.5rem;
+}
+
+.song-card .rank {
+    width: 10%;
+    max-width: 150px;
+}
+
+.song-card .about {
+    border-color: gray;
+    border-left: 1px solid;
+    border-right: 1px solid;
+
+    width: 100%;
+
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    align-items: stretch;
+    align-content: flex-start;
+}
+
+.song-card .song,
+.song-card .details{
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    align-items: flex-start;
+    align-content: flex-start;
+}
+
+.song-card .voting {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    justify-content: center;
+    align-items: center;
+    align-content: flex-start;
+
+    width: 10%;
+    min-width: 80px;
+}
+
+.song-card .song .title {
+    font-weight: bold;
+}
