@@ -1,0 +1,31 @@
+nav {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 10%;
+    height: 100%;
+    padding: 10px;
+    border: solid 5px green;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    align-items: flex-start;
+    align-content: flex-start;
+    text-align: center;
+    gap: 14rem;
+    background-color: white;
+    color: black;
+}
+
+nav a:hover {
+    color: green;
+    cursor: pointer;
+}
+
+nav a {
+    text-decoration: none;
+    display: block;
+    border-bottom: 2px solid green;
+    width: 100%;
+}
