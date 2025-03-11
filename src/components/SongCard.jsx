@@ -1,31 +1,109 @@
-import Link from "next/link";
+//? USAGE:
+/*
+import SongCard from '@/components/SongCard'
 
-export default function SongCard({id, title, artist, url, userId, score, rank, addedAt}) {
-    // const addedAtDate = new Date(addedAt);
-    // const addedAtString = addedAtDate.toDateString();
+<SongCard id={insert_id_here} />
+*/
+
+import React, { useState, useEffect } from 'react';
+import Link from "next/link";
+import {supabase} from '@/utils/supabase'
+import {Button, Box, Card, Typography} from "@mui/material";
+import PropTypes from 'prop-types';
+
+export default function SongCard({ id }) {
+    const [songData, setSongData] = useState(null);
+
+    useEffect(() => {
+        async function fetchData() {
+            const { data, error } = await supabase
+                .from('queue')
+                .select('title, author, url, added_at, user_id, score, rank')
+                .eq('id', id)
+                .single();
+
+            if (error) {
+                console.error('Error fetching data:', error);
+                return;
+            }
+
+            setSongData(data);
+        }
+
+        fetchData();
+    }, [id]);
+
+    if (!songData) {
+        // implement skeleton loading (MUI) here
+        return <div>Loading...</div>;
+    }
+
+    const { title, author, url, added_at, user_id, score, rank } = songData;
 
     return (
-        <div className={"song-card"} id={id}>
-            <div className={"rank"}>{rank}</div>
+        <Card variant="outlined" className="song-card" id={"song-"+id} sx={{
+            display: 'flex',
+            flexDirection: 'row',
+            width: '100%',
+            maxWidth: '800px',
+            padding: '0.5rem 1rem',
+            borderRadius: '10px'
+        }}>
+            <Box className="rank" sx={{
+                p: 2,
+                maxWidth: '150px',
+                width: '10%',
+                display: 'flex',
+                placeContent: 'center',
+                placeItems: 'center'
+            }}>
+                <Typography variant="h6">{rank}</Typography>
+            </Box>
 
-            <div className={"about"}>
-                <div className={"song"}>
-                    <span className={"title"}>
-                        <Link href={url} target={"_blank"}>{title}</Link>
-                    </span>
-                    <span className={"artist"}>{artist}</span>
-                </div>
-                <div className={"details"}>
-                    <span className={"user"}>{userId}</span>
-                    <span className={"add-time"}></span>
-                </div>
-            </div>
+            <Box className="about" sx={{
+                p: 2,
+                display: 'flex',
+                flexDirection: 'row',
+                justifyContent: 'space-around',
+                placeItems: 'center',
+                width: '100%',
+            }}>
+                <Box className="song" sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                }}>
+                    <Typography variant="h6" className="title">
+                        <Link href={url} target="_blank">{title}</Link>
+                    </Typography>
+                    <Typography variant="body1" className="artist">{author}</Typography>
+                </Box>
+                <Box className="details" sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                }}>
+                    <Typography variant="body2" className="user">{user_id}</Typography>
+                    <Typography variant="body2" className="add-time">{added_at}</Typography>
+                </Box>
+            </Box>
 
-            <div className={"voting"}>
-                <span className={"vote-up"}>BTN1</span>
-                <span className={"score"}>{score}</span>
-                <span className={"vote-down"}>BTN2</span>
-            </div>
-        </div>
-    )
+            <Box className="voting" sx={{
+                p: 2,
+                display: 'flex',
+                flexDirection: 'column',
+                placeContent: 'center',
+                placeItems: 'center',
+                width: '20%',
+                maxWidth: '150px',
+                minWidth: '50px',
+            }}>
+                <Button variant="contained" className="vote-up">BTN_UP</Button>
+                <Typography variant="h6" className="score">{score}</Typography>
+                <Button variant="contained" className="vote-down">BTN_DN</Button>
+            </Box>
+        </Card>
+    );
 }
+
+SongCard.propTypes = {
+    id: PropTypes.number.isRequired,
+};
