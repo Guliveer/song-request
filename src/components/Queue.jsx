@@ -29,9 +29,17 @@ export default function Queue() {
     if (!songs.length) return <div>No songs in queue</div>;
 
     return (
-        <div style={{display: "flex", flexDirection: "column", gap: "1rem"}}>
-            {songs.map((song) => (
-                <SongCard id={song.id} />
+        <div style={{ display: "flex", flexDirection: "column", padding: "1rem 0" }}>
+            {songs.map((song, index) => (
+                <div
+                    key={song.id}
+                    style={{
+                        padding: "10px 15px",
+                        borderBottom: index !== songs.length - 1 ? "1px solid rgba(255, 255, 255, 0.1)" : "none"
+                    }}
+                >
+                    <SongCard id={song.id} />
+                </div>
             ))}
         </div>
     );
