@@ -5,41 +5,30 @@ import SongCard from "@/components/SongCard";
 export default function Queue() {
     const [songs, setSongs] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
 
     useEffect(() => {
-        const fetchQueue = async () => {
+        async function fetchQueue() {
             try {
                 const { data, error } = await supabase.from("queue").select("id");
                 if (error) throw error;
                 setSongs(data || []);
             } catch (error) {
                 console.error("Error fetching queue:", error.message);
-                setError(error);
             } finally {
                 setLoading(false);
             }
-        };
+        }
 
         fetchQueue();
     }, []);
 
-    if (loading) return <div>Loading...</div>;
-    if (error) return <div>Error: {error.message}</div>;
+    if (loading) return <div>Loading...</div> ; // placeholder
     if (!songs.length) return <div>No songs in queue</div>;
 
     return (
-        <div style={{ display: "flex", flexDirection: "column", padding: "1rem 0" }}>
-            {songs.map((song, index) => (
-                <div
-                    key={song.id}
-                    style={{
-                        padding: "10px 15px",
-                        borderBottom: index !== songs.length - 1 ? "1px solid rgba(255, 255, 255, 0.1)" : "none"
-                    }}
-                >
-                    <SongCard id={song.id} />
-                </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+            {songs.map((song) => (
+                <SongCard key={song.id} id={song.id} />
             ))}
         </div>
     );

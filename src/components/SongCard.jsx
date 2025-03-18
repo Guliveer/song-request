@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from "next/link";
 import { supabase } from '@/utils/supabase';
-import { Button, Box, Card, Typography, Skeleton, IconButton } from "@mui/material";
+import { Box, Card, Typography, Skeleton, IconButton } from "@mui/material";
 import ThumbUpIcon from '@mui/icons-material/ThumbUp';
 import ThumbDownIcon from '@mui/icons-material/ThumbDown';
 import PropTypes from 'prop-types';
