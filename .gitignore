@@ -12,7 +12,7 @@
 
 # testing
 /coverage
-/src/pages/test
+/src/pages/test/
 
 # next.js
 /.next/
