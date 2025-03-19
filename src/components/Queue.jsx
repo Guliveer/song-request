@@ -4,7 +4,7 @@ import SongCard from "@/components/SongCard";
 
 export default function Queue() {
     const [songs, setSongs] = useState([]);
-    const [loading, setLoading] = useState(true);
+    // const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         async function fetchQueue() {
@@ -14,16 +14,16 @@ export default function Queue() {
                 setSongs(data || []);
             } catch (error) {
                 console.error("Error fetching queue:", error.message);
-            } finally {
-                setLoading(false);
+            // } finally {
+            //     setLoading(false);
             }
         }
 
         fetchQueue();
     }, []);
 
-    if (loading) return <div>Loading...</div> ; // placeholder
-    if (!songs.length) return <div>No songs in queue</div>;
+    // if (loading) return (<div>Loading...</div>); // placeholder
+    if (!songs.length) console.log("No songs in queue"); // placeholder;
 
     return (
         <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>

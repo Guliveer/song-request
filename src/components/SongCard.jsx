@@ -8,6 +8,7 @@ import PropTypes from 'prop-types';
 
 export default function SongCard({ id }) {
     const [songData, setSongData] = useState(null);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         async function fetchData() {
@@ -22,25 +23,29 @@ export default function SongCard({ id }) {
                 return;
             }
 
-            setSongData(data);
+            setTimeout(() => {
+                setSongData(data);
+                setLoading(false);
+            }, 0); // delay before rendering actual data
         }
 
         fetchData();
     }, [id]);
 
-    if (!songData) {
+    if (loading || !songData) {
         return (
             <Card variant="outlined" sx={{
                 display: 'flex',
                 flexDirection: 'row',
+                minWidth: '40em',
                 width: '100%',
-                maxWidth: '800px',
+                maxWidth: '50em',
                 padding: '1rem',
                 borderRadius: '10px',
                 alignItems: 'center'
             }}>
                 <Box sx={{ width: '10%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                    <Skeleton variant="text" width={40} height={30} />
+                    <Skeleton variant="text" width={40} height={50} />
                 </Box>
                 <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                     <Skeleton variant="text" width="80%" height={30} />
@@ -65,8 +70,9 @@ export default function SongCard({ id }) {
         <Card variant="outlined" sx={{
             display: 'flex',
             flexDirection: 'row',
+            minWidth: '40em',
             width: '100%',
-            maxWidth: '800px',
+            maxWidth: '50em',
             padding: '1rem',
             borderRadius: '10px',
             alignItems: 'center'
