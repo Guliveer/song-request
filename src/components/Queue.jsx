@@ -9,7 +9,10 @@ export default function Queue() {
     useEffect(() => {
         async function fetchQueue() {
             try {
-                const { data, error } = await supabase.from("queue").select("id");
+                const { data, error } = await supabase
+                    .from("queue")
+                    .select("id")
+                    .order("rank", { ascending: true });
                 if (error) throw error;
                 setSongs(data || []);
             } catch (error) {
