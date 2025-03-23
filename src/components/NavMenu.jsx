@@ -46,7 +46,9 @@ export default function NavMenu() {
                 flexDirection: "row",
                 flexWrap: "nowrap",
                 placeContent: "center",
-                backgroundColor: "grey",
+                backgroundColor: "#020714",
+                boxShadow: "0 4px 12px rgba(137, 159, 242, 0.15)",
+                borderBottom: "1px solid rgba(137, 159, 242, 0.1)",
             }}
         >
             <Toolbar sx={{
@@ -58,7 +60,14 @@ export default function NavMenu() {
                 justifyContent: "space-between",
                 alignItems: "center",
             }}>
-                <Typography variant="h5" component="div" sx={{display: "block", padding: "1rem"}}>
+                <Typography variant="h5" component="div" sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                    padding: "1rem",
+                    color: "#e7ecfc",
+                    fontWeight: "700",
+                }}>
                     Logo
                 </Typography>
                 <Box sx={{
@@ -66,20 +75,85 @@ export default function NavMenu() {
                     flexDirection: "row",
                     flexWrap: "nowrap",
                     width: "fit-content",
-                    gap: "3em",
+                    gap: "1.5em",
+                    alignItems: "center"
                 }}>
-                    <Button color="inherit">Home</Button>
-                    <Button color="inherit">User Panel</Button>
-                    <Button color="inherit">Admin Panel</Button>
+                    <Button color="inherit" sx={{
+                        color: "#e7ecfc",
+                        fontWeight: "500",
+                        borderRadius: "8px",
+                        padding: "0.5rem 1rem",
+                        transition: "all 0.3s ease",
+                        "&:hover": {
+                            backgroundColor: "rgba(137, 159, 242, 0.1)",
+                            transform: "translateY(-2px)",
+                        }
+                    }}>Home</Button>
+                    <Button color="inherit" sx={{
+                        color: "#e7ecfc",
+                        fontWeight: "500",
+                        borderRadius: "8px",
+                        padding: "0.5rem 1rem",
+                        transition: "all 0.3s ease",
+                        "&:hover": {
+                            backgroundColor: "rgba(137, 159, 242, 0.1)",
+                            transform: "translateY(-2px)",
+                        }
+                    }}>User Panel</Button>
+                    <Button color="inherit" sx={{
+                        color: "#e7ecfc",
+                        fontWeight: "500",
+                        borderRadius: "8px",
+                        padding: "0.5rem 1rem",
+                        transition: "all 0.3s ease",
+                        "&:hover": {
+                            backgroundColor: "rgba(137, 159, 242, 0.1)",
+                            transform: "translateY(-2px)",
+                        }
+                    }}>Admin Panel</Button>
                     {isLoggedIn ? (
-                        <Button color="inherit" onClick={signOut}>Sign out</Button>
+                        <Button color="inherit" onClick={signOut} sx={{
+                            backgroundColor: "#e83072",
+                            color: "#e7ecfc",
+                            fontWeight: "600",
+                            borderRadius: "24px",
+                            padding: "0.5rem 1.5rem",
+                            transition: "all 0.3s ease",
+                            marginLeft: "1rem",
+                            "&:hover": {
+                                backgroundColor: "#8b0f6f",
+                                boxShadow: "0 4px 8px rgba(232, 48, 114, 0.3)",
+                            }
+                        }}>Sign out</Button>
                     ) : (
                         <>
                             <Link href="/login" passHref>
-                                <Button color="inherit">Log in</Button>
+                                <Button color="inherit" sx={{
+                                    color: "#899ff2",
+                                    fontWeight: "600",
+                                    borderRadius: "24px",
+                                    padding: "0.5rem 1.5rem",
+                                    border: "2px solid #899ff2",
+                                    transition: "all 0.3s ease",
+                                    "&:hover": {
+                                        backgroundColor: "rgba(137, 159, 242, 0.1)",
+                                        boxShadow: "0 4px 8px rgba(137, 159, 242, 0.2)",
+                                    }
+                                }}>Log in</Button>
                             </Link>
                             <Link href="/register" passHref>
-                                <Button color="inherit">Register</Button>
+                                <Button color="inherit" sx={{
+                                    backgroundColor: "#e83072",
+                                    color: "#e7ecfc",
+                                    fontWeight: "600",
+                                    borderRadius: "24px",
+                                    padding: "0.5rem 1.5rem",
+                                    transition: "all 0.3s ease",
+                                    "&:hover": {
+                                        backgroundColor: "#8b0f6f",
+                                        boxShadow: "0 4px 8px rgba(232, 48, 114, 0.3)",
+                                    }
+                                }}>Register</Button>
                             </Link>
                         </>
                     )}
