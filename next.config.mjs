@@ -1,6 +1,7 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+// next.config.mjs
+export default {
   reactStrictMode: true,
+  allowedDevOrigins: [
+    'test.example.com',  '*.test.example.com'
+  ],
 };
-
-export default nextConfig;
