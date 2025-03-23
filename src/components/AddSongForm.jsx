@@ -9,7 +9,7 @@ export default function AddSongForm() {
         url: '',
     });
     const [user, setUser] = React.useState(null);
-    const [loading, setLoading] = React.useState(true);
+
 
     // Sprawdzanie, czy użytkownik jest zalogowany
     React.useEffect(() => {
@@ -18,7 +18,6 @@ export default function AddSongForm() {
             if (session) {
                 setUser(session.user); // Jeśli użytkownik jest zalogowany, ustawiamy go w stanie
             }
-            setLoading(false); // Kończymy ładowanie
         }
         checkUser();
     }, []);
@@ -54,7 +53,6 @@ export default function AddSongForm() {
         }
     };
 
-    if (loading) return <div>Loading...</div>; // Jeśli użytkownik jest ładowany, wyświetl "Loading..."
 
     return (
         <Box
