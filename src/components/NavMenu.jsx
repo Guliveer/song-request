@@ -1,37 +1,59 @@
-import React, {useEffect, useState} from "react";
+import React, { useEffect, useState } from "react";
 import { AppBar, Toolbar, Typography, Button, Box } from "@mui/material";
-import {supabase} from "@/utils/supabase";
-import {router} from "next/client";
+import { supabase } from "@/utils/supabase";
+import { useRouter } from "next/router";
 import Link from "next/link";
-import {useRouter} from "next/router";
-
-async function signOut() {
-    const { error } = await supabase.auth.signOut({scope: 'local'})
-    await router.push('/');
-}
 
 export default function NavMenu() {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [isAdmin, setIsAdmin] = useState(false); // Stan dla sprawdzania admina
     const router = useRouter();
 
-    useEffect(() => {
-        async function checkUser() {
-            const { data: { user } } = await supabase.auth.getUser();
-            setIsLoggedIn(!!user); // set isLoggedIn to true if user is logged in
+    // Funkcja wylogowywania
+    const signOut = async () => {
+        const { error } = await supabase.auth.signOut();
+        if (error) {
+            console.error('Error signing out:', error.message);
+            return;
         }
+        router.push('/'); // Po wylogowaniu przekierowanie na stronę główną
+    };
+
+    // Sprawdzanie użytkownika po załadowaniu komponentu
+    useEffect(() => {
+        const checkUser = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            setIsLoggedIn(!!user); // Ustawienie stanu logowania
+            setIsAdmin(!!user);
+
+            if (user) {
+                // Pobierz dane użytkownika z tabeli 'users'
+                const { data, error } = await supabase
+                    .from('users')
+                    .select('admin')
+                    .eq('id', user.id)
+                    .single();
+
+                if (error) {
+                    console.error("Error fetching user data", error);
+                    setIsAdmin(false);
+                } else {
+                    setIsAdmin(data?.admin || false); // Ustawienie stanu admina
+                }
+            }
+        };
 
         checkUser();
 
-        function handleRouteChange() {
-            // what to do when route changes
-            checkUser();
-        }
+        const handleRouteChange = () => {
+            checkUser(); // Sprawdzanie użytkownika przy każdej zmianie trasy
+        };
 
-        router.events.on('routeChangeComplete', handleRouteChange); // listen for route changes
+        router.events.on('routeChangeComplete', handleRouteChange);
 
-        return (
-            router.events.off('routeChangeComplete', handleRouteChange) // clean up event listener
-        )
+        return () => {
+            router.events.off('routeChangeComplete', handleRouteChange);
+        };
     }, [router]);
 
     return (
@@ -40,39 +62,46 @@ export default function NavMenu() {
             sx={{
                 width: "100%",
                 height: "6rem",
-                left: 0,
-                top: 0,
                 display: "flex",
                 flexDirection: "row",
-                flexWrap: "nowrap",
-                placeContent: "center",
+                justifyContent: "center",
                 backgroundColor: "grey",
             }}
         >
-            <Toolbar sx={{
-                width: '100%',
-                maxWidth: '110em',
-                display: "flex",
-                flexDirection: "row",
-                flexWrap: "nowrap",
-                justifyContent: "space-between",
-                alignItems: "center",
-            }}>
-                <Typography variant="h5" component="div" sx={{display: "block", padding: "1rem"}}>
-                    Logo
-                </Typography>
-                <Box sx={{
+            <Toolbar
+                sx={{
+                    width: '100%',
+                    maxWidth: '110em',
                     display: "flex",
                     flexDirection: "row",
-                    flexWrap: "nowrap",
-                    width: "fit-content",
-                    gap: "3em",
-                }}>
-                    <Button color="inherit">Home</Button>
-                    <Button color="inherit">User Panel</Button>
-                    <Button color="inherit">Admin Panel</Button>
-                    {isLoggedIn ? (
-                        <Button color="inherit" onClick={signOut}>Sign out</Button>
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                }}
+            >
+                <Typography variant="h5" sx={{ padding: "1rem" }}>
+                    Logo
+                </Typography>
+                <Box
+                    sx={{
+                        display: "flex",
+                        gap: "3em",
+                    }}
+                >
+                    <Link href="/" passHref>
+                        <Button color="inherit">Home</Button>
+                    </Link>
+                    {isAdmin && ( // Renderuj tylko, jeśli użytkownik jest adminem
+                        <Link href="/admin" passHref>
+                            <Button color="inherit">Admin Panel</Button>
+                        </Link>
+                    )}
+                    {isLoggedIn ? ( // Renderuj tylko, jeśli użytkownik jest zalogowany
+                        <>
+                            <Link href="/user" passHref>
+                                <Button color="inherit">User Panel</Button>
+                            </Link>
+                            <Button color="inherit" onClick={() => signOut(router)}>Sign out</Button>
+                        </>
                     ) : (
                         <>
                             <Link href="/login" passHref>
@@ -87,4 +116,4 @@ export default function NavMenu() {
             </Toolbar>
         </AppBar>
     );
-};
+}
