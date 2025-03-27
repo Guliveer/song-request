@@ -14,7 +14,6 @@ export default function AddSongForm() {
 
     // Sprawdzanie, czy użytkownik jest zalogowany
     useEffect(() => {
-        'use server'
         const checkUser = async () => {
             const user = await isUserLoggedIn()
             setUser(user);

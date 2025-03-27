@@ -24,7 +24,6 @@ export default function NavMenu() {
 
     useEffect(() => {
         async function checkUser() {
-            'use server'
             const loggedIn = await isUserLoggedIn();
             setIsLoggedIn(loggedIn);
         }

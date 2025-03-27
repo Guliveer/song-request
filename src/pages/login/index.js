@@ -27,7 +27,6 @@ export default function Login() {
     }, [router]);
 
     async function handleLogin(e) {
-        'use server'
         e.preventDefault();
         setError(null);
 
