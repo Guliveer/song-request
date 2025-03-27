@@ -28,7 +28,6 @@ export default function Register() {
     }, [router]);
 
     async function handleSignup(e) {
-        'use server'
         e.preventDefault();
         setError(null);
 
