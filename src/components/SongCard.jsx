@@ -1,10 +1,11 @@
+import PropTypes from 'prop-types';
 import React, { useState, useEffect } from 'react';
 import Link from "next/link";
-import { supabase } from '@/utils/supabase';
-import { Box, Card, Typography, Skeleton, IconButton } from "@mui/material";
+import { Box, Card, Typography, IconButton } from "@mui/material";
 import ThumbUpIcon from '@mui/icons-material/ThumbUp';
 import ThumbDownIcon from '@mui/icons-material/ThumbDown';
-import PropTypes from 'prop-types';
+import SkeletonSongCard from "@/components/skeletons/SkeletonSongCard";
+import {getUserInfo, getSongData} from "@/utils/actions"
 
 export default function SongCard({ id }) {
     const [songData, setSongData] = useState(null);
@@ -12,87 +13,59 @@ export default function SongCard({ id }) {
 
     useEffect(() => {
         async function fetchData() {
-            const { data, error } = await supabase
-                .from('queue')
-                .select('title, author, url, added_at, user_id, score, rank')
-                .eq('id', id)
-                .single();
+            try {
+                // Fetch the song data from the 'queue' table
+                const song = await getSongData(id);
 
-            if (error) {
-                console.error('Error fetching data:', error);
-                return;
-            }
+                // Fetch the username from the 'users' table
+                const user = await getUserInfo(song.user_id);
+                song.username = user ? '@' + user.username : song.user_id;
 
-            setTimeout(() => {
-                setSongData(data);
+                setSongData(song);
                 setLoading(false);
-            }, 0); // delay before rendering actual data
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            }
         }
 
         fetchData();
     }, [id]);
 
-    if (loading || !songData) {
-        return (
-            <Card variant="outlined" sx={{
-                display: 'flex',
-                flexDirection: 'row',
-                minWidth: '40em',
-                width: '100%',
-                maxWidth: '50em',
-                padding: '1rem',
-                borderRadius: '10px',
-                alignItems: 'center'
-            }}>
-                <Box sx={{ width: '10%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                    <Skeleton variant="text" width={40} height={50} />
-                </Box>
-                <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    <Skeleton variant="text" width="80%" height={30} />
-                    <Skeleton variant="text" width="60%" height={20} />
-                </Box>
-                <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                    <Skeleton variant="text" width="50%" height={20} />
-                    <Skeleton variant="text" width="40%" height={20} />
-                </Box>
-                <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '1rem', width: '25%', justifyContent: 'center' }}>
-                    <Skeleton variant="circular" width={40} height={40} />
-                    <Skeleton variant="text" width={30} height={30} />
-                    <Skeleton variant="circular" width={40} height={40} />
-                </Box>
-            </Card>
-        );
+    const cardStyle = {
+        display: 'flex',
+        flexDirection: 'row',
+        minWidth: '40em',
+        width: '100%',
+        maxWidth: '50em',
+        padding: '1rem',
+        borderRadius: '10px',
+        alignItems: 'center'
     }
 
-    const { title, author, url, added_at, user_id, score, rank } = songData;
+    if (loading || !songData) {
+        return <SkeletonSongCard cardStyle={cardStyle} />
+    }
+
+    const { title, author, url, added_at, user_id, score, rank, username } = songData;
 
     return (
-        <Card variant="outlined" sx={{
-            display: 'flex',
-            flexDirection: 'row',
-            minWidth: '40em',
-            width: '100%',
-            maxWidth: '50em',
-            padding: '1rem',
-            borderRadius: '10px',
-            alignItems: 'center'
-        }}>
+        <Card variant="outlined" sx={cardStyle}>
             <Box sx={{ width: '10%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                 <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 'normal' }}>{rank}</Typography>
             </Box>
             <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                 <Typography variant="h6" sx={{ fontWeight: 'bold', fontSize: '1.25rem', marginBottom: '0.5rem' }}>
-                    <Link href={url} target="_blank" style={{ textDecoration: 'none', color: 'inherit' }}>
+                    <Link href={url} target="_blank" style={{ textDecoration: 'none' }}>
                         {title}
                     </Link>
                 </Typography>
                 <Typography variant="body1" sx={{ fontSize: '0.875rem', fontWeight: 'normal' }}>{author}</Typography>
             </Box>
             <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                <Typography variant="body2" sx={{ fontSize: '0.75rem', fontWeight: 'normal', color: 'text.secondary' }}>
-                    Added by: {user_id}
+                <Typography variant="body2" sx={{ fontSize: '0.75rem', fontWeight: 'normal' }}>
+                    Added by: {username}
                 </Typography>
-                <Typography variant="body2" sx={{ fontSize: '0.75rem', fontWeight: 'normal', color: 'text.secondary' }}>
+                <Typography variant="body2" sx={{ fontSize: '0.75rem', fontWeight: 'normal' }}>
                     {new Date(added_at).toLocaleString()}
                 </Typography>
             </Box>

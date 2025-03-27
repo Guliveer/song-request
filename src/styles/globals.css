@@ -1,29 +1,41 @@
+/*
+    https://www.realtimecolors.com/
+*/
+
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css?family=Noto%20Sans%20Inscriptional%20Parthian:700|Noto%20Sans%20Inscriptional%20Parthian:400');
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --font-geist-sans: Arial, sans-serif;
-  --font-geist-mono: Courier, monospace;
+    --font-geist-sans: Arial, sans-serif;
+    --font-geist-mono: Courier, monospace;
+    font-family: 'Noto Sans Inscriptional Parthian', Arial, Helvetica, sans-serif;
 }
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-/*@media (prefers-color-scheme: dark) {*/
-/*  :root {*/
-/*    --background: #0a0a0a;*/
-/*    --foreground: #ededed;*/
-/*  }*/
-/*}*/
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-  box-sizing: border-box !important;
+    font-weight: 600;
+    box-sizing: border-box !important;
+}
+
+h1, h2, h3, h4, h5 {
+    font-family: 'Noto Sans Inscriptional Parthian', Arial, Helvetica, sans-serif;
+    font-weight: 800;
+}
+
+html {font-size: 100%;} /* 16px <=> 1rem */
+
+h1 {font-size: 4.210rem; /* 67.36px */}
+
+h2 {font-size: 3.158rem; /* 50.56px */}
+
+h3 {font-size: 2.369rem; /* 37.92px */}
+
+h4 {font-size: 1.777rem; /* 28.48px */}
+
+h5 {font-size: 1.333rem; /* 21.28px */}
+
+small {font-size: 0.750rem; /* 12px */}
+
+@theme inline {
+    --font-sans: var(--font-geist-sans);
+    --font-mono: var(--font-geist-mono);
 }

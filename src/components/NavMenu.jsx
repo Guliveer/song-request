@@ -1,164 +1,153 @@
-import React, {useEffect, useState} from "react";
-import { AppBar, Toolbar, Typography, Button, Box } from "@mui/material";
-import {supabase} from "@/utils/supabase";
-import {router} from "next/client";
-import Link from "next/link";
+import {useEffect, useState}from "react";
 import {useRouter} from "next/router";
-
-async function signOut() {
-    const { error } = await supabase.auth.signOut({scope: 'local'})
-    await router.push('/');
-}
+import {
+    AppBar,
+    Toolbar,
+    Typography,
+    Box,
+    ButtonGroup,
+    Button,
+    MenuItem,
+    Tooltip,
+    IconButton,
+    Menu,
+    Container,
+    Avatar
+} from "@mui/material";
+import MenuIcon from "@mui/icons-material/Menu";
+import {isUserLoggedIn, logOut} from "@/utils/actions";
+import {supabase} from "@/utils/supabase";
 
 export default function NavMenu() {
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [isLoggedIn, setIsLoggedIn] = useState(null);
     const router = useRouter();
 
     useEffect(() => {
         async function checkUser() {
-            const { data: { user } } = await supabase.auth.getUser();
-            setIsLoggedIn(!!user); // set isLoggedIn to true if user is logged in
+            'use server'
+            const loggedIn = await isUserLoggedIn();
+            setIsLoggedIn(loggedIn);
         }
 
-        checkUser();
+        checkUser(); // Call checkUser on component mount
 
         function handleRouteChange() {
-            // what to do when route changes
-            checkUser();
+            checkUser(); // Call checkUser on route change
         }
 
-        router.events.on('routeChangeComplete', handleRouteChange); // listen for route changes
+        router.events.on('routeChangeComplete', handleRouteChange); // Listen for route changes
 
-        return (
-            router.events.off('routeChangeComplete', handleRouteChange) // clean up event listener
-        )
+        return () => {
+            router.events.off('routeChangeComplete', handleRouteChange); // Clean up event listener
+        };
     }, [router]);
 
+    const pages = [
+        {name: "Home", href: "/"},
+        {name: "Admin Panel", href: "/admin"}
+    ];
+
+    const userMenu = {
+        loggedIn: [
+            {name: "User Panel", href: "/user"},
+            {name: "Log out", action: "logout"}
+        ],
+        loggedOut: [
+            {name: "Log in", href: "/login"},
+            {name: "Register", href: "/register"}
+        ]
+    };
+
+    const [anchorElNav, setAnchorElNav] = useState(null);
+    const [anchorElUser, setAnchorElUser] = useState(null);
+
+    const handleOpenNavMenu = (event) => setAnchorElNav(event.currentTarget);
+    const handleCloseNavMenu = () => setAnchorElNav(null);
+
+    const handleOpenUserMenu = (event) => setAnchorElUser(event.currentTarget);
+    const handleCloseUserMenu = () => setAnchorElUser(null);
+
+    const handleUserMenuClick = (item) => {
+        handleCloseUserMenu();
+        if (item.action === "logout") {
+            logOut()
+        } else if (item.href) {
+            router.push(item.href); // Przekierowanie na stronę
+        }
+    };
+
     return (
-        <AppBar
-            position="static"
-            sx={{
-                width: "100%",
-                height: "6rem",
-                left: 0,
-                top: 0,
-                display: "flex",
-                flexDirection: "row",
-                flexWrap: "nowrap",
-                placeContent: "center",
-                backgroundColor: "#020714",
-                boxShadow: "0 4px 12px rgba(137, 159, 242, 0.15)",
-                borderBottom: "1px solid rgba(137, 159, 242, 0.1)",
-            }}
-        >
-            <Toolbar sx={{
-                width: '100%',
-                maxWidth: '110em',
-                display: "flex",
-                flexDirection: "row",
-                flexWrap: "nowrap",
-                justifyContent: "space-between",
-                alignItems: "center",
-            }}>
-                <Typography variant="h5" component="div" sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.5rem",
-                    padding: "1rem",
-                    color: "#e7ecfc",
-                    fontWeight: "700",
-                }}>
-                    Logo
-                </Typography>
-                <Box sx={{
-                    display: "flex",
-                    flexDirection: "row",
-                    flexWrap: "nowrap",
-                    width: "fit-content",
-                    gap: "1.5em",
-                    alignItems: "center"
-                }}>
-                    <Button color="inherit" sx={{
-                        color: "#e7ecfc",
-                        fontWeight: "500",
-                        borderRadius: "8px",
-                        padding: "0.5rem 1rem",
-                        transition: "all 0.3s ease",
-                        "&:hover": {
-                            backgroundColor: "rgba(137, 159, 242, 0.1)",
-                            transform: "translateY(-2px)",
-                        }
-                    }}>Home</Button>
-                    <Button color="inherit" sx={{
-                        color: "#e7ecfc",
-                        fontWeight: "500",
-                        borderRadius: "8px",
-                        padding: "0.5rem 1rem",
-                        transition: "all 0.3s ease",
-                        "&:hover": {
-                            backgroundColor: "rgba(137, 159, 242, 0.1)",
-                            transform: "translateY(-2px)",
-                        }
-                    }}>User Panel</Button>
-                    <Button color="inherit" sx={{
-                        color: "#e7ecfc",
-                        fontWeight: "500",
-                        borderRadius: "8px",
-                        padding: "0.5rem 1rem",
-                        transition: "all 0.3s ease",
-                        "&:hover": {
-                            backgroundColor: "rgba(137, 159, 242, 0.1)",
-                            transform: "translateY(-2px)",
-                        }
-                    }}>Admin Panel</Button>
-                    {isLoggedIn ? (
-                        <Button color="inherit" onClick={signOut} sx={{
-                            backgroundColor: "#e83072",
-                            color: "#e7ecfc",
-                            fontWeight: "600",
-                            borderRadius: "24px",
-                            padding: "0.5rem 1.5rem",
-                            transition: "all 0.3s ease",
-                            marginLeft: "1rem",
-                            "&:hover": {
-                                backgroundColor: "#8b0f6f",
-                                boxShadow: "0 4px 8px rgba(232, 48, 114, 0.3)",
-                            }
-                        }}>Sign out</Button>
-                    ) : (
-                        <>
-                            <Link href="/login" passHref>
-                                <Button color="inherit" sx={{
-                                    color: "#899ff2",
-                                    fontWeight: "600",
-                                    borderRadius: "24px",
-                                    padding: "0.5rem 1.5rem",
-                                    border: "2px solid #899ff2",
-                                    transition: "all 0.3s ease",
-                                    "&:hover": {
-                                        backgroundColor: "rgba(137, 159, 242, 0.1)",
-                                        boxShadow: "0 4px 8px rgba(137, 159, 242, 0.2)",
-                                    }
-                                }}>Log in</Button>
-                            </Link>
-                            <Link href="/register" passHref>
-                                <Button color="inherit" sx={{
-                                    backgroundColor: "#e83072",
-                                    color: "#e7ecfc",
-                                    fontWeight: "600",
-                                    borderRadius: "24px",
-                                    padding: "0.5rem 1.5rem",
-                                    transition: "all 0.3s ease",
-                                    "&:hover": {
-                                        backgroundColor: "#8b0f6f",
-                                        boxShadow: "0 4px 8px rgba(232, 48, 114, 0.3)",
-                                    }
-                                }}>Register</Button>
-                            </Link>
-                        </>
-                    )}
-                </Box>
-            </Toolbar>
+        <AppBar position="static">
+            <Container maxWidth="xl">
+                <Toolbar disableGutters>
+                    {/* Menu na mobile */}
+                    <Box sx={{ flexGrow: 1, display: { xs: "flex", md: "none" } }}>
+                        <IconButton
+                            size="large"
+                            aria-label="menu"
+                            aria-controls="menu-appbar"
+                            aria-haspopup="true"
+                            onClick={handleOpenNavMenu}
+                        >
+                            <MenuIcon />
+                        </IconButton>
+                        <Menu
+                            id="menu-appbar"
+                            anchorEl={anchorElNav}
+                            anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+                            keepMounted
+                            transformOrigin={{ vertical: "top", horizontal: "left" }}
+                            open={Boolean(anchorElNav)}
+                            onClose={handleCloseNavMenu}
+                            sx={{ display: { xs: "block", md: "none" } }}
+                        >
+                            {pages.map((page) => (
+                                <MenuItem key={page.name} onClick={handleCloseNavMenu}>
+                                    <Typography sx={{ textAlign: "center" }}>{page.name}</Typography>
+                                </MenuItem>
+                            ))}
+                        </Menu>
+                    </Box>
+
+                    {/* Menu dla desktopów */}
+                    <Box sx={{ flexGrow: 1, display: { xs: "none", md: "flex" } }}>
+                        <ButtonGroup variant="text">
+                            {pages.map((page) => (
+                                <Button key={page.name} href={page.href} sx={{ my: 2, display: "block", padding: '0.5rem 1rem' }}>
+                                    {page.name}
+                                </Button>
+                            ))}
+                        </ButtonGroup>
+                    </Box>
+
+                    {/* Logowanie / Rejestracja */}
+                    <Box sx={{ flexGrow: 0, display: "flex", alignItems: "center", gap: 2 }}>
+                        <Tooltip title="Open settings">
+                            <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
+                                <Avatar alt="User" src={undefined} />                   {/* TODO: user avatar generation */}
+                            </IconButton>
+                        </Tooltip>
+
+                        {/* Menu użytkownika */}
+                        <Menu
+                            sx={{ mt: "45px" }}
+                            id="menu-appbar"
+                            anchorEl={anchorElUser}
+                            anchorOrigin={{ vertical: "top", horizontal: "right" }}
+                            keepMounted
+                            transformOrigin={{ vertical: "top", horizontal: "right" }}
+                            open={Boolean(anchorElUser)}
+                            onClose={handleCloseUserMenu}
+                        >
+                            {(isLoggedIn ? userMenu.loggedIn : userMenu.loggedOut).map((item) => (
+                                <MenuItem key={item.name} onClick={() => handleUserMenuClick(item)}>
+                                    <Typography sx={{ textAlign: "center" }}>{item.name}</Typography>
+                                </MenuItem>
+                            ))}
+                        </Menu>
+                    </Box>
+                </Toolbar>
+            </Container>
         </AppBar>
     );
 };
