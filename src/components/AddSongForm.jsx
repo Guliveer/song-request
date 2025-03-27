@@ -39,7 +39,6 @@ export default function AddSongForm() {
     };
 
     const handleSubmit = async (event) => {
-        'use server'
         event.preventDefault();
 
         if (!user) {
@@ -140,7 +139,6 @@ export default function AddSongForm() {
                         <Button
                             type="submit"
                             variant="contained"
-                            endIcon={<plusIcon />}
                             sx={{
                                 '& .MuiFilledInput-root': {
                                     borderRadius: 2,
