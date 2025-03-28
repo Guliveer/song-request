@@ -105,10 +105,32 @@ export default function NavMenu() {
                     ) : (
                         <>
                             <Link href="/login" passHref>
-                                <Button color="inherit">Log in</Button>
+                                <Button color="inherit" sx={{
+                                    color: "#899ff2",
+                                    fontWeight: "600",
+                                    borderRadius: "24px",
+                                    padding: "0.5rem 1.5rem",
+                                    border: "2px solid #899ff2",
+                                    transition: "all 0.3s ease",
+                                    "&:hover": {
+                                        backgroundColor: "rgba(137, 159, 242, 0.1)",
+                                        boxShadow: "0 4px 8px rgba(137, 159, 242, 0.2)",
+                                    }
+                                }}>Log in</Button>
                             </Link>
                             <Link href="/register" passHref>
-                                <Button color="inherit">Register</Button>
+                                <Button color="inherit" sx={{
+                                    backgroundColor: "#e83072",
+                                    color: "#e7ecfc",
+                                    fontWeight: "600",
+                                    borderRadius: "24px",
+                                    padding: "0.5rem 1.5rem",
+                                    transition: "all 0.3s ease",
+                                    "&:hover": {
+                                        backgroundColor: "#8b0f6f",
+                                        boxShadow: "0 4px 8px rgba(232, 48, 114, 0.3)",
+                                    }
+                                }}>Register</Button>
                             </Link>
                         </>
                     )}
