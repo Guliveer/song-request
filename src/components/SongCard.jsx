@@ -152,7 +152,16 @@ export default function SongCard({ id }) {
     const { title, author, url, added_at, user_id, score, rank } = songData;
 
     return (
-        <Card variant="outlined" sx={{ display: 'flex', flexDirection: 'row', padding: '1rem', borderRadius: '10px', alignItems: 'center', minWidth: '40em', width: '100%', maxWidth: '50em' }}>
+        <Card variant="outlined" sx={{
+            display: 'flex',
+            flexDirection: 'row',
+            minWidth: '40em',
+            width: '100%',
+            maxWidth: '50em',
+            padding: '1rem',
+            borderRadius: '10px',
+            alignItems: 'center'
+        }}>
             <Box sx={{ width: '10%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                 <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 'normal' }}>{rank}</Typography>
             </Box>
