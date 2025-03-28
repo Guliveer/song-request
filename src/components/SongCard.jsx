@@ -65,9 +65,9 @@ export default function SongCard({ id }) {
     }, [id]);
 
 
-    const handleVote = async (newVoteValue) => {
+    async function handleVote(newVoteValue) {
         if (!user) {
-            setError("Zaloguj się, aby głosować.");
+            setError("You have to be logged in to vote.");
             return;
         }
 
@@ -75,10 +75,6 @@ export default function SongCard({ id }) {
         setIsVoting(true);
 
         try {
-            let delta = 0;
-
-            console.log("Current userVote before vote:", userVote);
-
             // Cofnięcie głosu
             if (userVote === newVoteValue) {
                 const { error: deleteError } = await supabase
@@ -93,18 +89,9 @@ export default function SongCard({ id }) {
                     return;
                 }
 
-                delta = -newVoteValue; // Odejmowanie głosu kiedy głos jest resetowany
                 setUserVote(null); // Resetowanie głosu
                 console.log("Removed vote, updated userVote:", null);
             } else {
-                if (userVote === 1 && newVoteValue === -1) {
-                    delta = -2;
-                } else if (userVote === -1 && newVoteValue === 1) {
-                    delta = -2;
-                } else {
-                    delta = newVoteValue;
-                }
-
                 // Głosowanie lub zmiana głosu
                 const { error: voteError } = await supabase
                     .from('votes')
@@ -121,7 +108,6 @@ export default function SongCard({ id }) {
                     return;
                 }
 
-                delta = userVote === null ? newVoteValue : newVoteValue - userVote;
                 setUserVote(newVoteValue); // Update user vote
                 console.log("Updated vote, new userVote:", newVoteValue);
             }
@@ -129,7 +115,7 @@ export default function SongCard({ id }) {
             // Zaktualizowanie stanu lokalnego
             setSongData(prev => ({
                 ...prev,
-                score: prev.score + delta
+                score: prev.score + newVoteValue
             }));
 
         } catch (error) {
@@ -138,7 +124,7 @@ export default function SongCard({ id }) {
         } finally {
             setIsVoting(false);
         }
-    };
+    }
 
     if (loading || !songData) {
         return (
@@ -212,3 +198,7 @@ export default function SongCard({ id }) {
         </Card>
     );
 }
+
+SongCard.propTypes = {
+    id: PropTypes.number.isRequired,
+};
