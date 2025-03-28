@@ -84,7 +84,7 @@ export default function SongCard({ id }) {
                     .eq('song_id', id);
 
                 if (deleteError) {
-                    console.error("Error while removign vote:", deleteError);
+                    console.error("Error while removing vote:", deleteError);
                     setError(`Błąd przy usuwaniu głosu: ${deleteError.message}`);
                     return;
                 }
