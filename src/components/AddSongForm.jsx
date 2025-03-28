@@ -1,25 +1,33 @@
-import * as React from 'react';
+import {useState, useEffect} from 'react';
 import { Box, TextField, Stack, Button } from '@mui/material';
 import { supabase } from '@/utils/supabase';
+import { isUserLoggedIn } from "@/utils/actions";
+import { FormField } from "@/components/Items";
 
 export default function AddSongForm() {
-    const [formData, setFormData] = React.useState({
+    const [formData, setFormData] = useState({
         title: '',
         author: '',
         url: '',
     });
-    const [user, setUser] = React.useState(null);
-
+    const [user, setUser] = useState(null);
 
     // Sprawdzanie, czy użytkownik jest zalogowany
-    React.useEffect(() => {
-        async function checkUser() {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session) {
-                setUser(session.user); // Jeśli użytkownik jest zalogowany, ustawiamy go w stanie
-            }
-        }
+    useEffect(() => {
+        const checkUser = async () => {
+            const user = await isUserLoggedIn()
+            setUser(user);
+        };
+
         checkUser();
+
+        const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+            setUser(session?.user || null);
+        });
+
+        return () => {
+            authListener.subscription.unsubscribe();
+        };
     }, []);
 
     const handleChange = (event) => {
@@ -57,7 +65,6 @@ export default function AddSongForm() {
     return (
         <Box
             sx={{
-                border: "2px solid green",
                 borderRadius: "8px",
                 padding: 2,
                 maxWidth: "600px",
@@ -84,50 +91,47 @@ export default function AddSongForm() {
                     onSubmit={handleSubmit}
                 >
                     <Box sx={{ display: "flex", gap: 2, width: "100%" }}>
-                        <TextField
+                        <FormField
+                            required
                             id="title"
                             label="Title"
-                            variant="outlined"
+                            variant="filled"
                             fullWidth
                             value={formData.title}
                             onChange={handleChange}
-                            sx={{
-                                flex: 2,
-                                '& label.Mui-focused': { color: 'green' },
-                                '& .MuiOutlinedInput-root': {
-                                    '&.Mui-focused fieldset': { borderColor: 'green', borderRadius: "20px" },
-                                },
-                            }}
+                            sx={{ flex: 2 }}
                         />
                         <TextField
+                            required
                             id="author"
                             label="Author"
-                            variant="outlined"
+                            variant="filled"
                             fullWidth
                             value={formData.author}
                             onChange={handleChange}
+                            slotProps={{ input: { disableUnderline: true } }}
                             sx={{
                                 flex: 1,
-                                '& label.Mui-focused': { color: 'green' },
-                                '& .MuiOutlinedInput-root': {
-                                    '&.Mui-focused fieldset': { borderColor: 'green', borderRadius: "20px" },
-                                },
+                                '& .MuiFilledInput-root': {
+                                    borderRadius: 2,
+                                }
                             }}
                         />
                     </Box>
 
                     <TextField
+                        required
                         id="url"
                         label="URL"
-                        variant="outlined"
+                        variant="filled"
                         fullWidth
                         value={formData.url}
                         onChange={handleChange}
+                        slotProps={{ input: { disableUnderline: true } }}
                         sx={{
-                            '& label.Mui-focused': { color: 'green' },
-                            '& .MuiOutlinedInput-root': {
-                                '&.Mui-focused fieldset': { borderColor: 'green', borderRadius: "20px" },
-                            },
+                            '& .MuiFilledInput-root': {
+                                borderRadius: 2,
+                            }
                         }}
                     />
 
@@ -136,7 +140,9 @@ export default function AddSongForm() {
                             type="submit"
                             variant="contained"
                             sx={{
-                                backgroundColor: "green", color: "white", "&:hover": { backgroundColor: "darkgreen" }, borderRadius: "20px"
+                                '& .MuiFilledInput-root': {
+                                    borderRadius: 2,
+                                }
                             }}
                         >
                             Add to Queue
