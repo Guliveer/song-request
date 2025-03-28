@@ -64,10 +64,6 @@ export default function SongCard({ id }) {
         fetchUserAndVote();
     }, [id]);
 
-    // Czyszczenie localStorage po załadowaniu
-    useEffect(() => {
-        localStorage.removeItem(`vote_${id}`); // Usuwanie głosu z localStorage po załadowaniu strony
-    }, [id]);
 
     const handleVote = async (newVoteValue) => {
         if (!user) {
