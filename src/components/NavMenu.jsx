@@ -15,17 +15,31 @@ import {
     Avatar
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
-import {isUserLoggedIn, logOut} from "@/utils/actions";
+import {isUserLoggedIn, isUserAdmin, logOut} from "@/utils/actions";
 import {supabase} from "@/utils/supabase";
 
 export default function NavMenu() {
     const [isLoggedIn, setIsLoggedIn] = useState(null);
+    const [isAdmin, setIsAdmin] = useState(false); // Stan dla sprawdzania admina
     const router = useRouter();
 
+    // Funkcja wylogowywania
+    async function signOut() {
+        const { error } = await supabase.auth.signOut();
+        if (error) {
+            console.error('Error signing out:', error.message);
+            return;
+        }
+        router.push('/'); // Po wylogowaniu przekierowanie na stronę główną
+    }
+
+    // Sprawdzanie użytkownika po załadowaniu komponentu
     useEffect(() => {
         async function checkUser() {
             const loggedIn = await isUserLoggedIn();
             setIsLoggedIn(loggedIn);
+            const userAdmin = await isUserAdmin();
+            setIsAdmin(userAdmin);
         }
 
         checkUser(); // Call checkUser on component mount
@@ -116,6 +130,9 @@ export default function NavMenu() {
                                     {page.name}
                                 </Button>
                             ))}
+                            {isAdmin && ( // Renderuj tylko, jeśli użytkownik jest adminem
+                                <Button href="/admin" sx={{ my: 2, display: "block", padding: '0.5rem 1rem' }}>Admin Panel</Button>
+                            )}
                         </ButtonGroup>
                     </Box>
 
@@ -149,4 +166,4 @@ export default function NavMenu() {
             </Container>
         </AppBar>
     );
-};
+}
