@@ -12,7 +12,7 @@ export default function AdminPanel() {
             const { data: { user } } = await supabase.auth.getUser();
 
             if (!user) {
-                router.replace("/404"); // Niezalogowany → przenosi na login
+                router.replace("/404"); // Niezalogowany → 404
                 return;
             }
 
