@@ -7,22 +7,33 @@ export default function AdminPanel() {
     const [isAdmin, setIsAdmin] = useState(false);
     const router = useRouter();
 
-    useEffect(() => {
-        const checkAdmin = async () => {
+    useEffect(function() {
+        async function checkAdmin() {
             const { data: { user } } = await supabase.auth.getUser();
 
             if (!user) {
-                router.replace("/404"); // Niezalogowany → przenosi na 404
+                router.replace("/404"); // Niezalogowany → przenosi na login
                 return;
             }
 
+            const { data, error } = await supabase
+                .from("users")
+                .select("admin")
+                .eq("id", user.id)
+                .single();
+
+            if (error || !data?.admin) {
+                router.replace("/404"); // Brak uprawnień → 404
+                return;
+            }
 
             setIsAdmin(true);
             setIsLoading(false);
-        };
+        }
 
         checkAdmin();
     }, [router]);
+
 
     if (!isAdmin) return null;
 
