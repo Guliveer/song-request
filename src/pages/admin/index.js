@@ -12,20 +12,10 @@ export default function AdminPanel() {
             const { data: { user } } = await supabase.auth.getUser();
 
             if (!user) {
-                router.replace("/login"); // Niezalogowany → przenosi na login
+                router.replace("/404"); // Niezalogowany → przenosi na 404
                 return;
             }
 
-            const { data, error } = await supabase
-                .from("users")
-                .select("admin")
-                .eq("id", user.id)
-                .single();
-
-            if (error || !data?.admin) {
-                router.replace("/404"); // Brak uprawnień → 404
-                return;
-            }
 
             setIsAdmin(true);
             setIsLoading(false);

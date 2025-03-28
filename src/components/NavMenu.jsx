@@ -10,18 +10,18 @@ export default function NavMenu() {
     const router = useRouter();
 
     // Funkcja wylogowywania
-    const signOut = async () => {
+    async function signOut() {
         const { error } = await supabase.auth.signOut();
         if (error) {
             console.error('Error signing out:', error.message);
             return;
         }
         router.push('/'); // Po wylogowaniu przekierowanie na stronę główną
-    };
+    }
 
     // Sprawdzanie użytkownika po załadowaniu komponentu
     useEffect(() => {
-        const checkUser = async () => {
+        async function checkUser() {
             const { data: { user } } = await supabase.auth.getUser();
             setIsLoggedIn(!!user); // Ustawienie stanu logowania
             setIsAdmin(!!user);
@@ -41,19 +41,19 @@ export default function NavMenu() {
                     setIsAdmin(data?.admin || false); // Ustawienie stanu admina
                 }
             }
-        };
+        }
 
         checkUser();
 
-        const handleRouteChange = () => {
+        function handleRouteChange() {
             checkUser(); // Sprawdzanie użytkownika przy każdej zmianie trasy
-        };
+        }
 
         router.events.on('routeChangeComplete', handleRouteChange);
 
-        return () => {
-            router.events.off('routeChangeComplete', handleRouteChange);
-        };
+        return (
+            router.events.off('routeChangeComplete', handleRouteChange)
+        )
     }, [router]);
 
     return (
