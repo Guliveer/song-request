@@ -11,7 +11,7 @@ export default function UserPanel() {
         const checkUser = async () => {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) {
-                router.replace("/login"); // Przekierowanie na stronę logowania
+                await router.replace("/login"); // Przekierowanie na stronę logowania
                 return;
             }
             setIsLoggedIn(true);

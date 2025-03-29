@@ -1,173 +1,134 @@
-import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from "next/link";
 import { supabase } from '@/utils/supabase';
-import { Box, Card, Typography, Skeleton, IconButton, Snackbar } from "@mui/material";
+import { Box, Card, Typography, IconButton, Snackbar } from "@mui/material";
 import ThumbUpIcon from '@mui/icons-material/ThumbUp';
 import ThumbDownIcon from '@mui/icons-material/ThumbDown';
-import PropTypes from 'prop-types';
+import SkeletonSongCard from "@/components/skeletons/SkeletonSongCard";
+import { getUserInfo, getSongData, getCurrentUser, removeUserVote, updateUserVote } from "@/utils/actions";
+import debounce from 'lodash.debounce';
 
-export default function SongCard({ id }) {
+const VoteButtons = React.memo(({ userVote, handleVote, score }) => (
+    // Lets you skip re-rendering a component when its props are unchanged.
+
+    <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '1rem', width: '25%', justifyContent: 'center' }}>
+        <IconButton
+            color={userVote === 1 ? "secondary" : "default"}
+            onClick={() => handleVote(1)}
+        >
+            <ThumbUpIcon />
+        </IconButton>
+        <Typography variant="h6">{score}</Typography>
+        <IconButton
+            color={userVote === -1 ? "error" : "default"}
+            onClick={() => handleVote(-1)}
+        >
+            <ThumbDownIcon />
+        </IconButton>
+    </Box>
+));
+
+function SongCard({ id }) {
     const [songData, setSongData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState(null);
-    const [userVote, setUserVote] = useState(null); // 1 = upvote, -1 = downvote, null = brak głosu
-    const [error, setError] = useState(null); // Stan błędu
-    const [isVoting, setIsVoting] = useState(false); // Blokada wielokrotnych kliknięć
+    const [userVote, setUserVote] = useState(null); // 1 = upvote; -1 = downvote; null = no vote
+    const [error, setError] = useState(null); // Error state
 
-    // Pobieranie danych piosenki i użytkownika z supabase
-    useEffect(() => {
-        async function fetchData() {
-            const { data: song, error: songError } = await supabase
-                .from('queue')
-                .select('title, author, url, added_at, user_id, score, rank')
-                .eq('id', id)
-                .single();
+    const fetchData = useCallback(async () => {
+        try {
+            const [song, currentUser] = await Promise.all([getSongData(id), getCurrentUser()]);
 
-            if (songError) {
-                console.error('Error fetching song:', songError);
-                return;
-            }
-
-            setSongData(song);
-            setLoading(false);
-        }
-
-        async function fetchUserAndVote() {
-            const { data: { user }, error } = await supabase.auth.getUser();
-            if (error) {
-                console.error("Błąd przy pobieraniu użytkownika:", error);
-                return;
-            }
-
-            if (user) {
-                setUser(user);
-
-                // Sprawdzamy czy użytkownik już głosował
+            if (currentUser) {
+                setUser(currentUser);
                 const { data: voteData, error: voteError } = await supabase
                     .from('votes')
                     .select('vote')
                     .eq('song_id', id)
-                    .eq('user_id', user.id)
+                    .eq('user_id', currentUser.id)
                     .single();
 
                 if (voteError) {
-                    console.log("Brak głosu lub błąd:", voteError ? voteError.message : "Brak danych o głosie");
-                    setUserVote(null); // Brak głosu, ustawiamy na null
+                    console.log("Error:", voteError.message);
+                    setUserVote(null);
                 } else {
-                    setUserVote(voteData.vote === null ? null : voteData.vote);
-                    console.log("Znaleziono głos:", voteData);
+                    setUserVote(voteData.vote);
                 }
             }
-        }
 
-        fetchData();
-        fetchUserAndVote();
+            const user = await getUserInfo(song.user_id);
+            song.username = user ? '@' + user.username : song.user_id;
+
+            setSongData(song);
+        } catch (error) {
+            console.error('Error fetching data:', error);
+        } finally {
+            setLoading(false);
+        }
     }, [id]);
 
+    useEffect(() => {
+        fetchData();
+    }, [fetchData]);
 
-    async function handleVote(newVoteValue) {
+    const handleVote = useCallback(debounce(async (newVoteValue) => {
+        // debounce prevents multiple votes in a short time
         if (!user) {
             setError("You have to be logged in to vote.");
             return;
         }
 
-        if (isVoting) return; // Zablokowanie podwójnych kliknięć
-        setIsVoting(true);
+        let resultVoteVal = null; // variable to sync data update
 
         try {
-            // Cofnięcie głosu
             if (userVote === newVoteValue) {
-                const { error: deleteError } = await supabase
-                    .from('votes')
-                    .delete()
-                    .eq('user_id', user.id)
-                    .eq('song_id', id);
-
-                if (deleteError) {
-                    console.error("Błąd przy usuwaniu głosu:", deleteError);
-                    setError(`Błąd przy usuwaniu głosu: ${deleteError.message}`);
-                    return;
+                const response = await removeUserVote(id, user.id);
+                if (response !== true) {
+                    setError(`Error while removing vote: ${response}`);
+                    resultVoteVal = null;
                 }
-
-                setUserVote(null); // Resetowanie głosu
-                console.log("Removed vote, updated userVote:", null);
             } else {
-                // Głosowanie lub zmiana głosu
-                const { error: voteError } = await supabase
-                    .from('votes')
-                    .upsert({
-                        user_id: user.id,
-                        song_id: id,
-                        vote: newVoteValue,
-                        voted_at: new Date().toISOString(),
-                    }, { onConflict: ['user_id', 'song_id'] });
-
-                if (voteError) {
-                    console.error("Błąd przy głosowaniu:", voteError);
-                    setError(`Błąd przy głosowaniu: ${voteError.message}`);
+                const response = await updateUserVote(id, user.id, newVoteValue);
+                if (response !== true) {
+                    setError(`Voting error: ${response}`);
                     return;
                 }
-
-                setUserVote(newVoteValue); // Update user vote
-                console.log("Updated vote, new userVote:", newVoteValue);
+                resultVoteVal = newVoteValue;
             }
-
-            // Zaktualizowanie stanu lokalnego
-            setSongData(prev => ({
-                ...prev,
-                score: prev.score + newVoteValue
-            }));
-
         } catch (error) {
-            console.error("Błąd przy głosowaniu:", error);
-            setError(`Coś poszło nie tak: ${error.message}`);
+            console.error("Error while placing a vote:", error);
+            setError(`Something went wrong: ${error.message}`);
         } finally {
-            setIsVoting(false);
+            await fetchData().then(() => setUserVote(resultVoteVal));
         }
-    }
+    }, 300), [user, userVote, id, fetchData]);
 
+    const cardStyle = {
+        display: 'flex',
+        flexDirection: 'row',
+        minWidth: '40em',
+        width: '100%',
+        maxWidth: '50em',
+        padding: '1rem',
+        borderRadius: '10px',
+        alignItems: 'center'
+    }
+    
     if (loading || !songData) {
-        return (
-            <Card variant="outlined" sx={{ display: 'flex', flexDirection: 'row', padding: '1rem', borderRadius: '10px', alignItems: 'center', minWidth: '40em', width: '100%', maxWidth: '50em' }}>
-                <Box sx={{ width: '10%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                    <Skeleton variant="text" width={40} height={50} />
-                </Box>
-                <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    <Skeleton variant="text" width="80%" height={30} />
-                    <Skeleton variant="text" width="60%" height={20} />
-                </Box>
-                <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                    <Skeleton variant="text" width="50%" height={20} />
-                    <Skeleton variant="text" width="40%" height={20} />
-                </Box>
-                <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '1rem', width: '25%', justifyContent: 'center' }}>
-                    <Skeleton variant="circular" width={40} height={40} />
-                    <Skeleton variant="text" width={30} height={30} />
-                    <Skeleton variant="circular" width={40} height={40} />
-                </Box>
-            </Card>
-        );
+        return <SkeletonSongCard cardStyle={cardStyle} />
     }
 
-    const { title, author, url, added_at, user_id, score, rank } = songData;
+    const { title, author, url, added_at, user_id, score, rank, username } = songData;
 
     return (
-        <Card variant="outlined" sx={{
-            display: 'flex',
-            flexDirection: 'row',
-            minWidth: '40em',
-            width: '100%',
-            maxWidth: '50em',
-            padding: '1rem',
-            borderRadius: '10px',
-            alignItems: 'center'
-        }}>
+        <Card variant="outlined" sx={cardStyle}>
             <Box sx={{ width: '10%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                 <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 'normal' }}>{rank}</Typography>
             </Box>
             <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                 <Typography variant="h6" sx={{ fontWeight: 'bold', fontSize: '1.25rem', marginBottom: '0.5rem' }}>
-                    <Link href={url} target="_blank" style={{ textDecoration: 'none', color: 'inherit' }}>
+                    <Link href={url} target="_blank" style={{ textDecoration: 'none' }}>
                         {title}
                     </Link>
                 </Typography>
@@ -175,31 +136,17 @@ export default function SongCard({ id }) {
             </Box>
             <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                 <Typography variant="body2" sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
-                    Added by: {user_id}
+                    Added by: {username}
                 </Typography>
                 <Typography variant="body2" sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
                     {new Date(added_at).toLocaleString()}
                 </Typography>
             </Box>
-            <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '1rem', width: '25%', justifyContent: 'center' }}>
-                <IconButton
-                    color={userVote === 1 ? "primary" : "default"}
-                    onClick={() => handleVote(1)}
-                >
-                    <ThumbUpIcon />
-                </IconButton>
-                <Typography variant="h6">{score}</Typography>
-                <IconButton
-                    color={userVote === -1 ? "error" : "default"}
-                    onClick={() => handleVote(-1)}
-                >
-                    <ThumbDownIcon />
-                </IconButton>
-            </Box>
+            <VoteButtons userVote={userVote} handleVote={handleVote} score={songData.score} />
             {error && (
                 <Snackbar
                     open={!!error}
-                    autoHideDuration={6000}
+                    autoHideDuration={10000}
                     onClose={() => setError(null)}
                     message={error}
                 />
@@ -211,3 +158,5 @@ export default function SongCard({ id }) {
 SongCard.propTypes = {
     id: PropTypes.number.isRequired,
 };
+
+export default React.memo(SongCard);
