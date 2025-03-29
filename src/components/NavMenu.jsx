@@ -55,10 +55,14 @@ export default function NavMenu() {
         };
     }, [router]);
 
-    const pages = [
-        {name: "Home", href: "/"},
-        {name: "Admin Panel", href: "/admin"}
-    ];
+    const pages = {
+        public: [
+            {name: "Home", href: "/"}
+        ],
+        admin: [
+            {name: "Admin Panel", href: "/admin"}
+        ]
+    };
 
     const userMenu = {
         loggedIn: [
@@ -114,24 +118,35 @@ export default function NavMenu() {
                             onClose={handleCloseNavMenu}
                             sx={{ display: { xs: "block", md: "none" } }}
                         >
-                            {pages.map((page) => (
+                            {(pages.public).map((page) => (
                                 <MenuItem key={page.name} onClick={handleCloseNavMenu}>
                                     <Typography sx={{ textAlign: "center" }}>{page.name}</Typography>
                                 </MenuItem>
                             ))}
+                            {isAdmin && ( // Renderuj tylko, jeśli użytkownik jest adminem
+                                (pages.admin).map((page) => (
+                                    <MenuItem key={page.name} onClick={handleCloseNavMenu}>
+                                        <Typography sx={{ textAlign: "center" }}>{page.name}</Typography>
+                                    </MenuItem>
+                                ))
+                            )}
                         </Menu>
                     </Box>
 
                     {/* Menu dla desktopów */}
                     <Box sx={{ flexGrow: 1, display: { xs: "none", md: "flex" } }}>
                         <ButtonGroup variant="text">
-                            {pages.map((page) => (
+                            {(pages.public).map((page) => (
                                 <Button key={page.name} href={page.href} sx={{ my: 2, display: "block", padding: '0.5rem 1rem' }}>
                                     {page.name}
                                 </Button>
                             ))}
                             {isAdmin && ( // Renderuj tylko, jeśli użytkownik jest adminem
-                                <Button href="/admin" sx={{ my: 2, display: "block", padding: '0.5rem 1rem' }}>Admin Panel</Button>
+                                (pages.admin).map((page) => (
+                                    <Button key={page.name} href={page.href} sx={{ my: 2, display: "block", padding: '0.5rem 1rem' }}>
+                                        {page.name}
+                                    </Button>
+                                ))
                             )}
                         </ButtonGroup>
                     </Box>

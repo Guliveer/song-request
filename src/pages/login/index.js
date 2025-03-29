@@ -62,7 +62,7 @@ export default function Login() {
             flexDirection: 'column',
             placeItems: 'center',
             placeContent: 'center',
-            height: '80vh',
+            height: '90vh',
         }}>
             <h1>Log in</h1>
             <form

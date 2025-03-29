@@ -27,7 +27,7 @@ export default function Queue() {
 
                 // Assign rank based on sorted order
                 sortedSongs.forEach((song, index) => {
-                    song.rank = index + 1;
+                    song.rank = index;
                 });
 
                 setSongs(sortedSongs);

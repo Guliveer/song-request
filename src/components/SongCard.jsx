@@ -1,130 +1,108 @@
 import PropTypes from 'prop-types';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from "next/link";
 import { supabase } from '@/utils/supabase';
-import { Box, Card, Typography, Skeleton, IconButton, Snackbar } from "@mui/material";
+import { Box, Card, Typography, IconButton, Snackbar } from "@mui/material";
 import ThumbUpIcon from '@mui/icons-material/ThumbUp';
 import ThumbDownIcon from '@mui/icons-material/ThumbDown';
 import SkeletonSongCard from "@/components/skeletons/SkeletonSongCard";
-import {getUserInfo, getSongData} from "@/utils/actions"
+import { getUserInfo, getSongData, getCurrentUser, removeUserVote, updateUserVote } from "@/utils/actions";
+import debounce from 'lodash.debounce';
 
-export default function SongCard({ id }) {
+const VoteButtons = React.memo(({ userVote, handleVote, score }) => (
+    // Lets you skip re-rendering a component when its props are unchanged.
+
+    <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '1rem', width: '25%', justifyContent: 'center' }}>
+        <IconButton
+            color={userVote === 1 ? "secondary" : "default"}
+            onClick={() => handleVote(1)}
+        >
+            <ThumbUpIcon />
+        </IconButton>
+        <Typography variant="h6">{score}</Typography>
+        <IconButton
+            color={userVote === -1 ? "error" : "default"}
+            onClick={() => handleVote(-1)}
+        >
+            <ThumbDownIcon />
+        </IconButton>
+    </Box>
+));
+
+function SongCard({ id }) {
     const [songData, setSongData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState(null);
-    const [userVote, setUserVote] = useState(null); // 1 = upvote, -1 = downvote, null = brak głosu
-    const [error, setError] = useState(null); // Stan błędu
-    const [isVoting, setIsVoting] = useState(false); // Blokada wielokrotnych kliknięć
+    const [userVote, setUserVote] = useState(null); // 1 = upvote; -1 = downvote; null = no vote
+    const [error, setError] = useState(null); // Error state
 
-    // Pobieranie danych piosenki i użytkownika z supabase
-    useEffect(() => {
-        async function fetchData() {
-            try {
-                // Fetch the song data from the 'queue' table
-                const song = await getSongData(id);
+    const fetchData = useCallback(async () => {
+        try {
+            const [song, currentUser] = await Promise.all([getSongData(id), getCurrentUser()]);
 
-                // Fetch the username from the 'users' table
-                const user = await getUserInfo(song.user_id);
-                song.username = user ? '@' + user.username : song.user_id;
-
-                setSongData(song);
-                setLoading(false);
-            } catch (error) {
-                console.error('Error fetching data:', error);
-            }
-
-        async function fetchUserAndVote() {
-            const { data: { user }, error } = await supabase.auth.getUser();
-            if (error) {
-                console.error("Błąd przy pobieraniu użytkownika:", error);
-                return;
-            }
-
-            if (user) {
-                setUser(user);
-
-                // Sprawdzamy czy użytkownik już głosował
+            if (currentUser) {
+                setUser(currentUser);
                 const { data: voteData, error: voteError } = await supabase
                     .from('votes')
                     .select('vote')
                     .eq('song_id', id)
-                    .eq('user_id', user.id)
+                    .eq('user_id', currentUser.id)
                     .single();
 
                 if (voteError) {
-                    console.log("Brak głosu lub błąd:", voteError ? voteError.message : "Brak danych o głosie");
-                    setUserVote(null); // Brak głosu, ustawiamy na null
+                    console.log("Error:", voteError.message);
+                    setUserVote(null);
                 } else {
-                    setUserVote(voteData.vote === null ? null : voteData.vote);
-                    console.log("Znaleziono głos:", voteData);
+                    setUserVote(voteData.vote);
                 }
             }
-        }
 
-        fetchData();
-        fetchUserAndVote();
+            const user = await getUserInfo(song.user_id);
+            song.username = user ? '@' + user.username : song.user_id;
+
+            setSongData(song);
+        } catch (error) {
+            console.error('Error fetching data:', error);
+        } finally {
+            setLoading(false);
+        }
     }, [id]);
 
-    async function handleVote(newVoteValue) {
+    useEffect(() => {
+        fetchData();
+    }, [fetchData]);
+
+    const handleVote = useCallback(debounce(async (newVoteValue) => {
+        // debounce prevents multiple votes in a short time
         if (!user) {
             setError("You have to be logged in to vote.");
             return;
         }
 
-        if (isVoting) return; // Zablokowanie podwójnych kliknięć
-        setIsVoting(true);
+        let resultVoteVal = null; // variable to sync data update
 
         try {
-            // Cofnięcie głosu
             if (userVote === newVoteValue) {
-                const { error: deleteError } = await supabase
-                    .from('votes')
-                    .delete()
-                    .eq('user_id', user.id)
-                    .eq('song_id', id);
-
-                if (deleteError) {
-                    console.error("Error while removing vote:", deleteError);
-                    setError(`Błąd przy usuwaniu głosu: ${deleteError.message}`);
-                    return;
+                const response = await removeUserVote(id, user.id);
+                if (response !== true) {
+                    setError(`Error while removing vote: ${response}`);
+                    resultVoteVal = null;
                 }
-
-                setUserVote(null); // Resetowanie głosu
-                console.log("Removed vote, updated userVote:", null);
             } else {
-                // Głosowanie lub zmiana głosu
-                const { error: voteError } = await supabase
-                    .from('votes')
-                    .upsert({
-                        user_id: user.id,
-                        song_id: id,
-                        vote: newVoteValue,
-                        voted_at: new Date().toISOString(),
-                    }, { onConflict: ['user_id', 'song_id'] });
-
-                if (voteError) {
-                    console.error("Voting error:", voteError);
-                    setError(`Błąd przy głosowaniu: ${voteError.message}`);
+                const response = await updateUserVote(id, user.id, newVoteValue);
+                if (response !== true) {
+                    setError(`Voting error: ${response}`);
                     return;
                 }
-
-                setUserVote(newVoteValue); // Update user vote
-                console.log("Updated vote, new userVote:", newVoteValue);
+                resultVoteVal = newVoteValue;
             }
-
-            // Zaktualizowanie stanu lokalnego
-            setSongData(prev => ({
-                ...prev,
-                score: prev.score + newVoteValue
-            }));
-
         } catch (error) {
             console.error("Error while placing a vote:", error);
             setError(`Something went wrong: ${error.message}`);
         } finally {
-            setIsVoting(false);
+            await fetchData().then(() => setUserVote(resultVoteVal));
         }
-    }
+    }, 300), [user, userVote, id, fetchData]);
 
     const cardStyle = {
         display: 'flex',
@@ -164,25 +142,11 @@ export default function SongCard({ id }) {
                     {new Date(added_at).toLocaleString()}
                 </Typography>
             </Box>
-            <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '1rem', width: '25%', justifyContent: 'center' }}>
-                <IconButton
-                    color={userVote === 1 ? "primary" : "default"}
-                    onClick={() => handleVote(1)}
-                >
-                    <ThumbUpIcon />
-                </IconButton>
-                <Typography variant="h6">{score}</Typography>
-                <IconButton
-                    color={userVote === -1 ? "error" : "default"}
-                    onClick={() => handleVote(-1)}
-                >
-                    <ThumbDownIcon />
-                </IconButton>
-            </Box>
+            <VoteButtons userVote={userVote} handleVote={handleVote} score={songData.score} />
             {error && (
                 <Snackbar
                     open={!!error}
-                    autoHideDuration={6000}
+                    autoHideDuration={10000}
                     onClose={() => setError(null)}
                     message={error}
                 />
@@ -194,3 +158,5 @@ export default function SongCard({ id }) {
 SongCard.propTypes = {
     id: PropTypes.number.isRequired,
 };
+
+export default React.memo(SongCard);

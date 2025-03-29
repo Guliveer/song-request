@@ -1,15 +1,16 @@
-import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '@/utils/supabase';
 import HCaptcha from '@hcaptcha/react-hcaptcha';
 import {Button, Link, Typography} from '@mui/material';
 import { isUserLoggedIn } from "@/utils/actions";
 import {ErrorAlert, FormField} from "@/components/Items";
+import { useEffect, useRef, useState } from 'react';
 
 export default function Register() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [username, setUsername] = useState('');
     const [error, setError] = useState(null);
     const [captchaToken, setCaptchaToken] = useState(null);
     const [loading, setLoading] = useState(true); // for skeleton loading
@@ -41,19 +42,45 @@ export default function Register() {
             return;
         }
 
-        const { error } = await supabase.auth.signUp({
+        const alphanumericRegex = /^[a-z0-9]+$/i;
+        if (!alphanumericRegex.test(username)) {
+            setError('Username must be alphanumeric-only');
+            return;
+        }
+
+        const { data: existingUser } = await supabase
+            .from('users')
+            .select('username')
+            .eq('username', username)
+            .single();
+
+        if (existingUser) {
+            setError('Username already taken');
+            return;
+        }
+
+        const { error: signUpError, user } = await supabase.auth.signUp({
             email,
             password,
             options: { captchaToken },
         });
 
-        captcha.current.resetCaptcha();
-
-        if (error) {
-            setError(error.message);
-        } else {
-            await router.push('/');
+        if (signUpError) {
+            setError(signUpError.message);
+            return;
         }
+
+        const { error: insertError } = await supabase
+            .from('users')
+            .insert([{ id: user.id, username, }]);
+
+        if (insertError) {
+            setError(insertError.message);
+            return;
+        }
+
+        captcha.current.resetCaptcha();
+        await router.push('/');
     }
 
     function handleCaptchaChange(token) {
@@ -68,7 +95,7 @@ export default function Register() {
             flexDirection: 'column',
             placeItems: 'center',
             placeContent: 'center',
-            height: '80vh',
+            height: '90vh',
         }}>
             <h1>Register</h1>
             <form
@@ -82,6 +109,15 @@ export default function Register() {
                     width: '300px',
                 }}
             >
+                <FormField
+                    type="text"
+                    label="Username"
+                    value={username}
+                    fullWidth
+                    onChange={(e) => setUsername(e.target.value)}
+                    required
+                    variant="outlined"
+                />
                 <FormField
                     type="email"
                     label="Email"
@@ -132,7 +168,7 @@ export default function Register() {
                     variant="contained"
                     size="large"
                 >
-                    Register
+                    Create account
                 </Button>
             </form>
             <Typography variant="body2" align="center">

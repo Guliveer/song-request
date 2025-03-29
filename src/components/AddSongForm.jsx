@@ -95,55 +95,37 @@ export default function AddSongForm() {
                             required
                             id="title"
                             label="Title"
-                            variant="filled"
                             fullWidth
                             value={formData.title}
                             onChange={handleChange}
                             sx={{ flex: 2 }}
                         />
-                        <TextField
+                        <FormField
                             required
                             id="author"
                             label="Author"
-                            variant="filled"
                             fullWidth
                             value={formData.author}
                             onChange={handleChange}
-                            slotProps={{ input: { disableUnderline: true } }}
-                            sx={{
-                                flex: 1,
-                                '& .MuiFilledInput-root': {
-                                    borderRadius: 2,
-                                }
-                            }}
+                            sx={{ flex: 1 }}
                         />
                     </Box>
 
-                    <TextField
+                    <FormField
                         required
                         id="url"
                         label="URL"
-                        variant="filled"
                         fullWidth
                         value={formData.url}
                         onChange={handleChange}
-                        slotProps={{ input: { disableUnderline: true } }}
-                        sx={{
-                            '& .MuiFilledInput-root': {
-                                borderRadius: 2,
-                            }
-                        }}
+                        sx={{ }}
                     />
 
                     <Stack direction="row" justifyContent="center" sx={{ width: "100%", marginTop: 2 }}>
                         <Button
                             type="submit"
                             variant="contained"
-                            sx={{
-                                '& .MuiFilledInput-root': {
-                                    borderRadius: 2,
-                                }
-                            }}
+                            sx={{ }}
                         >
                             Add to Queue
                         </Button>

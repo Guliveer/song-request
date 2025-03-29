@@ -51,6 +51,18 @@ export async function logOut() {
     }
 }
 
+export async function getCurrentUser() {
+    if (!await isUserLoggedIn()) { return null; }
+
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        return user;
+    } catch (error) {
+        console.error('Error fetching current user:', error.message);
+        return null;
+    }
+}
+
 export async function getUserInfo(id) {
     try {
         const { data, error } = await supabase
@@ -98,4 +110,50 @@ export async function getSongData(id) {
 
 getSongData.propTypes = {
     id: PropTypes.number.isRequired
+}
+
+export async function removeUserVote(songId, userId) {
+    try {
+        const { error } = await supabase
+            .from('votes')
+            .delete()
+            .eq('song_id', songId)
+            .eq('user_id', userId);
+        if (error) throw error;
+
+        return true;
+    } catch (error) {
+        console.error('Error removing user vote:', error.message);
+        return error;
+    }
+}
+
+removeUserVote.propTypes = {
+    songId: PropTypes.number.isRequired,
+    userId: PropTypes.string.isRequired
+}
+
+export async function updateUserVote(songId, userId, vote) {
+    try {
+        const { error } = await supabase
+            .from('votes')
+            .upsert({
+                song_id: songId,
+                user_id: userId,
+                vote,
+                voted_at: new Date().toISOString(),
+            }, { onConflict: ['user_id', 'song_id'] });
+        if (error) throw error;
+
+        return true;
+    } catch (error) {
+        console.error('Error updating user vote:', error.message);
+        return error;
+    }
+}
+
+updateUserVote.propTypes = {
+    songId: PropTypes.number.isRequired,
+    userId: PropTypes.string.isRequired,
+    vote: PropTypes.number.isRequired
 }
