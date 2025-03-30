@@ -11,13 +11,18 @@ export default function AdminPanel() {
         async function checkAdmin() {
             const { data: { user } } = await supabase.auth.getUser();
 
+            if (!user) {
+                await router.replace("/404"); // Niezalogowany → 404
+                return;
+            }
+
             const { data, error } = await supabase
                 .from("users")
                 .select("admin")
                 .eq("id", user.id)
                 .single();
 
-            if (!user|| error || !data?.admin) {
+            if (error || !data?.admin) {
                 await router.replace("/404"); // Brak uprawnień → 404
                 return;
             }
