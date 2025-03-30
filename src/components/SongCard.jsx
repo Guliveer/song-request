@@ -14,14 +14,14 @@ const VoteButtons = React.memo(({ userVote, handleVote, score }) => (
 
     <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '1rem', width: '25%', justifyContent: 'center' }}>
         <IconButton
-            color={userVote === 1 ? "secondary" : "default"}
+            color={userVote === 1 ? "default" : "secondary"}
             onClick={() => handleVote(1)}
         >
             <ThumbUpIcon />
         </IconButton>
         <Typography variant="h6">{score}</Typography>
         <IconButton
-            color={userVote === -1 ? "error" : "default"}
+            color={userVote === -1 ? "error" : "secondary"}
             onClick={() => handleVote(-1)}
         >
             <ThumbDownIcon />
