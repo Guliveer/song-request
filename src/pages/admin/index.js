@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import { supabase } from "@/utils/supabase";
+import {isUserAdmin, isUserLoggedIn} from "@/utils/actions";
 
 export default function AdminPanel() {
     const [isLoading, setIsLoading] = useState(true);
@@ -9,20 +9,16 @@ export default function AdminPanel() {
 
     useEffect(function() {
         async function checkAdmin() {
-            const { data: { user } } = await supabase.auth.getUser();
+            const checkLoggedIn = await isUserLoggedIn();
 
-            if (!user) {
+            if (!checkLoggedIn) {
                 await router.replace("/404"); // Niezalogowany → 404
                 return;
             }
 
-            const { data, error } = await supabase
-                .from("users")
-                .select("admin")
-                .eq("id", user.id)
-                .single();
+            const checkAdmin = await isUserAdmin();
 
-            if (error || !data?.admin) {
+            if (!checkAdmin) {
                 await router.replace("/404"); // Brak uprawnień → 404
                 return;
             }

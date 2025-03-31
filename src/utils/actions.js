@@ -14,10 +14,39 @@ export async function isUserLoggedIn() {
     }
 }
 
+export async function getCurrentUser() {
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        return user;
+    } catch (error) {
+        console.error('Error fetching current user:', error.message);
+        return null;
+    }
+}
+
+export async function getUserInfo(id) {
+    try {
+        const { data, error } = await supabase
+            .from('users')
+            .select()
+            .eq('id', id)
+            .single();
+        if (error) throw error;
+
+        return data;
+    } catch (error) {
+        console.error('Error fetching user info:', error.message);
+        return null;
+    }
+}
+
+getUserInfo.propTypes = {
+    id: PropTypes.string.isRequired
+}
+
 export async function isUserAdmin() {
     try {
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-        if (userError) throw userError;
+        const user = await getCurrentUser();
 
         if (!user) {
             return false;
@@ -49,38 +78,6 @@ export async function logOut() {
     } finally {
         await router.push('/'); // Redirect to home page
     }
-}
-
-export async function getCurrentUser() {
-    if (!await isUserLoggedIn()) { return null; }
-
-    try {
-        const { data: { user } } = await supabase.auth.getUser();
-        return user;
-    } catch (error) {
-        console.error('Error fetching current user:', error.message);
-        return null;
-    }
-}
-
-export async function getUserInfo(id) {
-    try {
-        const { data, error } = await supabase
-            .from('users')
-            .select()
-            .eq('id', id)
-            .single();
-        if (error) throw error;
-
-        return data;
-    } catch (error) {
-        console.error('Error fetching user info:', error.message);
-        return null;
-    }
-}
-
-getUserInfo.propTypes = {
-    id: PropTypes.string.isRequired
 }
 
 export async function getSongData(id) {
