@@ -1,8 +1,9 @@
 import { useRouter } from 'next/router';
 import HCaptcha from '@hcaptcha/react-hcaptcha';
 import {Button, CircularProgress, Link, Typography} from '@mui/material';
-import { isUserLoggedIn, signUp, isUsernameAvailable } from "@/utils/actions";
+import {isUserLoggedIn, signUp, isUsernameAvailable} from "@/utils/actions";
 import {ErrorAlert, FormField} from "@/components/Items";
+import AuthProviders from "@/components/AuthProviders";
 import { useEffect, useRef, useState } from 'react';
 
 export default function Register() {
@@ -74,13 +75,11 @@ export default function Register() {
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '1rem',
-                    placeItems: 'center',
-                    placeContent: 'center',
-                    width: '300px',
+                    width: '19rem',
                 }}
             >
                 <FormField
-                    type="text"
+                    type="test"
                     label="Username"
                     value={username}
                     fullWidth
@@ -141,6 +140,7 @@ export default function Register() {
                 >
                     {isSubmitting ? <CircularProgress size={26}/> : 'Create account'}
                 </Button>
+                <AuthProviders />
             </form>
             <Typography variant="body2" align="center">
                 Already registered? <Link href="/login">Log in</Link>

@@ -1,8 +1,8 @@
 'use server'
 import PropTypes from "prop-types";
-import {router} from "next/client";
 import {supabase} from '@/utils/supabase';
 import {createCanvas} from 'canvas';
+
 
 export async function isUserLoggedIn() {
     try {
@@ -31,14 +31,8 @@ export async function getUserInfo(id) {
             .select()
             .eq('id', id)
             .single();
+
         if (error) throw error;
-
-        // also add display_name (from auth.users) to the data object
-        const { data: { user } } = await supabase.auth.getUser();
-
-        if (!data.username) {
-            data.username = data.display_name || user.email.split('@')[0];
-        }
 
         return data;
     } catch (error) {
@@ -85,6 +79,10 @@ export async function isUsernameAvailable(username) {
     return true;
 }
 
+isUsernameAvailable.propTypes = {
+    username: PropTypes.string.isRequired
+}
+
 export async function signUp(email, password, username, captchaToken) {
     const { error: signUpError, user } = await supabase.auth.signUp({
         email,
@@ -101,6 +99,13 @@ export async function signUp(email, password, username, captchaToken) {
     if (signUpError) throw new Error(signUpError.message);
 
     return user;
+}
+
+signUp.propTypes = {
+    email: PropTypes.string.isRequired,
+    password: PropTypes.string.isRequired,
+    username: PropTypes.string.isRequired,
+    captchaToken: PropTypes.string.isRequired
 }
 
 export async function logOut() {

@@ -1,10 +1,9 @@
 //* https://www.realtimecolors.com/
 
-//? Theme is a subject to change
-
-import {Noto_Sans_Inscriptional_Parthian} from "next/dist/compiled/@next/font/dist/google";
+// Theme is a subject to change
 
 import { createTheme } from '@mui/material/styles';
+import {Noto_Sans_Inscriptional_Parthian} from "next/dist/compiled/@next/font/dist/google";
 
 export const themeOptions = {
     // Colors
