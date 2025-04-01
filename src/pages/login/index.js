@@ -4,7 +4,7 @@ import { supabase } from '@/utils/supabase';
 import HCaptcha from '@hcaptcha/react-hcaptcha';
 import {isUserLoggedIn} from "@/utils/actions";
 import {ErrorAlert, FormField} from "@/components/Items";
-import {Button, Typography, Link} from "@mui/material";
+import {Button, Typography, Link, CircularProgress} from "@mui/material";
 
 export default function Login() {
     const [email, setEmail] = useState('');
@@ -12,6 +12,7 @@ export default function Login() {
     const [error, setError] = useState(null);
     const [captchaToken, setCaptchaToken] = useState(null);
     const [loading, setLoading] = useState(true); // for skeleton loading
+    const [isSubmitting, setIsSubmitting] = useState(false); // for button loading state
     const router = useRouter();
     const captcha = useRef();
 
@@ -29,6 +30,7 @@ export default function Login() {
     async function handleLogin(e) {
         e.preventDefault();
         setError(null);
+        setIsSubmitting(true);
 
         if (!captchaToken) {
             setError('Please complete the CAPTCHA');
@@ -41,13 +43,15 @@ export default function Login() {
             options: { captchaToken },
         });
 
-        captcha.current.resetCaptcha();
 
         if (error) {
+            captcha.current.resetCaptcha();
             setError(error.message);
         } else {
             await router.push('/');
         }
+
+        setIsSubmitting(false);
     }
 
     function handleCaptchaChange(token) {
@@ -114,8 +118,9 @@ export default function Login() {
                     fullWidth
                     variant="contained"
                     size="large"
+                    disabled={isSubmitting || !email || !password || !captchaToken}
                 >
-                    Login
+                    {isSubmitting ? <CircularProgress size={26}/> : 'Log in'}
                 </Button>
             </form>
             <Typography variant="body2" align="center">

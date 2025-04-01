@@ -33,6 +33,13 @@ export async function getUserInfo(id) {
             .single();
         if (error) throw error;
 
+        // also add display_name (from auth.users) to the data object
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!data.username) {
+            data.username = data.display_name || user.email.split('@')[0];
+        }
+
         return data;
     } catch (error) {
         console.error('Error fetching user info:', error.message);
@@ -66,6 +73,36 @@ export async function isUserAdmin() {
     }
 }
 
+export async function isUsernameAvailable(username) {
+    const { data: existingUser } = await supabase
+        .from('users')
+        .select('username')
+        .eq('username', username)
+        .single();
+
+    if (existingUser) throw new Error('Username already taken');
+
+    return true;
+}
+
+export async function signUp(email, password, username, captchaToken) {
+    const { error: signUpError, user } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+            data: {
+                display_name: username, // Field in auth.users
+                username: username, // Field in public.users
+            },
+            captchaToken
+        },
+    });
+
+    if (signUpError) throw new Error(signUpError.message);
+
+    return user;
+}
+
 export async function logOut() {
     try {
         const { error } = await supabase.auth.signOut({scope: 'local'});
@@ -76,7 +113,7 @@ export async function logOut() {
         console.error('Error logging out:', error.message);
         return false;
     } finally {
-        await router.push('/'); // Redirect to home page
+        window.location.href = '/'; // Redirect to home page and reload
     }
 }
 
