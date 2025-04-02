@@ -4,13 +4,15 @@ import { Box } from '@mui/material';
 import {Google, GitHub, FacebookRounded as Facebook} from '@mui/icons-material';
 
 const availableProviders = [
-    {providerName: 'spotify', displayName: 'Spotify', icon: <Spotify />},
+    // {providerName: 'spotify', displayName: 'Spotify', icon: <Spotify />}, //! has some problems, idk why
+    //? https://supabase.com/docs/guides/auth/social-login/auth-spotify?queryGroups=language&language=js&queryGroups=environment&environment=server
+
     {providerName: 'google', displayName: 'Google', icon: <Google />},
     {providerName: 'facebook', displayName: 'Facebook', icon: <Facebook />},
     {providerName: 'github', displayName: 'GitHub', icon: <GitHub />},
 ];
 
-export default function AuthProviders({prompt}) {
+export default function AuthProvidersList({prompt}) {
     return (
         <Box display="flex" flexDirection="column" gap={2}>
             {availableProviders.map((provider) => (
@@ -26,7 +28,7 @@ export default function AuthProviders({prompt}) {
     );
 }
 
-AuthProviders.propTypes = {
+AuthProvidersList.propTypes = {
     prompt: PropTypes.string,
 };
 
