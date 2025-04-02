@@ -3,7 +3,7 @@ import HCaptcha from '@hcaptcha/react-hcaptcha';
 import {Button, CircularProgress, Link, Typography} from '@mui/material';
 import {isUserLoggedIn, signUp, isUsernameAvailable} from "@/utils/actions";
 import {ErrorAlert, FormField} from "@/components/Items";
-import AuthProviders from "@/components/AuthProviders";
+import AuthProvidersList from "@/components/AuthProvidersList";
 import { useEffect, useRef, useState } from 'react';
 
 export default function Register() {
@@ -79,7 +79,7 @@ export default function Register() {
                 }}
             >
                 <FormField
-                    type="test"
+                    type="text"
                     label="Username"
                     value={username}
                     fullWidth
@@ -140,7 +140,7 @@ export default function Register() {
                 >
                     {isSubmitting ? <CircularProgress size={26}/> : 'Create account'}
                 </Button>
-                <AuthProviders />
+                <AuthProvidersList />
             </form>
             <Typography variant="body2" align="center">
                 Already registered? <Link href="/login">Log in</Link>

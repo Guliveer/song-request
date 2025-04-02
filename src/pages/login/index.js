@@ -5,7 +5,7 @@ import HCaptcha from '@hcaptcha/react-hcaptcha';
 import {isUserLoggedIn} from "@/utils/actions";
 import {ErrorAlert, FormField} from "@/components/Items";
 import {Button, Typography, Link, CircularProgress} from "@mui/material";
-import AuthProviders from "@/components/AuthProviders";
+import AuthProvidersList from "@/components/AuthProvidersList";
 
 export default function Login() {
     const [email, setEmail] = useState('');
@@ -123,7 +123,7 @@ export default function Login() {
                 >
                     {isSubmitting ? <CircularProgress size={26}/> : 'Log in'}
                 </Button>
-                <AuthProviders />
+                <AuthProvidersList />
             </form>
             <Typography variant="body2" align="center">
                 First time around? <Link href="/register">Register</Link>
