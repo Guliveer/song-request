@@ -100,7 +100,8 @@ function SongCard({ id }) {
             console.error("Error while placing a vote:", error);
             setError(`Something went wrong: ${error.message}`);
         } finally {
-            await fetchData().then(() => setUserVote(resultVoteVal));
+            await fetchData();
+            setUserVote(resultVoteVal);
         }
     }, 300), [user, userVote, id, fetchData]);
 
@@ -135,14 +136,14 @@ function SongCard({ id }) {
                 <Typography variant="body1" sx={{ fontSize: '0.875rem', fontWeight: 'normal' }}>{author}</Typography>
             </Box>
             <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                <Typography variant="body2" sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+                <Typography variant="body2" sx={{ fontSize: '0.75rem', color: 'secondary' }}>
                     Added by: {username}
                 </Typography>
-                <Typography variant="body2" sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+                <Typography variant="body2" sx={{ fontSize: '0.75rem', color: 'secondary' }}>
                     {new Date(added_at).toLocaleString()}
                 </Typography>
             </Box>
-            <VoteButtons userVote={userVote} handleVote={handleVote} score={songData.score} />
+            <VoteButtons userVote={userVote} handleVote={handleVote} score={score} />
             {error && (
                 <Snackbar
                     open={!!error}

@@ -1,9 +1,9 @@
 import { useRouter } from 'next/router';
-import { supabase } from '@/utils/supabase';
 import HCaptcha from '@hcaptcha/react-hcaptcha';
-import {Button, Link, Typography} from '@mui/material';
-import { isUserLoggedIn } from "@/utils/actions";
+import {Button, CircularProgress, Link, Typography} from '@mui/material';
+import {isUserLoggedIn, signUp, isUsernameAvailable} from "@/utils/actions";
 import {ErrorAlert, FormField} from "@/components/Items";
+import AuthProviders from "@/components/AuthProviders";
 import { useEffect, useRef, useState } from 'react';
 
 export default function Register() {
@@ -14,6 +14,7 @@ export default function Register() {
     const [error, setError] = useState(null);
     const [captchaToken, setCaptchaToken] = useState(null);
     const [loading, setLoading] = useState(true); // for skeleton loading
+    const [isSubmitting, setIsSubmitting] = useState(false); // for button loading state
     const router = useRouter();
     const captcha = useRef();
 
@@ -31,56 +32,26 @@ export default function Register() {
     async function handleSignup(e) {
         e.preventDefault();
         setError(null);
+        setIsSubmitting(true);
 
-        if (!captchaToken) {
-            setError('Please complete the CAPTCHA');
-            return;
+        try {
+            await router.prefetch('/register/success');
+
+            if (!captchaToken) throw new Error('Please complete the CAPTCHA');
+            if (password !== confirmPassword) throw new Error('Passwords do not match');
+            if (!/^[a-z0-9]+$/i.test(username)) throw new Error('Username must be alphanumeric-only');
+
+            await isUsernameAvailable(username);
+
+            await signUp(email, password, username, captchaToken);
+
+            await router.push('/register/success');
+        } catch (err) {
+            captcha.current.resetCaptcha();
+            setError(err.message);
+        } finally {
+            setIsSubmitting(false);
         }
-
-        if (password !== confirmPassword) {
-            setError('Passwords do not match');
-            return;
-        }
-
-        const alphanumericRegex = /^[a-z0-9]+$/i;
-        if (!alphanumericRegex.test(username)) {
-            setError('Username must be alphanumeric-only');
-            return;
-        }
-
-        const { data: existingUser } = await supabase
-            .from('users')
-            .select('username')
-            .eq('username', username)
-            .single();
-
-        if (existingUser) {
-            setError('Username already taken');
-            return;
-        }
-
-        const { error: signUpError, user } = await supabase.auth.signUp({
-            email,
-            password,
-            options: { captchaToken },
-        });
-
-        if (signUpError) {
-            setError(signUpError.message);
-            return;
-        }
-
-        const { error: insertError } = await supabase
-            .from('users')
-            .insert([{ id: user.id, username, }]);
-
-        if (insertError) {
-            setError(insertError.message);
-            return;
-        }
-
-        captcha.current.resetCaptcha();
-        await router.push('/');
     }
 
     function handleCaptchaChange(token) {
@@ -104,13 +75,11 @@ export default function Register() {
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '1rem',
-                    placeItems: 'center',
-                    placeContent: 'center',
-                    width: '300px',
+                    width: '19rem',
                 }}
             >
                 <FormField
-                    type="text"
+                    type="test"
                     label="Username"
                     value={username}
                     fullWidth
@@ -167,9 +136,11 @@ export default function Register() {
                     fullWidth
                     variant="contained"
                     size="large"
+                    disabled={isSubmitting || !email || !password || !captchaToken}
                 >
-                    Create account
+                    {isSubmitting ? <CircularProgress size={26}/> : 'Create account'}
                 </Button>
+                <AuthProviders />
             </form>
             <Typography variant="body2" align="center">
                 Already registered? <Link href="/login">Log in</Link>

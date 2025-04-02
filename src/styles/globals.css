@@ -2,22 +2,15 @@
     https://www.realtimecolors.com/
 */
 
-@import "tailwindcss";
 @import url('https://fonts.googleapis.com/css?family=Noto%20Sans%20Inscriptional%20Parthian:700|Noto%20Sans%20Inscriptional%20Parthian:400');
-
-:root {
-    --font-geist-sans: Arial, sans-serif;
-    --font-geist-mono: Courier, monospace;
-    font-family: 'Noto Sans Inscriptional Parthian', Arial, Helvetica, sans-serif;
-}
+@import "tailwindcss";
 
 body {
-    font-weight: 600;
     box-sizing: border-box !important;
+    font-weight: 600;
 }
 
 h1, h2, h3, h4, h5 {
-    font-family: 'Noto Sans Inscriptional Parthian', Arial, Helvetica, sans-serif;
     font-weight: 800;
 }
 
@@ -34,8 +27,3 @@ h4 {font-size: 1.777rem; /* 28.48px */}
 h5 {font-size: 1.333rem; /* 21.28px */}
 
 small {font-size: 0.750rem; /* 12px */}
-
-@theme inline {
-    --font-sans: var(--font-geist-sans);
-    --font-mono: var(--font-geist-mono);
-}
