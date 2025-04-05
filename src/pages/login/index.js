@@ -17,6 +17,16 @@ export default function Login() {
     const router = useRouter();
     const captcha = useRef();
 
+    useEffect(function () {
+        document.title = 'Login - Song Request';
+        const link = document.querySelector("link[rel~='icon']") || document.createElement('link');
+        link.rel = 'icon';
+        link.type = 'image/png';
+        link.href = '/logo.png';
+
+        document.head.appendChild(link);
+    }, []);
+
     useEffect(() => {
         async function checkUser() {
             if (await isUserLoggedIn()) {
