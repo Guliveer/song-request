@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { Container, Typography, Button, Box } from '@mui/material';
 import {isUserLoggedIn} from "@/utils/actions";
+import SetTitle from "@/components/SetTitle";
 
 export default function RegisterSuccess() {
     const router = useRouter();
@@ -19,6 +20,9 @@ export default function RegisterSuccess() {
     }, [router]);
 
     return (
+        <>
+        <SetTitle text={"Welcome!"} />
+
         <Container maxWidth="sm">
             <Box
                 display="flex"
@@ -44,5 +48,6 @@ export default function RegisterSuccess() {
                 </Box>
             </Box>
         </Container>
+        </>
     );
 }

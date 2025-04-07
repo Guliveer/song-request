@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import {isUserAdmin, isUserLoggedIn} from "@/utils/actions";
+import SetTitle from "@/components/SetTitle";
 
 export default function AdminPanel() {
     const [isLoading, setIsLoading] = useState(true);
@@ -34,9 +35,12 @@ export default function AdminPanel() {
     if (!isAdmin) return null;
 
     return (
+        <>
+        <SetTitle text={"Admin Panel"} />
         <div>
             <h1>Admin Panel</h1>
             <p>Tylko dla administratorów.</p>
         </div>
+        </>
     );
 }
