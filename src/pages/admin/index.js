@@ -1,21 +1,12 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import {isUserAdmin, isUserLoggedIn} from "@/utils/actions";
+import SetTitle from "@/components/SetTitle";
 
 export default function AdminPanel() {
     const [isLoading, setIsLoading] = useState(true);
     const [isAdmin, setIsAdmin] = useState(false);
     const router = useRouter();
-
-    useEffect(function () {
-        document.title = 'Admin Panel - Song Request';
-        const link = document.querySelector("link[rel~='icon']") || document.createElement('link');
-        link.rel = 'icon';
-        link.type = 'image/png';
-        link.href = '/logo.png';
-
-        document.head.appendChild(link);
-    }, []);
 
     useEffect(function() {
         async function checkAdmin() {
@@ -44,9 +35,12 @@ export default function AdminPanel() {
     if (!isAdmin) return null;
 
     return (
+        <>
+        <SetTitle text={"Admin Panel"} />
         <div>
             <h1>Admin Panel</h1>
             <p>Tylko dla administratorów.</p>
         </div>
+        </>
     );
 }

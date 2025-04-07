@@ -6,6 +6,7 @@ import {isUserLoggedIn} from "@/utils/actions";
 import {ErrorAlert, FormField} from "@/components/Items";
 import {Button, Typography, Link, CircularProgress} from "@mui/material";
 import AuthProvidersList from "@/components/AuthProvidersList";
+import SetTitle from "@/components/SetTitle";
 
 export default function Login() {
     const [email, setEmail] = useState('');
@@ -16,16 +17,6 @@ export default function Login() {
     const [isSubmitting, setIsSubmitting] = useState(false); // for button loading state
     const router = useRouter();
     const captcha = useRef();
-
-    useEffect(function () {
-        document.title = 'Login - Song Request';
-        const link = document.querySelector("link[rel~='icon']") || document.createElement('link');
-        link.rel = 'icon';
-        link.type = 'image/png';
-        link.href = '/logo.png';
-
-        document.head.appendChild(link);
-    }, []);
 
     useEffect(() => {
         async function checkUser() {
@@ -70,6 +61,9 @@ export default function Login() {
     }
 
     return (
+        <>
+        <SetTitle text={"Log in"} />
+
         <div style={{
             display: 'flex',
             gap: '2em',
@@ -139,5 +133,6 @@ export default function Login() {
                 First time around? <Link href="/register">Register</Link>
             </Typography>
         </div>
+        </>
     );
 }

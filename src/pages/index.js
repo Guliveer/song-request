@@ -1,19 +1,11 @@
 import AddSongForm from '@/components/AddSongForm';
 import Queue from '@/components/Queue';
-import { useEffect } from 'react';
+import SetTitle from "@/components/SetTitle";
 
 export default function Home() {
-    useEffect(function () {
-        document.title = 'Home - Song Request';
-        const link = document.querySelector("link[rel~='icon']") || document.createElement('link');
-        link.rel = 'icon';
-        link.type = 'image/png';
-        link.href = '/logo.png';
-
-        document.head.appendChild(link);
-    }, []);
-
     return (
+        <>
+        <SetTitle />
         <div style={{
             display: 'flex',
             flexDirection: 'column',
@@ -23,5 +15,6 @@ export default function Home() {
             <AddSongForm />
             <Queue />
         </div>
+        </>
     );
 }

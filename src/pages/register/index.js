@@ -5,6 +5,7 @@ import {isUserLoggedIn, signUp, isUsernameAvailable} from "@/utils/actions";
 import {ErrorAlert, FormField} from "@/components/Items";
 import AuthProvidersList from "@/components/AuthProvidersList";
 import { useEffect, useRef, useState } from 'react';
+import SetTitle from "@/components/SetTitle";
 
 export default function Register() {
     const [email, setEmail] = useState('');
@@ -17,16 +18,6 @@ export default function Register() {
     const [isSubmitting, setIsSubmitting] = useState(false); // for button loading state
     const router = useRouter();
     const captcha = useRef();
-
-    useEffect(function () {
-        document.title = 'Register - Song Request';
-        const link = document.querySelector("link[rel~='icon']") || document.createElement('link');
-        link.rel = 'icon';
-        link.type = 'image/png';
-        link.href = '/logo.png';
-
-        document.head.appendChild(link);
-    }, []);
 
     useEffect(() => {
         async function checkUser() {
@@ -69,6 +60,9 @@ export default function Register() {
     }
 
     return (
+        <>
+        <SetTitle text={"Register"} />
+
         <div style={{
             display: 'flex',
             gap: '2em',
@@ -156,5 +150,6 @@ export default function Register() {
                 Already registered? <Link href="/login">Log in</Link>
             </Typography>
         </div>
+        </>
     );
 }
