@@ -185,7 +185,7 @@ export default function AddSongForm() {
                                     <Button
                                         type="submit"
                                         variant="contained"
-                                        color={user ? "primary" : "disabled"}
+                                        color="primary"
                                         disabled={!user}
                                         startIcon={<SendIcon />}
                                         sx={{
