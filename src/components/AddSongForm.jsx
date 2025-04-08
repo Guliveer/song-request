@@ -1,33 +1,38 @@
-import {useState, useEffect} from 'react';
-import { Box, TextField, Stack, Button } from '@mui/material';
+import { useState, useEffect } from 'react';
+import {
+    Box, Button, Dialog, DialogTitle, DialogContent,
+    Fab, Tooltip, Stack, useTheme
+} from '@mui/material';
+import {
+    AddRounded as AddIcon,
+    PlaylistAddRounded as FormIcon,
+    SendRounded as SendIcon
+} from '@mui/icons-material';
+import { keyframes } from '@mui/system';
 import { supabase } from '@/utils/supabase';
 import { isUserLoggedIn } from "@/utils/actions";
 import { FormField } from "@/components/Items";
 
+
 export default function AddSongForm() {
-    const [formData, setFormData] = useState({
-        title: '',
-        author: '',
-        url: '',
-    });
+    const theme = useTheme();
+    const [open, setOpen] = useState(false);
+    const [formData, setFormData] = useState({ title: '', author: '', url: '' });
     const [user, setUser] = useState(null);
 
-    // Sprawdzanie, czy użytkownik jest zalogowany
     useEffect(() => {
         const checkUser = async () => {
-            const user = await isUserLoggedIn()
-            setUser(user);
+            const currentUser = await isUserLoggedIn();
+            setUser(currentUser);
         };
 
         checkUser();
 
-        const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+        const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
             setUser(session?.user || null);
         });
 
-        return () => {
-            authListener.subscription.unsubscribe();
-        };
+        return () => authListener.subscription.unsubscribe();
     }, []);
 
     const handleChange = (event) => {
@@ -40,98 +45,165 @@ export default function AddSongForm() {
 
     const handleSubmit = async (event) => {
         event.preventDefault();
+        if (!user) return;
 
-        if (!user) {
-            console.error('User not authenticated');
-            return; // Jeśli użytkownik nie jest zalogowany, nie wysyłamy formularza
-        }
-
-        console.log('Submitting form with data:', formData);
-
-        // Wysyłanie do bazy danych
         const { data, error } = await supabase
             .from('queue')
             .insert([{ ...formData, user_id: user.id }]);
 
         if (error) {
-            console.error('Error adding song to queue:', error.message);
+            console.error('Error:', error.message);
         } else {
-            console.log('Song added to queue:', data);
-            setFormData({ title: '', author: '', url: '' }); // Czyszczenie formularza po dodaniu
+            console.log('Song added:', data);
+            setFormData({ title: '', author: '', url: '' });
+            setOpen(false);
         }
     };
 
+    const fadeInBackground = keyframes`
+        from {
+            opacity: 0;
+            background-color: rgba(0, 0, 0, 0);
+            }
+        to {
+            opacity: 1;
+            background-color: rgba(0, 0, 0, 0.2);
+        }
+        `;
+
+    const fadeOutBackground = keyframes` 
+        from {
+            opacity: 1;
+            background-color: rgba(0, 0, 0, 0.2);
+        }
+        to {
+            opacity: 0;
+            background-color: rgba(0, 0, 0, 0);
+        }
+        `;
 
     return (
-        <Box
-            sx={{
-                borderRadius: "8px",
-                padding: 2,
-                maxWidth: "600px",
-                margin: "auto",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-            }}
-        >
-            <h1>Add Song to Queue</h1>
-            {!user ? (
-                <div>You must be logged in to add a song.</div> // Jeśli użytkownik nie jest zalogowany, pokazujemy ten komunikat
-            ) : (
-                <Box
-                    component="form"
+        <>
+            <Tooltip title="Add song" placement="left">
+                <Fab
+                    color="primary"
+                    onClick={() => setOpen(true)}
                     sx={{
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        width: "100%",
-                        gap: 2,
-                        padding: 1,
+                        position: 'fixed',
+                        bottom: 24,
+                        right: 24,
+                        zIndex: 1300,
+                        boxShadow: 6,
+                        '&:hover': {
+                            backgroundColor: theme.palette.primary.dark,
+                        },
                     }}
-                    onSubmit={handleSubmit}
                 >
-                    <Box sx={{ display: "flex", gap: 2, width: "100%" }}>
+                    <AddIcon />
+                </Fab>
+            </Tooltip>
+
+            <Dialog
+                open={open}
+                onClose={() => setOpen(false)}
+                fullWidth
+                maxWidth="sm"
+                sx={{
+                    backdropFilter: 'blur(6px)', // rozmycie tła
+                    animation: `${open ? fadeInBackground : fadeOutBackground} 0.3s ease-in-out`,
+                    backgroundColor: 'rgba(0,0,0,0.2)', // ciemne, przezroczyste tło za dialogiem
+                    '& .MuiDialog-paper': {
+                        borderRadius: 4,
+                        p: 2,
+                        position: 'relative',
+                        background: 'rgba(25, 25, 25, 1)', // ciemne przezroczyste tło
+                        border: `2px solid ${theme.palette.primary.main}`, // kolorowa ramka
+                        boxShadow: theme.shadows[12],
+                        backdropFilter: 'blur(16px)',
+                    },
+                }}
+            >
+                <DialogTitle
+                    sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                        color: theme.palette.primary.main,
+                        fontWeight: 'bold',
+                    }}
+                >
+                    <FormIcon color="primary" />
+                    Add Song to Queue
+                </DialogTitle>
+
+                <DialogContent>
+                    <Box
+                        component="form"
+                        onSubmit={handleSubmit}
+                        sx={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 2,
+                            mt: 1,
+                        }}
+                    >
+                        <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
+                            <FormField
+                                required
+                                id="title"
+                                label="Title"
+                                fullWidth
+                                value={formData.title}
+                                onChange={handleChange}
+                            />
+                            <FormField
+                                required
+                                id="author"
+                                label="Author"
+                                fullWidth
+                                value={formData.author}
+                                onChange={handleChange}
+                            />
+                        </Box>
+
                         <FormField
                             required
-                            id="title"
-                            label="Title"
+                            id="url"
+                            label="URL"
                             fullWidth
-                            value={formData.title}
+                            value={formData.url}
                             onChange={handleChange}
-                            sx={{ flex: 2 }}
                         />
-                        <FormField
-                            required
-                            id="author"
-                            label="Author"
-                            fullWidth
-                            value={formData.author}
-                            onChange={handleChange}
-                            sx={{ flex: 1 }}
-                        />
+
+                        <Stack direction="row" justifyContent="center" mt={1}>
+                            <Tooltip
+                                title={!user ? "You must be logged in to add a song." : ""}
+                                arrow
+                                placement="top"
+                            >
+                                <span>
+                                    <Button
+                                        type="submit"
+                                        variant="contained"
+                                        color={user ? "primary" : "disabled"}
+                                        disabled={!user}
+                                        startIcon={<SendIcon />}
+                                        sx={{
+                                            px: 3,
+                                            py: 1,
+                                            fontWeight: 600,
+                                            boxShadow: 4,
+                                            textTransform: 'none',
+                                        }}
+                                    >
+                                        {user ? "Add to Queue" : "Login Required"}
+                                    </Button>
+                                </span>
+                            </Tooltip>
+                        </Stack>
                     </Box>
-
-                    <FormField
-                        required
-                        id="url"
-                        label="URL"
-                        fullWidth
-                        value={formData.url}
-                        onChange={handleChange}
-                        sx={{ }}
-                    />
-
-                    <Stack direction="row" justifyContent="center" sx={{ width: "100%", marginTop: 2 }}>
-                        <Button
-                            type="submit"
-                            variant="contained"
-                            sx={{ }}
-                        >
-                            Add to Queue
-                        </Button>
-                    </Stack>
-                </Box>
-            )}
-        </Box>
+                </DialogContent>
+            </Dialog>
+        </>
     );
 }
