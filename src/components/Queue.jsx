@@ -30,7 +30,10 @@ export default function Queue() {
                         comparison = a.author.localeCompare(b.author);
                     } else if (sortCriteria === 'title') {
                         comparison = a.title.localeCompare(b.title);
+                    } else if (sortCriteria === 'added_at') { // New sorting logic
+                        comparison = new Date(a.added_at) - new Date(b.added_at);
                     }
+
                     return sortOrder === 'asc' ? comparison : -comparison;
                 });
 
@@ -84,6 +87,7 @@ export default function Queue() {
                 <MenuItem onClick={() => handleSortChange('score')}>Score</MenuItem>
                 <MenuItem onClick={() => handleSortChange('author')}>Author</MenuItem>
                 <MenuItem onClick={() => handleSortChange('title')}>Title</MenuItem>
+                <MenuItem onClick={() => handleSortChange('added_at')}>Added Time</MenuItem> {/* New option */}
             </Menu>
 
             {/* Render sorted queue */}
