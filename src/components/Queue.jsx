@@ -1,6 +1,7 @@
 'use server'
 import {useEffect, useState} from "react";
 import {supabase} from "@/utils/supabase";
+import {sortSongs} from "@/utils/actions";
 import SongCard from "@/components/SongCard";
 import {IconButton, Menu, MenuItem, Box} from '@mui/material';
 import SortIcon from '@mui/icons-material/Sort';
@@ -21,27 +22,8 @@ export default function Queue() {
                     .select("id, score, author, title, added_at");
                 if (error) throw error;
 
-                // Sort songs based on selected criteria and order
-                const sortedSongs = data.sort((a, b) => {
-                    let comparison = 0;
-                    if (sortCriteria === 'score') {
-                        comparison = b.score - a.score;
-                    } else if (sortCriteria === 'author') {
-                        comparison = a.author.localeCompare(b.author);
-                    } else if (sortCriteria === 'title') {
-                        comparison = a.title.localeCompare(b.title);
-                    } else if (sortCriteria === 'added_at') { // New sorting logic
-                        comparison = new Date(a.added_at) - new Date(b.added_at);
-                    }
-
-                    return sortOrder === 'asc' ? comparison : -comparison;
-                });
-
-                // Assign rank based on sorted order
-                sortedSongs.forEach((song, index) => {
-                    song.rank = index;
-                });
-
+                // Use the utility function to sort songs
+                const sortedSongs = sortSongs(data, sortCriteria, sortOrder);
                 setSongs(sortedSongs);
             } catch (error) {
                 console.error("Error fetching queue:", error.message);
@@ -87,7 +69,7 @@ export default function Queue() {
                 <MenuItem onClick={() => handleSortChange('score')}>Score</MenuItem>
                 <MenuItem onClick={() => handleSortChange('author')}>Author</MenuItem>
                 <MenuItem onClick={() => handleSortChange('title')}>Title</MenuItem>
-                <MenuItem onClick={() => handleSortChange('added_at')}>Added Time</MenuItem> {/* New option */}
+                <MenuItem onClick={() => handleSortChange('added_at')}>Added Time</MenuItem>
             </Menu>
 
             {/* Render sorted queue */}

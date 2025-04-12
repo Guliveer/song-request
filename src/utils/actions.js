@@ -154,3 +154,38 @@ updateUserVote.propTypes = {
     userId: PropTypes.string.isRequired,
     vote: PropTypes.number.isRequired
 }
+
+export function sortSongs(data, sortCriteria, sortOrder) {
+    return data.sort((a, b) => {
+        let comparison = 0;
+
+        // Primary sorting
+        if (sortCriteria === 'score') {
+            comparison = b.score - a.score; // Descending
+        } else if (sortCriteria === 'author') {
+            comparison = a.author.localeCompare(b.author); // Ascending
+        } else if (sortCriteria === 'title') {
+            comparison = a.title.localeCompare(b.title); // Ascending
+        } else if (sortCriteria === 'added_at') {
+            comparison = new Date(a.added_at) - new Date(b.added_at); // Ascending
+        }
+
+        // Apply primary sort order
+        if (sortOrder === 'asc') {
+            comparison = -comparison;
+        }
+
+        // Secondary sorting (fixed logic)
+        if (comparison === 0) {
+            if (sortCriteria === 'score' || sortCriteria === 'title') {
+                // Secondary: added_at (ascending)
+                comparison = new Date(a.added_at) - new Date(b.added_at);
+            } else {
+                // Secondary: score (ascending)
+                comparison = a.score - b.score;
+            }
+        }
+
+        return comparison;
+    });
+}
