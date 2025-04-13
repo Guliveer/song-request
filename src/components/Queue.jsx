@@ -3,7 +3,7 @@ import {useEffect, useState} from "react";
 import {supabase} from "@/utils/supabase";
 import {sortSongs} from "@/utils/actions";
 import SongCard from "@/components/SongCard";
-import {IconButton, Menu, MenuItem, Box} from '@mui/material';
+import {IconButton, Menu, MenuItem, Box, Button, Pagination} from '@mui/material';
 import SortIcon from '@mui/icons-material/Sort';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
@@ -14,24 +14,33 @@ export default function Queue() {
     const [sortOrder, setSortOrder] = useState('desc');
     const [anchorEl, setAnchorEl] = useState(null);
 
+    // Pagination states
+    const [page, setPage] = useState(1); // Aktualna strona
+    const [pageSize] = useState(10); // Liczba elementów na stronę
+    const [totalPages, setTotalPages] = useState(1); // Całkowita liczba stron
+
     useEffect(() => {
         async function fetchQueue() {
             try {
-                const {data, error} = await supabase
+                // Fetch data from the "queue" table with pagination
+                const {data, error, count} = await supabase
                     .from("queue")
-                    .select("id, score, author, title, added_at");
+                    .select("id, score, author, title, added_at", { count: 'exact' }) // Pobierz dane z liczbą rekordów
+                    .order(sortCriteria, { ascending: sortOrder === 'asc' })
+                    .range((page - 1) * pageSize, page * pageSize - 1); // Dodano stronicowanie
                 if (error) throw error;
 
-                // Use the utility function to sort songs
+                // Ustaw liczbę stron na podstawie liczby rekordów
+                setTotalPages(Math.ceil(count / pageSize));
                 const sortedSongs = sortSongs(data, sortCriteria, sortOrder);
-                setSongs(sortedSongs);
+                setSongs(sortedSongs); // Ustaw dane w stanie
             } catch (error) {
                 console.error("Error fetching queue:", error.message);
             }
         }
 
         fetchQueue();
-    }, [sortCriteria, sortOrder]);
+    }, [sortCriteria, sortOrder, page]); // Dodano zależność od `page`
 
     const handleSortClick = (event) => {
         setAnchorEl(event.currentTarget);
@@ -43,7 +52,12 @@ export default function Queue() {
 
     const handleSortChange = (criteria) => {
         setSortCriteria(criteria);
+        setPage(1); // Resetuj stronę
         handleSortClose();
+    };
+
+    const handlePageChange = (event, value) => {
+        setPage(value); // Zmień stronę
     };
 
     return (
@@ -51,7 +65,7 @@ export default function Queue() {
             {/* Sort options */}
             <Box style={{display: "flex", justifyContent: "space-between", alignItems: "center"}}>
                 <div></div>
-                {/* Empty div to push icons to the right */}
+                {/* Puste div, aby przesunąć ikony na prawo */}
                 <div style={{display: "flex", alignItems: "center", gap: "1rem"}}>
                     <IconButton onClick={handleSortClick}>
                         <SortIcon/>
@@ -76,6 +90,15 @@ export default function Queue() {
             {songs.map((song) => (
                 <SongCard key={song.id} id={song.id}/>
             ))}
+
+            {/* Pagination */}
+            <Pagination
+                count={totalPages} // Liczba stron
+                page={page} // Aktualna strona
+                onChange={handlePageChange} // Zmiana strony
+                color="primary"
+                style={{alignSelf: "center"}}
+            />
         </div>
     );
 }
