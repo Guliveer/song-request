@@ -14,18 +14,6 @@ import {
     MusicNoteRounded as SongIcon,
     NumbersRounded as RankIcon,
 } from '@mui/icons-material';
-
-const voteButtonsStyle = {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    px: 2,
-    gap: 0,
-    minWidth: '1em',
-    order: { xs: 2, sm: 0 }, // Ensure buttons are last on mobile
-    alignSelf: 'flex-end', // Align to the right
-};
 const VoteButtons = React.memo(({ userVote, handleVote, score }) => (
     <Box
         sx={{
@@ -153,7 +141,6 @@ function SongCard({ id }) {
             width: '100%',
             minWidth: 'fit-content',
             maxWidth: 500,
-            overflow: 'none',
             px: 3,
             py: 3,
             borderRadius: '1em',
@@ -284,7 +271,6 @@ function SongCard({ id }) {
                     userVote={userVote}
                     handleVote={handleVote}
                     score={score}
-                    sx={voteButtonsStyle}
                 />
             </Box>
 

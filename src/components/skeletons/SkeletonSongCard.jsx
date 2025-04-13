@@ -10,7 +10,6 @@ export default function SkeletonSongCard() {
             width: '100%',
             minWidth: 'fit-content',
             maxWidth: 500,
-            overflow: 'none',
             px: 3,
             py: 3,
             borderRadius: '1em',
