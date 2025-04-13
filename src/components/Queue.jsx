@@ -62,19 +62,34 @@ export default function Queue() {
     };
 
     return (
-        <div style={{display: "flex", flexDirection: "column", gap: "1rem"}}>
+        <Box sx={{
+            display: "flex",
+            flexDirection: "column",
+            flexWrap: 'nowrap',
+            alignItems: 'flex-start',
+            justifyContent: 'center',
+            gap: 5,
+            minWidth: '100px',
+            width: '100vw',
+            p: '1rem 2rem',
+        }}>
+
             {/* Sort options */}
-            <Box style={{display: "flex", justifyContent: "space-between", alignItems: "center"}}>
-                <div></div>
-                {/* Empty div to push icons to the right */}
-                <div style={{display: "flex", alignItems: "center", gap: "1rem"}}>
-                    <IconButton onClick={handleSortClick}>
-                        <SortIcon/>
-                    </IconButton>
-                    <IconButton onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}>
-                        {sortOrder === 'asc' ? <ArrowUpwardIcon/> : <ArrowDownwardIcon/>}
-                    </IconButton>
-                </div>
+            <Box style={{
+                width: '100%',
+                display: "flex",
+                flexDirection: 'row',
+                flexWrap: 'nowrap',
+                alignItems: "center",
+                justifyContent: 'flex-end',
+                gap: "1rem",
+            }}>
+                <IconButton onClick={handleSortClick}>
+                    <SortIcon/>
+                </IconButton>
+                <IconButton onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}>
+                    {sortOrder === 'asc' ? <ArrowUpwardIcon/> : <ArrowDownwardIcon/>}
+                </IconButton>
             </Box>
             <Menu
                 anchorEl={anchorEl}
@@ -86,10 +101,20 @@ export default function Queue() {
                 <MenuItem onClick={() => handleSortChange('title')}>Title</MenuItem>
             </Menu>
 
-            {/* Render sorted queue */}
-            {songs.map((song) => (
-                <SongCard key={song.id} id={song.id}/>
-            ))}
-        </div>
+            <Box sx={{
+                display: 'flex',
+                flexDirection: 'row',
+                flexWrap: 'wrap',
+                gap: 5,
+                justifyContent: 'center',
+                alignItems: 'flex-start',
+                width: '100%',
+            }}>
+                {/* Render sorted queue */}
+                {songs.map((song) => (
+                    <SongCard key={song.id} id={song.id}/>
+                ))}
+            </Box>
+        </Box>
     );
 }

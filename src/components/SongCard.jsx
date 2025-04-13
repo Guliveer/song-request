@@ -2,29 +2,64 @@ import PropTypes from 'prop-types';
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from "next/link";
 import { supabase } from '@/utils/supabase';
-import { Box, Card, Typography, IconButton, Snackbar } from "@mui/material";
-import ThumbUpIcon from '@mui/icons-material/ThumbUp';
-import ThumbDownIcon from '@mui/icons-material/ThumbDown';
+import {Box, Card, Typography, IconButton, Snackbar, Divider} from "@mui/material";
 import SkeletonSongCard from "@/components/skeletons/SkeletonSongCard";
 import { getUserInfo, getSongData, getCurrentUser, removeUserVote, updateUserVote } from "@/utils/actions";
 import debounce from 'lodash.debounce';
+import {
+    KeyboardArrowUpRounded as VoteUpIcon,
+    KeyboardArrowDownRounded as VoteDownIcon,
+    AccountCircleRounded as WhoAddedIcon,
+    CalendarTodayRounded as DateAddedIcon,
+    MusicNoteRounded as SongIcon,
+    NumbersRounded as RankIcon,
+} from '@mui/icons-material';
 
+const voteButtonsStyle = {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    px: 2,
+    gap: 0,
+    minWidth: '1em',
+    order: { xs: 2, sm: 0 }, // Ensure buttons are last on mobile
+    alignSelf: 'flex-end', // Align to the right
+};
 const VoteButtons = React.memo(({ userVote, handleVote, score }) => (
-    // Lets you skip re-rendering a component when its props are unchanged.
-
-    <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '1rem', width: '25%', justifyContent: 'center' }}>
+    <Box
+        sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minWidth: '3em',
+        }}
+    >
         <IconButton
-            color={userVote === 1 ? "default" : "secondary"}
             onClick={() => handleVote(1)}
+            color={userVote === 1 ? "primary" : "disabled"}
+            size="small"
+            sx={{ borderRadius: 3 }}
         >
-            <ThumbUpIcon />
+            <VoteUpIcon color={userVote === 1 ? "primary" : "disabled"} sx={{fontSize: 30}} />
         </IconButton>
-        <Typography variant="h6">{score}</Typography>
-        <IconButton
-            color={userVote === -1 ? "error" : "secondary"}
-            onClick={() => handleVote(-1)}
+        <Typography
+            variant="body1"
+            sx={{
+                fontWeight: 'bold',
+                fontSize: '1rem',
+            }}
         >
-            <ThumbDownIcon />
+            {score}
+        </Typography>
+        <IconButton
+            onClick={() => handleVote(-1)}
+            color={userVote === -1 ? "primary" : "disabled"}
+            size="small"
+            sx={{ borderRadius: 3 }}
+        >
+            <VoteDownIcon color={userVote === -1 ? "primary" : "disabled"} sx={{fontSize: 30}}/>
         </IconButton>
     </Box>
 ));
@@ -104,46 +139,155 @@ function SongCard({ id }) {
             setUserVote(resultVoteVal);
         }
     }, 300), [user, userVote, id, fetchData]);
-
-    const cardStyle = {
-        display: 'flex',
-        flexDirection: 'row',
-        minWidth: '40em',
-        width: '100%',
-        maxWidth: '50em',
-        padding: '1rem',
-        borderRadius: '10px',
-        alignItems: 'center'
-    }
     
     if (loading || !songData) {
-        return <SkeletonSongCard cardStyle={cardStyle} />
+        return <SkeletonSongCard />
     }
 
     const { title, author, url, added_at, user_id, score, rank, username } = songData;
 
     return (
-        <Card variant="outlined" sx={cardStyle}>
-            <Box sx={{ width: '10%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 'normal' }}>{rank}</Typography>
+        <Card variant="outlined" sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            width: '100%',
+            minWidth: 'fit-content',
+            maxWidth: 500,
+            overflow: 'none',
+            px: 3,
+            py: 3,
+            borderRadius: '1em',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 3,
+            backgroundColor: 'background.paper',
+            position: 'relative',
+        }}>
+            {/* Rank */}
+            <Box sx={{
+                width: '100%',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+            }}>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <RankIcon fontSize="small" sx={{ color: 'text.disabled' }} />
+                    <Typography variant="h6" color="text.secondary">
+                        {rank}
+                    </Typography>
+                </Box>
             </Box>
-            <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                <Typography variant="h6" sx={{ fontWeight: 'bold', fontSize: '1.25rem', marginBottom: '0.5rem' }}>
-                    <Link href={url} target="_blank" style={{ textDecoration: 'none' }}>
-                        {title}
-                    </Link>
-                </Typography>
-                <Typography variant="body1" sx={{ fontSize: '0.875rem', fontWeight: 'normal' }}>{author}</Typography>
+
+            <Divider variant="fullWidth" flexItem />
+
+            {/* Song Info */}
+            <Box sx={{
+                display: 'flex',
+                flexDirection: 'row',
+                gap: 0,
+                overflow: 'none',
+                width: '100%',
+                minWidth: 'fit-content',
+            }}>
+                <Box sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: 2,
+                    width: '100%',
+                }}>
+                <Box sx={{
+                    flex: 2,
+                    display: 'flex',
+                    flexWrap: 'nowrap',
+                    flexDirection: 'column',
+                    alignItems: 'flex-start',
+                    gap: 0.5,
+                    width: '100%',
+                    minWidth: 'fit-content',
+                    justifyContent: 'stretch',
+                }}>
+                    <Box sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5em',
+                        width: '100%',
+                        overflow: 'hidden',
+                        whiteSpace: 'nowrap',
+                        position: 'relative',
+                    }}>
+                        <SongIcon fontSize="small" sx={{ color: 'primary.main' }} />
+                        <Box sx={{
+                            display: 'inline-block',
+                            position: 'relative',
+                            width: 200, // Define the visible area
+                            overflow: 'hidden', // Hide overflowing text
+                            whiteSpace: 'nowrap',
+                        }}>
+                            <Typography
+                                variant="h6"
+                                sx={{
+                                    fontWeight: 'bold',
+                                    fontSize: '1.3rem',
+                                    display: 'inline-block',
+                                    animation: title.length > 15 ? 'scrollText 10s linear infinite' : 'none',
+                                }}
+                            >
+                                <Link href={url} target="_blank" style={{ textDecoration: 'none' }}>
+                                    {title}
+                                </Link>
+                            </Typography>
+                        </Box>
+                    </Box>
+                    <Box sx={{
+                        display: 'inline-block',
+                        position: 'relative',
+                        width: 175, // Define the visible area
+                        overflow: 'hidden', // Hide overflowing text
+                        whiteSpace: 'nowrap',
+                    }}>
+                        <Typography variant="body1" sx={{
+                            fontSize: '1rem',
+                            display: 'inline-block',
+                            animation: title.length > 30 ? 'scrollText 10s linear infinite' : 'none',
+                        }}>{author}</Typography>
+                    </Box>
+                </Box>
+
+                {/* Metadata */}
+                <Box sx={{
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'flex-start',
+                    alignItems: 'flex-start',
+                    gap: 1,
+                    width: '100%',
+                }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: '0.4em' }}>
+                        <WhoAddedIcon fontSize="small" sx={{ color: 'text.disabled' }} />
+                        <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.9rem' }}>
+                            {username}
+                        </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: '0.4em' }}>
+                        <DateAddedIcon fontSize="small" sx={{ color: 'text.disabled' }} />
+                        <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.9rem' }}>
+                            {new Date(added_at).toLocaleString()}
+                        </Typography>
+                    </Box>
+                </Box>
             </Box>
-            <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                <Typography variant="body2" sx={{ fontSize: '0.75rem', color: 'secondary' }}>
-                    Added by: {username}
-                </Typography>
-                <Typography variant="body2" sx={{ fontSize: '0.75rem', color: 'secondary' }}>
-                    {new Date(added_at).toLocaleString()}
-                </Typography>
+
+                {/* Vote Buttons */}
+                <VoteButtons
+                    userVote={userVote}
+                    handleVote={handleVote}
+                    score={score}
+                    sx={voteButtonsStyle}
+                />
             </Box>
-            <VoteButtons userVote={userVote} handleVote={handleVote} score={score} />
+
             {error && (
                 <Snackbar
                     open={!!error}
@@ -158,6 +302,12 @@ function SongCard({ id }) {
 
 SongCard.propTypes = {
     id: PropTypes.number.isRequired,
+};
+
+VoteButtons.propTypes = {
+    userVote: PropTypes.number,
+    handleVote: PropTypes.func.isRequired,
+    score: PropTypes.number.isRequired,
 };
 
 export default React.memo(SongCard);
