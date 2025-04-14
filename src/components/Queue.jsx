@@ -1,11 +1,13 @@
 'use server'
 import {useEffect, useState} from "react";
 import {supabase} from "@/utils/supabase";
+import {sortSongs} from "@/utils/actions";
 import SongCard from "@/components/SongCard";
-import {IconButton, Menu, MenuItem, Box} from '@mui/material';
+import {IconButton, Menu, MenuItem, Box, Button, Pagination} from '@mui/material';
 import SortIcon from '@mui/icons-material/Sort';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import SearchField from '@/components/SearchField';
 
 export default function Queue() {
     const [songs, setSongs] = useState([]);
@@ -13,40 +15,33 @@ export default function Queue() {
     const [sortOrder, setSortOrder] = useState('desc');
     const [anchorEl, setAnchorEl] = useState(null);
 
+    // Pagination states
+    const [page, setPage] = useState(1); // Aktualna strona
+    const [pageSize] = useState(10); // Liczba elementów na stronę
+    const [totalPages, setTotalPages] = useState(1); // Całkowita liczba stron
+
     useEffect(() => {
         async function fetchQueue() {
             try {
-                const {data, error} = await supabase
+                // Fetch data from the "queue" table with pagination
+                const {data, error, count} = await supabase
                     .from("queue")
-                    .select("id, score, author, title, added_at");
+                    .select("id, score, author, title, added_at", { count: 'exact' }) // Pobierz dane z liczbą rekordów
+                    .order(sortCriteria, { ascending: sortOrder === 'asc' })
+                    .range((page - 1) * pageSize, page * pageSize - 1); // Dodano stronicowanie
                 if (error) throw error;
 
-                // Sort songs based on selected criteria and order
-                const sortedSongs = data.sort((a, b) => {
-                    let comparison = 0;
-                    if (sortCriteria === 'score') {
-                        comparison = b.score - a.score;
-                    } else if (sortCriteria === 'author') {
-                        comparison = a.author.localeCompare(b.author);
-                    } else if (sortCriteria === 'title') {
-                        comparison = a.title.localeCompare(b.title);
-                    }
-                    return sortOrder === 'asc' ? comparison : -comparison;
-                });
-
-                // Assign rank based on sorted order
-                sortedSongs.forEach((song, index) => {
-                    song.rank = index;
-                });
-
-                setSongs(sortedSongs);
+                // Ustaw liczbę stron na podstawie liczby rekordów
+                setTotalPages(Math.ceil(count / pageSize));
+                const sortedSongs = sortSongs(data, sortCriteria, sortOrder);
+                setSongs(sortedSongs); // Ustaw dane w stanie
             } catch (error) {
                 console.error("Error fetching queue:", error.message);
             }
         }
 
         fetchQueue();
-    }, [sortCriteria, sortOrder]);
+    }, [sortCriteria, sortOrder, page]); // Dodano zależność od `page`
 
     const handleSortClick = (event) => {
         setAnchorEl(event.currentTarget);
@@ -58,7 +53,12 @@ export default function Queue() {
 
     const handleSortChange = (criteria) => {
         setSortCriteria(criteria);
+        setPage(1); // Resetuj stronę
         handleSortClose();
+    };
+
+    const handlePageChange = (event, value) => {
+        setPage(value); // Zmień stronę
     };
 
     return (
@@ -73,6 +73,9 @@ export default function Queue() {
             width: '100vw',
             p: '1rem 2rem',
         }}>
+            
+            {/* Search field */}
+            <SearchField />
 
             {/* Sort options */}
             <Box style={{
@@ -91,6 +94,8 @@ export default function Queue() {
                     {sortOrder === 'asc' ? <ArrowUpwardIcon/> : <ArrowDownwardIcon/>}
                 </IconButton>
             </Box>
+
+            {/* Sort menu */}
             <Menu
                 anchorEl={anchorEl}
                 open={Boolean(anchorEl)}
@@ -99,6 +104,7 @@ export default function Queue() {
                 <MenuItem onClick={() => handleSortChange('score')}>Score</MenuItem>
                 <MenuItem onClick={() => handleSortChange('author')}>Author</MenuItem>
                 <MenuItem onClick={() => handleSortChange('title')}>Title</MenuItem>
+                <MenuItem onClick={() => handleSortChange('added_at')}>Added Time</MenuItem>
             </Menu>
 
             <Box sx={{
@@ -115,6 +121,15 @@ export default function Queue() {
                     <SongCard key={song.id} id={song.id}/>
                 ))}
             </Box>
+
+            {/* Pagination */}
+            <Pagination
+                count={totalPages} // Liczba stron
+                page={page} // Aktualna strona
+                onChange={handlePageChange} // Zmiana strony
+                color="primary"
+                style={{alignSelf: "center"}}
+            />
         </Box>
     );
 }

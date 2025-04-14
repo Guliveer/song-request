@@ -14,9 +14,9 @@
     "@fontsource/roboto": "^5.2.5",
     "@hcaptcha/react-hcaptcha": "^1.12.0",
     "@marsidev/react-turnstile": "^1.1.0",
-    "@mui/icons-material": "^6.4.8",
+    "@mui/icons-material": "^6.4.11",
     "@mui/material": "^6.4.8",
-    "@mui/system": "^7.0.1",
+    "@mui/system": "^7.0.2",
     "@supabase/supabase-js": "^2.49.1",
     "canvas": "^3.1.0",
     "lodash.debounce": "^4.0.8",
@@ -24,7 +24,7 @@
     "prop-types": "^15.8.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-router-dom": "^7.3.0"
+    "react-router-dom": "^7.5.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
