@@ -62,30 +62,37 @@ export default function Queue() {
     };
 
     return (
-        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-            {/* Sort and search options in one row */}
-            <Box
-                style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    width: "100%",
-                }}
-            >
-                {/* Search field */}
+        <Box sx={{
+            display: "flex",
+            flexDirection: "column",
+            flexWrap: 'nowrap',
+            alignItems: 'flex-start',
+            justifyContent: 'center',
+            gap: 5,
+            minWidth: '100px',
+            width: '100vw',
+            p: '1rem 2rem',
+        }}>
+            
+            {/* Search field */}
+            <SearchField />
 
-                <SearchField />
-
-
-                {/* Sort options */}
-                <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-                    <IconButton onClick={handleSortClick}>
-                        <SortIcon />
-                    </IconButton>
-                    <IconButton onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}>
-                        {sortOrder === 'asc' ? <ArrowUpwardIcon /> : <ArrowDownwardIcon />}
-                    </IconButton>
-                </div>
+            {/* Sort options */}
+            <Box style={{
+                width: '100%',
+                display: "flex",
+                flexDirection: 'row',
+                flexWrap: 'nowrap',
+                alignItems: "center",
+                justifyContent: 'flex-end',
+                gap: "1rem",
+            }}>
+                <IconButton onClick={handleSortClick}>
+                    <SortIcon/>
+                </IconButton>
+                <IconButton onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}>
+                    {sortOrder === 'asc' ? <ArrowUpwardIcon/> : <ArrowDownwardIcon/>}
+                </IconButton>
             </Box>
 
             {/* Sort menu */}
@@ -100,10 +107,20 @@ export default function Queue() {
                 <MenuItem onClick={() => handleSortChange('added_at')}>Added Time</MenuItem>
             </Menu>
 
-            {/* Render sorted queue */}
-            {songs.map((song) => (
-                <SongCard key={song.id} id={song.id} />
-            ))}
+            <Box sx={{
+                display: 'flex',
+                flexDirection: 'row',
+                flexWrap: 'wrap',
+                gap: 5,
+                justifyContent: 'center',
+                alignItems: 'flex-start',
+                width: '100%',
+            }}>
+                {/* Render sorted queue */}
+                {songs.map((song) => (
+                    <SongCard key={song.id} id={song.id}/>
+                ))}
+            </Box>
 
             {/* Pagination */}
             <Pagination
@@ -113,6 +130,6 @@ export default function Queue() {
                 color="primary"
                 style={{alignSelf: "center"}}
             />
-        </div>
+        </Box>
     );
 }
