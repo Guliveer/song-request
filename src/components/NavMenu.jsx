@@ -1,77 +1,39 @@
-import {useEffect, useState}from "react";
-import {useRouter} from "next/router";
+import { useUser } from "@/context/UserContext";
+import { useRouter } from "next/router";
+import { useState } from "react";
 import {
     AppBar,
     Toolbar,
     Typography,
     Box,
-    ButtonGroup,
-    Button,
     MenuItem,
     Tooltip,
     IconButton,
     Menu,
     Container,
-    Avatar
+    Avatar,
+    Link
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
-import {isUserLoggedIn, isUserAdmin, logOut} from "@/utils/actions";
-import {supabase} from "@/utils/supabase";
+import { logOut } from "@/utils/actions";
 
 export default function NavMenu() {
-    const [isLoggedIn, setIsLoggedIn] = useState(null);
-    const [isAdmin, setIsAdmin] = useState(false); // Stan dla sprawdzania admina
+    const { isLoggedIn, isAdmin } = useUser();
     const router = useRouter();
 
-    // Funkcja wylogowywania
-    async function signOut() {
-        const { error } = await supabase.auth.signOut();
-        if (error) {
-            console.error('Error signing out:', error.message);
-            return;
-        }
-        router.push('/'); // Po wylogowaniu przekierowanie na stronę główną
-    }
-
-    // Sprawdzanie użytkownika po załadowaniu komponentu
-    useEffect(() => {
-        async function checkUser() {
-            const loggedIn = await isUserLoggedIn();
-            setIsLoggedIn(loggedIn);
-            const userAdmin = await isUserAdmin();
-            setIsAdmin(userAdmin);
-        }
-
-        checkUser(); // Call checkUser on component mount
-
-        function handleRouteChange() {
-            checkUser(); // Call checkUser on route change
-        }
-
-        router.events.on('routeChangeComplete', handleRouteChange); // Listen for route changes
-
-        return () => {
-            router.events.off('routeChangeComplete', handleRouteChange); // Clean up event listener
-        };
-    }, [router]);
-
     const pages = {
-        public: [
-            {name: "Home", href: "/"}
-        ],
-        admin: [
-            {name: "Admin Panel", href: "/admin"}
-        ]
+        public: [{ name: "Home", href: "/" }],
+        admin: [{ name: "Admin Panel", href: "/admin" }]
     };
 
     const userMenu = {
         loggedIn: [
-            {name: "User Panel", href: "/user"},
-            {name: "Log out", action: "logout"}
+            { name: "User Panel", href: "/user" },
+            { name: "Log out", action: "logout" }
         ],
         loggedOut: [
-            {name: "Log in", href: "/login"},
-            {name: "Register", href: "/register"}
+            { name: "Log in", href: "/login" },
+            { name: "Register", href: "/register" }
         ]
     };
 
@@ -87,9 +49,9 @@ export default function NavMenu() {
     const handleUserMenuClick = (item) => {
         handleCloseUserMenu();
         if (item.action === "logout") {
-            logOut()
+            logOut();
         } else if (item.href) {
-            router.push(item.href); // Przekierowanie na stronę
+            router.push(item.href);
         }
     };
 
@@ -118,44 +80,55 @@ export default function NavMenu() {
                             onClose={handleCloseNavMenu}
                             sx={{ display: { xs: "block", md: "none" } }}
                         >
-                            {(pages.public).map((page) => (
+                            {pages.public.map((page) => (
                                 <MenuItem key={page.name} onClick={handleCloseNavMenu}>
                                     <Typography sx={{ textAlign: "center" }}>{page.name}</Typography>
                                 </MenuItem>
                             ))}
-                            {isAdmin && ( // Renderuj tylko, jeśli użytkownik jest adminem
-                                (pages.admin).map((page) => (
+                            {isAdmin &&
+                                pages.admin.map((page) => (
                                     <MenuItem key={page.name} onClick={handleCloseNavMenu}>
                                         <Typography sx={{ textAlign: "center" }}>{page.name}</Typography>
                                     </MenuItem>
-                                ))
-                            )}
+                                ))}
                         </Menu>
                     </Box>
 
                     {/* Menu dla desktopów */}
-                    <Box sx={{ flexGrow: 1, display: { xs: "none", md: "flex" } }}>
-                        <ButtonGroup variant="text">
-                            {(pages.public).map((page) => (
-                                <Button key={page.name} href={page.href} sx={{ my: 2, display: "block", padding: '0.5rem 1rem' }}>
+                    <Box sx={{ flexGrow: 1, display: { xs: "none", md: "flex" }, gap: 3 }}>
+                        {pages.public.map((page) => (
+                            <Link
+                                key={page.name}
+                                href={page.href}
+                                underline={"none"}
+                                sx={{
+                                    textTransform: "uppercase"
+                                }}
+                            >
+                                {page.name}
+                            </Link>
+                        ))}
+
+                        {isAdmin &&
+                            pages.admin.map((page) => (
+                                <Link
+                                    key={page.name}
+                                    href={page.href}
+                                    underline={"none"}
+                                    sx={{
+                                        textTransform: "uppercase"
+                                    }}
+                                >
                                     {page.name}
-                                </Button>
+                                </Link>
                             ))}
-                            {isAdmin && ( // Renderuj tylko, jeśli użytkownik jest adminem
-                                (pages.admin).map((page) => (
-                                    <Button key={page.name} href={page.href} sx={{ my: 2, display: "block", padding: '0.5rem 1rem' }}>
-                                        {page.name}
-                                    </Button>
-                                ))
-                            )}
-                        </ButtonGroup>
                     </Box>
 
                     {/* Logowanie / Rejestracja */}
                     <Box sx={{ flexGrow: 0, display: "flex", alignItems: "center", gap: 2 }}>
                         <Tooltip title="Open settings">
                             <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                                <Avatar alt="User" src={undefined} />                   {/* TODO: user avatar generation */}
+                                <Avatar alt="User" src={undefined} />
                             </IconButton>
                         </Tooltip>
 

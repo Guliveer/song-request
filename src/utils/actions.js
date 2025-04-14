@@ -1,8 +1,8 @@
 'use server'
 import PropTypes from "prop-types";
-import {router} from "next/client";
 import {supabase} from '@/utils/supabase';
 import {createCanvas} from 'canvas';
+
 
 export async function isUserLoggedIn() {
     try {
@@ -31,6 +31,7 @@ export async function getUserInfo(id) {
             .select()
             .eq('id', id)
             .single();
+
         if (error) throw error;
 
         return data;
@@ -66,6 +67,47 @@ export async function isUserAdmin() {
     }
 }
 
+export async function isUsernameAvailable(username) {
+    const { data: existingUser } = await supabase
+        .from('users')
+        .select('username')
+        .eq('username', username)
+        .single();
+
+    if (existingUser) throw new Error('Username already taken');
+
+    return true;
+}
+
+isUsernameAvailable.propTypes = {
+    username: PropTypes.string.isRequired
+}
+
+export async function signUp(email, password, username, captchaToken) {
+    const { error: signUpError, user } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+            data: {
+                display_name: username, // Field in auth.users
+                username: username, // Field in public.users
+            },
+            captchaToken
+        },
+    });
+
+    if (signUpError) throw new Error(signUpError.message);
+
+    return user;
+}
+
+signUp.propTypes = {
+    email: PropTypes.string.isRequired,
+    password: PropTypes.string.isRequired,
+    username: PropTypes.string.isRequired,
+    captchaToken: PropTypes.string.isRequired
+}
+
 export async function logOut() {
     try {
         const { error } = await supabase.auth.signOut({scope: 'local'});
@@ -76,7 +118,7 @@ export async function logOut() {
         console.error('Error logging out:', error.message);
         return false;
     } finally {
-        await router.push('/'); // Redirect to home page
+        window.location.href = '/'; // Redirect to home page and reload
     }
 }
 

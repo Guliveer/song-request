@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { supabase } from "@/utils/supabase";
+import SetTitle from "@/components/SetTitle";
 
 export default function UserPanel() {
     const [isLoading, setIsLoading] = useState(true);
@@ -24,9 +25,12 @@ export default function UserPanel() {
     if (!isLoggedIn) return null;
 
     return (
+        <>
+        <SetTitle text={"User Panel"} />
         <div>
             <h1>User Panel</h1>
             <p>Witaj w panelu użytkownika!</p>
         </div>
+        </>
     );
 }

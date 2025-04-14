@@ -7,6 +7,7 @@ import {IconButton, Menu, MenuItem, Box, Button, Pagination} from '@mui/material
 import SortIcon from '@mui/icons-material/Sort';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import SearchField from '@/components/SearchField';
 
 export default function Queue() {
     const [songs, setSongs] = useState([]);
@@ -61,20 +62,33 @@ export default function Queue() {
     };
 
     return (
-        <div style={{display: "flex", flexDirection: "column", gap: "1rem"}}>
-            {/* Sort options */}
-            <Box style={{display: "flex", justifyContent: "space-between", alignItems: "center"}}>
-                <div></div>
-                {/* Puste div, aby przesunąć ikony na prawo */}
-                <div style={{display: "flex", alignItems: "center", gap: "1rem"}}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+            {/* Sort and search options in one row */}
+            <Box
+                style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    width: "100%",
+                }}
+            >
+                {/* Search field */}
+
+                <SearchField />
+
+
+                {/* Sort options */}
+                <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
                     <IconButton onClick={handleSortClick}>
-                        <SortIcon/>
+                        <SortIcon />
                     </IconButton>
                     <IconButton onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}>
-                        {sortOrder === 'asc' ? <ArrowUpwardIcon/> : <ArrowDownwardIcon/>}
+                        {sortOrder === 'asc' ? <ArrowUpwardIcon /> : <ArrowDownwardIcon />}
                     </IconButton>
                 </div>
             </Box>
+
+            {/* Sort menu */}
             <Menu
                 anchorEl={anchorEl}
                 open={Boolean(anchorEl)}
@@ -88,7 +102,7 @@ export default function Queue() {
 
             {/* Render sorted queue */}
             {songs.map((song) => (
-                <SongCard key={song.id} id={song.id}/>
+                <SongCard key={song.id} id={song.id} />
             ))}
 
             {/* Pagination */}
