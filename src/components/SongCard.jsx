@@ -1,17 +1,24 @@
 import PropTypes from 'prop-types';
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from "next/link";
+import { useRouter } from 'next/router';
 import { supabase } from '@/utils/supabase';
 import { Box, Card, Typography, IconButton, Snackbar } from "@mui/material";
 import ThumbUpIcon from '@mui/icons-material/ThumbUp';
 import ThumbDownIcon from '@mui/icons-material/ThumbDown';
+import DeleteIcon from '@mui/icons-material/Delete';
+import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import SkeletonSongCard from "@/components/skeletons/SkeletonSongCard";
-import { getUserInfo, getSongData, getCurrentUser, removeUserVote, updateUserVote } from "@/utils/actions";
+import {
+    getUserInfo,
+    getSongData,
+    getCurrentUser,
+    removeUserVote,
+    updateUserVote
+} from "@/utils/actions";
 import debounce from 'lodash.debounce';
 
 const VoteButtons = React.memo(({ userVote, handleVote, score }) => (
-    // Lets you skip re-rendering a component when its props are unchanged.
-
     <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '1rem', width: '25%', justifyContent: 'center' }}>
         <IconButton
             color={userVote === 1 ? "default" : "secondary"}
@@ -33,12 +40,17 @@ function SongCard({ id }) {
     const [songData, setSongData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState(null);
-    const [userVote, setUserVote] = useState(null); // 1 = upvote; -1 = downvote; null = no vote
-    const [error, setError] = useState(null); // Error state
+    const [userVote, setUserVote] = useState(null);
+    const [error, setError] = useState(null);
+    const router = useRouter();
+    const isAdminPanel = router.pathname.startsWith("/admin");
 
     const fetchData = useCallback(async () => {
         try {
-            const [song, currentUser] = await Promise.all([getSongData(id), getCurrentUser()]);
+            const [song, currentUser] = await Promise.all([
+                getSongData(id),
+                getCurrentUser()
+            ]);
 
             if (currentUser) {
                 setUser(currentUser);
@@ -73,13 +85,12 @@ function SongCard({ id }) {
     }, [fetchData]);
 
     const handleVote = useCallback(debounce(async (newVoteValue) => {
-        // debounce prevents multiple votes in a short time
         if (!user) {
             setError("You have to be logged in to vote.");
             return;
         }
 
-        let resultVoteVal = null; // variable to sync data update
+        let resultVoteVal = null;
 
         try {
             if (userVote === newVoteValue) {
@@ -105,6 +116,32 @@ function SongCard({ id }) {
         }
     }, 300), [user, userVote, id, fetchData]);
 
+    const handleDelete = async () => {
+        const { error } = await supabase
+            .from('queue')
+            .delete()
+            .eq('id', id);
+
+        if (error) {
+            setError("Błąd podczas usuwania piosenki.");
+        } else {
+            router.reload();
+        }
+    };
+
+    const handleResetVotes = async () => {
+        const { error } = await supabase
+            .from('votes')
+            .delete()
+            .eq('song_id', id);
+
+        if (error) {
+            setError("Błąd podczas resetowania głosów.");
+        } else {
+            router.reload();
+        }
+    };
+
     const cardStyle = {
         display: 'flex',
         flexDirection: 'row',
@@ -114,13 +151,13 @@ function SongCard({ id }) {
         padding: '1rem',
         borderRadius: '10px',
         alignItems: 'center'
-    }
-    
+    };
+
     if (loading || !songData) {
         return <SkeletonSongCard cardStyle={cardStyle} />
     }
 
-    const { title, author, url, added_at, user_id, score, rank, username } = songData;
+    const { title, author, url, added_at, username, score, rank } = songData;
 
     return (
         <Card variant="outlined" sx={cardStyle}>
@@ -144,6 +181,24 @@ function SongCard({ id }) {
                 </Typography>
             </Box>
             <VoteButtons userVote={userVote} handleVote={handleVote} score={score} />
+            {isAdminPanel && (
+                <Box sx={{ display: 'flex', flexDirection: 'row', gap: '0.5rem', marginLeft: '1rem' }}>
+                    <IconButton
+                        color="error"
+                        onClick={handleDelete}
+                        title="Usuń piosenkę"
+                    >
+                        <DeleteIcon />
+                    </IconButton>
+                    <IconButton
+                        color="primary"
+                        onClick={handleResetVotes}
+                        title="Resetuj głosy"
+                    >
+                        <RestartAltIcon />
+                    </IconButton>
+                </Box>
+            )}
             {error && (
                 <Snackbar
                     open={!!error}
@@ -160,4 +215,4 @@ SongCard.propTypes = {
     id: PropTypes.number.isRequired,
 };
 
-export default React.memo(SongCard);
+export default React.memo(SongCard)
