@@ -1,81 +1,35 @@
 import { useState, useEffect, useRef } from 'react';
-import { supabase } from '@/utils/supabase';
-import {Box, IconButton, InputBase, Paper, Popper, Radio, RadioGroup, FormControlLabel, ClickAwayListener,} from '@mui/material';
+import {
+    Box, IconButton, InputBase, Paper, Popper,
+    Radio, RadioGroup, FormControlLabel, ClickAwayListener
+} from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 
-function SearchField() {
+function SearchField({ onSearchChange }) {
     const [query, setQuery] = useState('');
-    const [results, setResults] = useState([]);
     const [filter, setFilter] = useState('title');
     const [showFilter, setShowFilter] = useState(false);
-    const [isFocused, setIsFocused] = useState(false);
     const anchorRef = useRef(null);
 
     useEffect(() => {
         const delayDebounce = setTimeout(() => {
-            if (query.trim() === '') {
-                setResults([]);
-                return;
-            }
-
-            const fetchResults = async () => {
-                let searchQuery = supabase.from('queue').select('*');
-
-                if (filter === 'title') {
-                    searchQuery = searchQuery.ilike('title', `%${query}%`);
-                } else if (filter === 'author') {
-                    searchQuery = searchQuery.ilike('author', `%${query}%`);
-                } else if (filter === 'user') {
-                    const { data: users, error: userError } = await supabase
-                        .from('users')
-                        .select('id')
-                        .ilike('username', `%${query}%`);
-
-                    if (userError) {
-                        console.error('Błąd podczas pobierania użytkowników:', userError.message);
-                        return;
-                    }
-
-                    if (users.length === 0) {
-                        setResults([]);
-                        return;
-                    }
-
-                    const userIds = users.map((user) => user.id);
-                    searchQuery = searchQuery.in('user_id', userIds);
-                }
-
-                const { data, error } = await searchQuery;
-
-                if (error) {
-                    console.error('Błąd podczas pobierania danych:', error.message);
-                } else {
-                    setResults(data);
-                }
-            };
-
-            fetchResults();
+            onSearchChange(query, filter);
         }, 300);
-
         return () => clearTimeout(delayDebounce);
-    }, [query, filter]);
+    }, [query, filter, onSearchChange]);
 
     const handleInputChange = (e) => {
         const value = e.target.value;
         setQuery(value);
-
         if (value.trim() !== '') {
             setShowFilter(false);
         }
     };
 
     return (
-        <ClickAwayListener onClickAway={() => {
-            setShowFilter(false);
-            setIsFocused(false);
-        }}>
-            <Box ref={anchorRef} sx={{ position: 'relative', width: 500, mt: 1 }}>
+        <ClickAwayListener onClickAway={() => setShowFilter(false)}>
+            <Box ref={anchorRef} sx={{ position: 'relative', width: 350, mt: 1 }}>
                 <Paper
                     component="form"
                     sx={{
@@ -96,10 +50,6 @@ function SearchField() {
                         placeholder="Search"
                         value={query}
                         onChange={handleInputChange}
-                        onFocus={() => {
-                            setIsFocused(true);
-                            setShowFilter(false);
-                        }}
                     />
                     <IconButton
                         size="small"
@@ -110,7 +60,6 @@ function SearchField() {
                     </IconButton>
                 </Paper>
 
-                {/* Dropdown filtrów */}
                 <Popper
                     open={showFilter}
                     anchorEl={anchorRef.current}
@@ -143,45 +92,6 @@ function SearchField() {
                         </RadioGroup>
                     </Paper>
                 </Popper>
-
-                {/* Lista wyników */}
-                {query.trim() !== '' && isFocused && (
-                    <Box
-                        sx={{
-                            position: 'absolute',
-                            top: '100%',
-                            left: 0,
-                            width: '100%',
-                            maxHeight: '250px',
-                            overflowY: 'auto',
-                            backgroundColor: 'rgba(0, 0, 0, 1)',
-                            borderRadius: '12px',
-                            mt: 1,
-                            p: 1,
-                            zIndex: 5,
-                        }}
-                    >
-                        {results.length === 0 ? (
-                            <Box sx={{ textAlign: 'center', color: '#ccc' }}>Not found...</Box>
-                        ) : (
-                            results.map((item) => (
-                                <Box
-                                    key={item.id}
-                                    sx={{
-                                        p: 1,
-                                        borderRadius: '12px',
-                                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                                        mb: 1,
-                                        cursor: 'pointer',
-                                        color: '#fff',
-                                    }}
-                                >
-                                    <strong>{item.title}</strong> – {item.author}
-                                </Box>
-                            ))
-                        )}
-                    </Box>
-                )}
             </Box>
         </ClickAwayListener>
     );
