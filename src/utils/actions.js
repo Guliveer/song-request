@@ -3,6 +3,40 @@ import PropTypes from "prop-types";
 import {supabase} from '@/utils/supabase';
 import {createCanvas} from 'canvas';
 
+export async function playSound(type, volume = 1.0) {
+    const basePath = '/audio'; // Base path for all sounds
+    let soundPath;
+
+    switch (type) {
+        case 'success':
+            soundPath = `${basePath}/mixkit-correct-answer-tone-2870.wav`;
+            break;
+        case 'swoosh':
+            soundPath = `${basePath}/mixkit-fast-small-sweep-transition-166.wav`;
+            break;
+        case 'click':
+            soundPath = `${basePath}/mixkit-modern-technology-select-3124.wav`;
+            break;
+        default:
+            console.error(`Sound type: "${type}" not found.`);
+            return;
+    }
+
+    try {
+        const audio = new Audio(soundPath);
+        audio.preload = 'auto';
+
+        audio.volume = Math.min(Math.max(volume, 0.0), 1.0);
+        await audio.play();
+    } catch (error) {
+        console.error(`Error playing sound "${type}":`, error.message);
+    }
+}
+
+playSound.propTypes = {
+    audio: PropTypes.oneOf(['success', 'swoosh', 'click']).isRequired,
+    volume: PropTypes.number,
+}
 
 export async function isUserLoggedIn() {
     try {
@@ -230,4 +264,10 @@ export function sortSongs(data, sortCriteria, sortOrder) {
 
         return comparison;
     });
+}
+
+sortSongs.propTypes = {
+    data: PropTypes.array.isRequired,
+    sortCriteria: PropTypes.oneOf(['score', 'author', 'title', 'added_at']).isRequired,
+    sortOrder: PropTypes.oneOf(['asc', 'desc']).isRequired
 }

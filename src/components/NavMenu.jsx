@@ -12,9 +12,17 @@ import {
     Menu,
     Container,
     Avatar,
-    Link
+    Link, ButtonGroup, Button
 } from "@mui/material";
-import MenuIcon from "@mui/icons-material/Menu";
+import {
+    MenuRounded as MenuIcon,
+    HowToRegRounded as RegisterIcon,
+    LoginRounded as LoginIcon,
+    LogoutRounded as LogoutIcon,
+    MiscellaneousServicesRounded as UserPanelIcon,
+    AdminPanelSettingsRounded as AdminPanelIcon,
+    HomeRounded as HomeIcon,
+} from '@mui/icons-material';
 import { logOut } from "@/utils/actions";
 
 export default function NavMenu() {
@@ -22,18 +30,22 @@ export default function NavMenu() {
     const router = useRouter();
 
     const pages = {
-        public: [{ name: "Home", href: "/" }],
-        admin: [{ name: "Admin Panel", href: "/admin" }]
+        public: [
+            { name: "Home", href: "/", icon: <HomeIcon /> }
+        ],
+        admin: [
+            { name: "Admin Panel", href: "/admin", icon: <AdminPanelIcon /> }
+        ],
     };
 
     const userMenu = {
         loggedIn: [
-            { name: "User Panel", href: "/user" },
-            { name: "Log out", action: "logout" }
+            { name: "User Panel", href: "/user", icon: <UserPanelIcon /> },
+            { name: "Log out", action: "logout", icon: <LogoutIcon /> }
         ],
         loggedOut: [
-            { name: "Log in", href: "/login" },
-            { name: "Register", href: "/register" }
+            { name: "Log in", href: "/login", icon: <LoginIcon /> },
+            { name: "Register", href: "/register", icon: <RegisterIcon /> }
         ]
     };
 
@@ -102,9 +114,13 @@ export default function NavMenu() {
                                 href={page.href}
                                 underline={"none"}
                                 sx={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 1,
                                     textTransform: "uppercase"
                                 }}
                             >
+                                {page.icon}
                                 {page.name}
                             </Link>
                         ))}
@@ -116,9 +132,13 @@ export default function NavMenu() {
                                     href={page.href}
                                     underline={"none"}
                                     sx={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: 1,
                                         textTransform: "uppercase"
                                     }}
                                 >
+                                    {page.icon}
                                     {page.name}
                                 </Link>
                             ))}
@@ -126,11 +146,29 @@ export default function NavMenu() {
 
                     {/* Logowanie / Rejestracja */}
                     <Box sx={{ flexGrow: 0, display: "flex", alignItems: "center", gap: 2 }}>
+                        {!isLoggedIn &&
+                            <ButtonGroup>
+                                {!isLoggedIn && userMenu.loggedOut.map((item) => (
+                                    <Link key={item.name} href={item.href} underline="none">
+                                        <Button
+                                            variant={item.name === "Register" ? "contained" : "outlined"}
+                                            //? (un)comment below line to show/hide icons for "Log in" and "Register"
+                                            // startIcon={item.icon}
+                                        >
+                                            {item.name}
+                                        </Button>
+                                    </Link>
+                                ))}
+                            </ButtonGroup>
+                        }
+
+                        {isLoggedIn && (
                         <Tooltip title="Open settings">
                             <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
                                 <Avatar alt="User" src={undefined} />
                             </IconButton>
                         </Tooltip>
+                        )}
 
                         {/* Menu użytkownika */}
                         <Menu
@@ -143,9 +181,17 @@ export default function NavMenu() {
                             open={Boolean(anchorElUser)}
                             onClose={handleCloseUserMenu}
                         >
-                            {(isLoggedIn ? userMenu.loggedIn : userMenu.loggedOut).map((item) => (
+                            {isLoggedIn && userMenu.loggedIn.map((item) => (
                                 <MenuItem key={item.name} onClick={() => handleUserMenuClick(item)}>
-                                    <Typography sx={{ textAlign: "center" }}>{item.name}</Typography>
+                                    <Typography sx={{
+                                        display: "flex",
+                                        justifyContent: "flex-start",
+                                        alignItems: "center",
+                                        gap: 1.5,
+                                    }}>
+                                        {item.icon}
+                                        {item.name}
+                                    </Typography>
                                 </MenuItem>
                             ))}
                         </Menu>

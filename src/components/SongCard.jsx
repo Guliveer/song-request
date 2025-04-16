@@ -4,7 +4,10 @@ import Link from "next/link";
 import { supabase } from '@/utils/supabase';
 import {Box, Card, Typography, IconButton, Snackbar, Divider} from "@mui/material";
 import SkeletonSongCard from "@/components/skeletons/SkeletonSongCard";
-import { getUserInfo, getSongData, getCurrentUser, removeUserVote, updateUserVote } from "@/utils/actions";
+import {
+    getUserInfo, getSongData, getCurrentUser, removeUserVote,
+    updateUserVote, playSound
+} from "@/utils/actions";
 import debounce from 'lodash.debounce';
 import {
     KeyboardArrowUpRounded as VoteUpIcon,
@@ -14,6 +17,7 @@ import {
     MusicNoteRounded as SongIcon,
     NumbersRounded as RankIcon,
 } from '@mui/icons-material';
+
 const VoteButtons = React.memo(({ userVote, handleVote, score }) => (
     <Box
         sx={{
@@ -119,6 +123,8 @@ function SongCard({ id }) {
                 }
                 resultVoteVal = newVoteValue;
             }
+
+            await playSound('click', 0.75);
         } catch (error) {
             console.error("Error while placing a vote:", error);
             setError(`Something went wrong: ${error.message}`);
