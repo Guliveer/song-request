@@ -43,11 +43,11 @@ export default function Login() {
         if (error) {
             captcha.current.resetCaptcha();
             setError(error.message);
-        } else {
-            router.push('/');
+            setIsSubmitting(false);
+            return;
         }
 
-        setIsSubmitting(false);
+        window.location.href = '/'; // redirect & reload the webapp
     }
 
     function handleCaptchaChange(token) {
