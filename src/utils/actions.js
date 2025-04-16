@@ -38,6 +38,64 @@ playSound.propTypes = {
     volume: PropTypes.number,
 }
 
+export async function genUserAvatar(id) {
+    try {
+        const { data: user, error } = await supabase
+            .from("users")
+            .select("username, color")
+            .eq("id", id)
+            .single();
+        
+        if (error) throw error;
+
+        const { username, color } = user;
+        const initial = username.charAt(0).toUpperCase();
+
+        const size = 256;
+        const canvas = createCanvas(size, size);
+        const ctx = canvas.getContext("2d");
+
+        // 🎨 Tło
+        ctx.fillStyle = color;
+        ctx.fillRect(0, 0, size, size);
+
+        // 🖌️ Tryb mieszania (blend mode)
+        const blendMode = getBlendModeForText(color);
+
+        // 🌟 Rysujemy "bazę" pod literę
+        ctx.fillRect(0, 0, size, size);
+
+        // 🔠 Litera
+        ctx.globalCompositeOperation = "source-atop"; // Zachowujemy tylko literę
+        ctx.fillStyle = blendMode === "screen" ? "rgba(255,255,255,0.75)" : "rgba(0,0,0,0.75)";
+        ctx.font = "bold 18em Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(initial, size / 2, size / 2);
+
+        return canvas.toDataURL();
+    } catch (error) {
+        console.error("Error generating user avatar:", error.message);
+        return null;
+    }
+}
+
+function getBlendModeForText(hex) {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+
+    if (luminance > 0.75) return "multiply";  // Bardzo jasne tło → litera ciemnieje
+    if (luminance < 0.35) return "screen";    // Bardzo ciemne tło → litera się rozjaśnia
+    return "overlay";                         // Średnie tło → naturalne wzmocnienie kontrastu
+}
+
+genUserAvatar.propTypes = {
+    id: PropTypes.string.isRequired
+}
+
 export async function isUserLoggedIn() {
     try {
         const { data: { user } } = await supabase.auth.getUser()

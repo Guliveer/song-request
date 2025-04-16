@@ -1,6 +1,6 @@
 import { useUser } from "@/context/UserContext";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import {useEffect, useState} from "react";
 import {
     AppBar,
     Toolbar,
@@ -23,11 +23,31 @@ import {
     AdminPanelSettingsRounded as AdminPanelIcon,
     HomeRounded as HomeIcon,
 } from '@mui/icons-material';
-import { logOut } from "@/utils/actions";
+import {genUserAvatar, logOut} from "@/utils/actions";
 
 export default function NavMenu() {
-    const { isLoggedIn, isAdmin } = useUser();
+    const { isLoggedIn, isAdmin, uuid } = useUser();
     const router = useRouter();
+    const [avatarUrl, setAvatarUrl] = useState(undefined);
+
+    useEffect(() => {
+        if (isLoggedIn) {
+            let isMounted = true;
+
+            async function fetchAvatar() {
+                const url = await genUserAvatar(uuid);
+                if (isMounted) {
+                    setAvatarUrl(url);
+                }
+            }
+
+            fetchAvatar();
+
+            return () => {
+                isMounted = false; // Cleanup
+            };
+        }
+    }, [isLoggedIn, uuid]);
 
     const pages = {
         public: [
@@ -165,7 +185,7 @@ export default function NavMenu() {
                         {isLoggedIn && (
                         <Tooltip title="Open settings">
                             <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                                <Avatar alt="User" src={undefined} />
+                                <Avatar alt="Avatar" src={avatarUrl} />
                             </IconButton>
                         </Tooltip>
                         )}
