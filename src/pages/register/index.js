@@ -3,7 +3,6 @@ import HCaptcha from '@hcaptcha/react-hcaptcha';
 import { Button, CircularProgress, Link, Typography } from '@mui/material';
 import { signUp, isUsernameAvailable } from "@/utils/actions";
 import { ErrorAlert, FormField } from "@/components/Items";
-import AuthProvidersList from "@/components/AuthProvidersList";
 import { useEffect, useRef, useState } from 'react';
 import SetTitle from "@/components/SetTitle";
 import { useUser } from "@/context/UserContext";
@@ -140,7 +139,6 @@ export default function Register() {
                     >
                         {isSubmitting ? <CircularProgress size={26} /> : 'Create account'}
                     </Button>
-                    <AuthProvidersList />
                 </form>
                 <Typography variant="body2" align="center">
                     Already registered? <Link href="/login">Log in</Link>
