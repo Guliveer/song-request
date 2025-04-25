@@ -4,7 +4,6 @@ import { Box, Button, CircularProgress, Divider, Link, Typography } from '@mui/m
 import { HowToRegRounded as RegisterIcon } from '@mui/icons-material';
 import { signUp, isUsernameAvailable, playSound } from "@/utils/actions";
 import { ErrorAlert, FormField } from "@/components/Items";
-import AuthProvidersList from "@/components/AuthProvidersList";
 import { useEffect, useRef, useState } from 'react';
 import SetTitle from "@/components/SetTitle";
 import { useUser } from "@/context/UserContext";
@@ -143,10 +142,6 @@ export default function Register() {
                     >
                         {isSubmitting ? <CircularProgress size={26} /> : 'Create account'}
                     </Button>
-
-                    <Divider variant="fullWidth" flexItem />
-
-                    <AuthProvidersList />
                 </form>
                 <Typography variant="body2" align="center">
                     Already registered? <Link href="/login">Log in</Link>
