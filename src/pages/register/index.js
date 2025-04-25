@@ -1,7 +1,8 @@
 import { useRouter } from 'next/router';
 import HCaptcha from '@hcaptcha/react-hcaptcha';
-import { Button, CircularProgress, Link, Typography } from '@mui/material';
-import { signUp, isUsernameAvailable } from "@/utils/actions";
+import { Box, Button, CircularProgress, Divider, Link, Typography } from '@mui/material';
+import { HowToRegRounded as RegisterIcon } from '@mui/icons-material';
+import { signUp, isUsernameAvailable, playSound } from "@/utils/actions";
 import { ErrorAlert, FormField } from "@/components/Items";
 import { useEffect, useRef, useState } from 'react';
 import SetTitle from "@/components/SetTitle";
@@ -41,6 +42,7 @@ export default function Register() {
 
             await signUp(email, password, username, captchaToken);
 
+            await playSound('swoosh', 0.8);
             await router.push('/register/success');
         } catch (err) {
             captcha.current.resetCaptcha();
@@ -58,7 +60,7 @@ export default function Register() {
         <>
             <SetTitle text={"Register"} />
 
-            <div style={{
+            <Box sx={{
                 display: 'flex',
                 gap: '2em',
                 flexWrap: 'nowrap',
@@ -135,6 +137,7 @@ export default function Register() {
                         fullWidth
                         variant="contained"
                         size="large"
+                        startIcon={<RegisterIcon />}
                         disabled={isSubmitting || !email || !password || !captchaToken}
                     >
                         {isSubmitting ? <CircularProgress size={26} /> : 'Create account'}
@@ -143,7 +146,7 @@ export default function Register() {
                 <Typography variant="body2" align="center">
                     Already registered? <Link href="/login">Log in</Link>
                 </Typography>
-            </div>
+            </Box>
         </>
     );
 }

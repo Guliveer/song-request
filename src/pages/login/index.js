@@ -3,8 +3,9 @@ import { useRouter } from 'next/router';
 import { supabase } from '@/utils/supabase';
 import HCaptcha from '@hcaptcha/react-hcaptcha';
 import { useUser } from "@/context/UserContext";
+import { LoginRounded as LoginIcon } from '@mui/icons-material';
 import { ErrorAlert, FormField } from "@/components/Items";
-import { Button, Typography, Link, CircularProgress } from "@mui/material";
+import {Button, Typography, Link, CircularProgress, Box, Divider} from "@mui/material";
 import AuthProvidersList from "@/components/AuthProvidersList";
 import SetTitle from "@/components/SetTitle";
 
@@ -43,11 +44,11 @@ export default function Login() {
         if (error) {
             captcha.current.resetCaptcha();
             setError(error.message);
-        } else {
-            router.push('/');
+            setIsSubmitting(false);
+            return;
         }
 
-        setIsSubmitting(false);
+        window.location.href = '/'; // redirect & reload the webapp
     }
 
     function handleCaptchaChange(token) {
@@ -58,7 +59,7 @@ export default function Login() {
         <>
             <SetTitle text={"Log in"} />
 
-            <div style={{
+            <Box sx={{
                 display: 'flex',
                 gap: '2em',
                 flexWrap: 'nowrap',
@@ -117,16 +118,20 @@ export default function Login() {
                         fullWidth
                         variant="contained"
                         size="large"
+                        startIcon={<LoginIcon />}
                         disabled={isSubmitting || !email || !password || !captchaToken}
                     >
                         {isSubmitting ? <CircularProgress size={26} /> : 'Log in'}
                     </Button>
+
+                    <Divider variant="fullWidth" flexItem />
+
                     <AuthProvidersList />
                 </form>
                 <Typography variant="body2" align="center">
                     First time around? <Link href="/register">Register</Link>
                 </Typography>
-            </div>
+            </Box>
         </>
     );
 }

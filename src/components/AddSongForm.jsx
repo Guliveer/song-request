@@ -1,13 +1,16 @@
 import { useState } from 'react';
 import {
     Box, Button, Dialog, DialogTitle, DialogContent,
-    Fab, Tooltip, Stack, useTheme
+    Fab, Tooltip, Stack, useTheme, CircularProgress
 } from '@mui/material';
 import {
     AddRounded as AddIcon,
     PlaylistAddRounded as FormIcon,
-    SendRounded as SendIcon
+    SendRounded as SendIcon,
+    BlockRounded as BlockIcon,
+    DoneRounded as SuccessIcon,
 } from '@mui/icons-material';
+import { playSound } from '@/utils/actions'
 import { keyframes } from '@mui/system';
 import { supabase } from '@/utils/supabase';
 import { useUser } from "@/context/UserContext";
@@ -18,6 +21,8 @@ export default function AddSongForm() {
     const { isLoggedIn } = useUser(); // Use the global user state
     const [open, setOpen] = useState(false);
     const [formData, setFormData] = useState({ title: '', author: '', url: '' });
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [success, setSuccess] = useState(false);
 
     const handleChange = (event) => {
         const { id, value } = event.target;
@@ -30,6 +35,7 @@ export default function AddSongForm() {
     const handleSubmit = async (event) => {
         event.preventDefault();
         if (!isLoggedIn) return;
+        setIsSubmitting(true);
 
         const { data, error } = await supabase
             .from('queue')
@@ -38,10 +44,15 @@ export default function AddSongForm() {
         if (error) {
             console.error('Error:', error.message);
         } else {
-            console.log('Song added:', data);
+            setSuccess(true);
+            setIsSubmitting(false);
             setFormData({ title: '', author: '', url: '' });
+            await playSound('success', 0.8);
             setOpen(false);
         }
+
+        setIsSubmitting(false);
+        setSuccess(false);
     };
 
     const fadeInBackground = keyframes`
@@ -135,6 +146,7 @@ export default function AddSongForm() {
                                 id="title"
                                 label="Title"
                                 fullWidth
+                                disabled={!isLoggedIn}
                                 value={formData.title}
                                 onChange={handleChange}
                             />
@@ -143,6 +155,7 @@ export default function AddSongForm() {
                                 id="author"
                                 label="Author"
                                 fullWidth
+                                disabled={!isLoggedIn}
                                 value={formData.author}
                                 onChange={handleChange}
                             />
@@ -153,6 +166,7 @@ export default function AddSongForm() {
                             id="url"
                             label="URL"
                             fullWidth
+                            disabled={!isLoggedIn}
                             value={formData.url}
                             onChange={handleChange}
                         />
@@ -163,24 +177,36 @@ export default function AddSongForm() {
                                 arrow
                                 placement="top"
                             >
-                                <span>
+                                {/* Box is required for tooltip to work */}
+                                <Box sx={{
+                                    display: 'flex',
+                                    justifyContent: 'center',
+                                    width: '100%',
+                                }}>
                                     <Button
                                         type="submit"
                                         variant="contained"
                                         color="primary"
-                                        disabled={!isLoggedIn}
-                                        startIcon={<SendIcon />}
+                                        disabled={!isLoggedIn || isSubmitting}
+                                        startIcon={
+                                            success ? <SuccessIcon /> :
+                                            (!isLoggedIn ? <BlockIcon /> :
+                                            (!isSubmitting ? <SendIcon /> : null))
+                                        }
                                         sx={{
-                                            px: 3,
+                                            minWidth: '50%',
                                             py: 1,
+                                            px: 2,
                                             fontWeight: 600,
                                             boxShadow: 4,
                                             textTransform: 'none',
                                         }}
                                     >
-                                        {isLoggedIn ? "Add to Queue" : "Login Required"}
+                                        {success ? "Done!" :
+                                        (isSubmitting ? <CircularProgress size={24} /> :
+                                        (isLoggedIn ? "Add to Queue" : "Login Required"))}
                                     </Button>
-                                </span>
+                                </Box>
                             </Tooltip>
                         </Stack>
                     </Box>
