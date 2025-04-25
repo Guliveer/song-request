@@ -16,6 +16,9 @@ import {
 import { SketchPicker } from "react-color";
 import { supabase } from "@/utils/supabase";
 
+import {availableProviders}  from "@/components/AuthProvidersList";
+import {AuthProvider} from "@/components/Items";
+
 export default function Account() {
     const theme = useTheme();
 
@@ -135,6 +138,21 @@ export default function Account() {
                         Change color
                     </Button>
                 </Stack>
+                <Box
+                    display="flex"
+                    flexDirection="row"
+                    gap={2}
+                    sx={{ mt: 2, mb: 2 }} // Adds top and bottom margins
+                >
+                    {availableProviders.map((provider) => (
+                        <AuthProvider
+                            key={provider.providerName}
+                            providerName={provider.providerName}
+                            displayName={provider.displayName}
+                            icon={provider.icon}
+                        />
+                    ))}
+                </Box>
             </Paper>
 
             {/* Dialog zmiany koloru */}
