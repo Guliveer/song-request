@@ -8,28 +8,25 @@ import ThumbUpIcon from '@mui/icons-material/ThumbUp';
 import ThumbDownIcon from '@mui/icons-material/ThumbDown';
 import DeleteIcon from '@mui/icons-material/Delete';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
+import BlockIcon from '@mui/icons-material/Block';
 import SkeletonSongCard from "@/components/skeletons/SkeletonSongCard";
-import {
-    getUserInfo,
-    getSongData,
-    getCurrentUser,
-    removeUserVote,
-    updateUserVote
-} from "@/utils/actions";
+import { getUserInfo, getSongData, getCurrentUser, removeUserVote, updateUserVote } from "@/utils/actions";
 import debounce from 'lodash.debounce';
 
-const VoteButtons = React.memo(({ userVote, handleVote, score }) => (
+const VoteButtons = React.memo(({ userVote, handleVote, score, isBanned }) => (
     <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '1rem', width: '25%', justifyContent: 'center' }}>
         <IconButton
             color={userVote === 1 ? "default" : "secondary"}
-            onClick={() => handleVote(1)}
+            onClick={() => !isBanned && handleVote(1)}
+            disabled={isBanned}
         >
             <ThumbUpIcon />
         </IconButton>
         <Typography variant="h6">{score}</Typography>
         <IconButton
             color={userVote === -1 ? "error" : "secondary"}
-            onClick={() => handleVote(-1)}
+            onClick={() => !isBanned && handleVote(-1)}
+            disabled={isBanned}
         >
             <ThumbDownIcon />
         </IconButton>
@@ -41,6 +38,7 @@ function SongCard({ id }) {
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState(null);
     const [userVote, setUserVote] = useState(null);
+    const [isBanned, setIsBanned] = useState(false);  // Nowy stan do śledzenia stanu bana
     const [error, setError] = useState(null);
     const router = useRouter();
     const isAdminPanel = router.pathname.startsWith("/admin");
@@ -54,6 +52,21 @@ function SongCard({ id }) {
 
             if (currentUser) {
                 setUser(currentUser);
+
+                // Sprawdzamy stan bana użytkownika
+                const { data: userData, error: userError } = await supabase
+                    .from("users")
+                    .select("ban_status")
+                    .eq("id", currentUser.id)
+                    .single();
+
+                if (userError) {
+                    console.log("Error:", userError.message);
+                    setIsBanned(false);  // Jeśli nie uda się pobrać stanu bana, traktujemy użytkownika jako niezbanowanego
+                } else {
+                    setIsBanned(userData?.ban_status > 0);
+                }
+
                 const { data: voteData, error: voteError } = await supabase
                     .from('votes')
                     .select('vote')
@@ -90,6 +103,11 @@ function SongCard({ id }) {
             return;
         }
 
+        if (isBanned) {
+            setError("You are banned and cannot vote.");
+            return;
+        }
+
         let resultVoteVal = null;
 
         try {
@@ -114,8 +132,9 @@ function SongCard({ id }) {
             await fetchData();
             setUserVote(resultVoteVal);
         }
-    }, 300), [user, userVote, id, fetchData]);
+    }, 300), [user, userVote, id, fetchData, isBanned]);
 
+    // funkcja do usuwania piosenki
     const handleDelete = async () => {
         const { error } = await supabase
             .from('queue')
@@ -129,6 +148,7 @@ function SongCard({ id }) {
         }
     };
 
+    // funkcja do resetowania głosów
     const handleResetVotes = async () => {
         const { error } = await supabase
             .from('votes')
@@ -137,6 +157,29 @@ function SongCard({ id }) {
 
         if (error) {
             setError("Błąd podczas resetowania głosów.");
+        } else {
+            router.reload();
+        }
+    };
+
+    // funkcja do banowania url
+    const handleBanAndDelete = async () => {
+        const { error: insertError } = await supabase
+            .from('banned_url')
+            .insert([{ url: songData.url }]);
+
+        if (insertError) {
+            setError("Błąd podczas banowania URL.");
+            return;
+        }
+
+        const { error: deleteError } = await supabase
+            .from('queue')
+            .delete()
+            .eq('id', id);
+
+        if (deleteError) {
+            setError("Błąd podczas usuwania piosenki.");
         } else {
             router.reload();
         }
@@ -180,7 +223,7 @@ function SongCard({ id }) {
                     {new Date(added_at).toLocaleString()}
                 </Typography>
             </Box>
-            <VoteButtons userVote={userVote} handleVote={handleVote} score={score} />
+            <VoteButtons userVote={userVote} handleVote={handleVote} score={score} isBanned={isBanned} />
             {isAdminPanel && (
                 <Box sx={{ display: 'flex', flexDirection: 'row', gap: '0.5rem', marginLeft: '1rem' }}>
                     <IconButton
@@ -196,6 +239,13 @@ function SongCard({ id }) {
                         title="Resetuj głosy"
                     >
                         <RestartAltIcon />
+                    </IconButton>
+                    <IconButton
+                        color="warning"
+                        onClick={handleBanAndDelete}
+                        title="Banuj URL i usuń"
+                    >
+                        <BlockIcon />
                     </IconButton>
                 </Box>
             )}
@@ -215,4 +265,4 @@ SongCard.propTypes = {
     id: PropTypes.number.isRequired,
 };
 
-export default React.memo(SongCard)
+export default React.memo(SongCard);

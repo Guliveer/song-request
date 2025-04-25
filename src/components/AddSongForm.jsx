@@ -1,4 +1,4 @@
-import {useState, useEffect} from 'react';
+import { useState, useEffect } from 'react';
 import { Box, TextField, Stack, Button } from '@mui/material';
 import { supabase } from '@/utils/supabase';
 import { isUserLoggedIn } from "@/utils/actions";
@@ -15,7 +15,7 @@ export default function AddSongForm() {
     // Sprawdzanie, czy użytkownik jest zalogowany
     useEffect(() => {
         const checkUser = async () => {
-            const user = await isUserLoggedIn()
+            const user = await isUserLoggedIn();
             setUser(user);
         };
 
@@ -43,24 +43,43 @@ export default function AddSongForm() {
 
         if (!user) {
             console.error('User not authenticated');
-            return; // Jeśli użytkownik nie jest zalogowany, nie wysyłamy formularza
+            return;
+        }
+
+        // Sprawdzanie stanu bana użytkownika
+        const { data: userData, error: userError } = await supabase
+            .from('users')
+            .select('ban_status')
+            .eq('id', user.id)
+            .single();
+
+        if (userError) {
+            console.error('Error fetching user data:', userError.message);
+            alert('Error checking ban status');
+            return;
+        }
+
+        if (userData.ban_status > 0) {
+            // Jeśli użytkownik jest zbanowany, nie pozwalamy na dodanie piosenki
+            alert('Nie mozesz dodac piosenki, ponieważ twoje konto ma aktywnego bana.');
+            return;
         }
 
         console.log('Submitting form with data:', formData);
 
-        // Wysyłanie do bazy danych
+        // Jeśli nie ma błędów i użytkownik nie jest zbanowany, dodajemy piosenkę do kolejki
         const { data, error } = await supabase
             .from('queue')
             .insert([{ ...formData, user_id: user.id }]);
 
         if (error) {
             console.error('Error adding song to queue:', error.message);
+            alert('Error adding song: ' + error.message);
         } else {
             console.log('Song added to queue:', data);
-            setFormData({ title: '', author: '', url: '' }); // Czyszczenie formularza po dodaniu
+            setFormData({ title: '', author: '', url: '' });
         }
     };
-
 
     return (
         <Box
@@ -76,7 +95,7 @@ export default function AddSongForm() {
         >
             <h1>Add Song to Queue</h1>
             {!user ? (
-                <div>You must be logged in to add a song.</div> // Jeśli użytkownik nie jest zalogowany, pokazujemy ten komunikat
+                <div>You must be logged in to add a song.</div>
             ) : (
                 <Box
                     component="form"
@@ -118,14 +137,12 @@ export default function AddSongForm() {
                         fullWidth
                         value={formData.url}
                         onChange={handleChange}
-                        sx={{ }}
                     />
 
                     <Stack direction="row" justifyContent="center" sx={{ width: "100%", marginTop: 2 }}>
                         <Button
                             type="submit"
                             variant="contained"
-                            sx={{ }}
                         >
                             Add to Queue
                         </Button>
@@ -135,3 +152,4 @@ export default function AddSongForm() {
         </Box>
     );
 }
+

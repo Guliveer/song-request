@@ -3,7 +3,17 @@ import { useRouter } from "next/router";
 import { isUserAdmin, isUserLoggedIn } from "@/utils/actions";
 import { supabase } from "@/utils/supabase";
 import SongCard from "@/components/SongCard";
-import { Card, Typography, Box, IconButton, Divider } from "@mui/material";
+import {
+    Card,
+    Typography,
+    Box,
+    IconButton,
+    Divider,
+    Select,
+    MenuItem,
+    FormControl,
+    InputLabel
+} from "@mui/material";
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import DeleteIcon from '@mui/icons-material/Delete';
 
@@ -46,7 +56,7 @@ export default function AdminPanel() {
         async function fetchUsers() {
             const { data, error } = await supabase
                 .from("users")
-                .select("id, username");
+                .select("id, username, ban_status");
 
             if (!error) setUsers(data);
         }
@@ -54,8 +64,9 @@ export default function AdminPanel() {
         if (isAdmin) fetchUsers();
     }, [isAdmin]);
 
+    // funkcja do resetowania głosów użytkownika
     const handleResetVotesForUser = async (userId) => {
-        const { error } = await supabase
+        const { error } = await supabase // TO JUŻ BYŁO WCZEŚNIEJ, ZOSTAWIĆ
             .from("votes")
             .delete()
             .eq("user_id", userId);
@@ -67,6 +78,7 @@ export default function AdminPanel() {
         }
     };
 
+    // funkcja do usuwania głosów użytkownika
     const handleDeleteUserSongs = async (userId) => {
         const { error } = await supabase
             .from("queue")
@@ -77,12 +89,40 @@ export default function AdminPanel() {
             alert(`Błąd usuwania piosenek użytkownika: ${error.message}`);
         } else {
             alert("Piosenki użytkownika zostały usunięte.");
-            // odśwież listę piosenek po usunięciu
+
             const { data, error: fetchError } = await supabase
                 .from("queue")
                 .select("id")
                 .order("added_at", { ascending: false });
             if (!fetchError) setSongs(data);
+        }
+    };
+
+    // funkcja do nakładania/zmiany bana
+    const handleBanChange = async (userId, days) => {
+        console.log("Ban request → userId:", userId, "| Days:", days);
+        const { data: updateData, error } = await supabase
+            .from("users")
+            .update({ ban_status: days })
+            .eq("id", userId)
+            .select("id, username, ban_status"); // <- potrzebne!
+
+        if (error) {
+            console.error("Błąd przy update:", error);
+            alert(`Błąd ustawiania bana: ${error.message}`);
+        } else {
+            console.log("Update result:", updateData);
+            alert(`Ban ustawiony na ${days === 0 ? "brak" : days + " dni"}.`);
+
+            const { data: usersData, error: usersError } = await supabase
+                .from("users")
+                .select("id, username, ban_status");
+
+            if (usersError) {
+                console.error("Błąd przy pobieraniu użytkowników:", usersError);
+            } else {
+                setUsers(usersData);
+            }
         }
     };
 
@@ -110,11 +150,9 @@ export default function AdminPanel() {
                         key={user.id}
                         sx={{
                             display: "flex",
-                            flexDirection: { xs: "column", sm: "row" },
-                            alignItems: { xs: "flex-start", sm: "center" },
-                            justifyContent: "space-between",
+                            flexDirection: "column",
+                            gap: "0.5rem",
                             padding: "0.75rem 1rem",
-                            gap: { xs: "0.5rem", sm: "0" },
                             marginTop: "1rem"
                         }}
                     >
@@ -135,9 +173,25 @@ export default function AdminPanel() {
                                 <DeleteIcon />
                             </IconButton>
                         </Box>
+
+                        <FormControl size="small" sx={{ minWidth: 150 }}>
+                            <InputLabel id={`ban-select-label-${user.id}`}>Ban</InputLabel>
+                            <Select
+                                labelId={`ban-select-label-${user.id}`}
+                                value={user.ban_status || 0}
+                                label="Ban"
+                                onChange={(e) => handleBanChange(user.id, e.target.value)}
+                            >
+                                <MenuItem value={0}>Brak bana</MenuItem>
+                                <MenuItem value={7}>1 tydzień</MenuItem>
+                                <MenuItem value={30}>1 miesiąc</MenuItem>
+                                <MenuItem value={90}>3 miesiące</MenuItem>
+                                <MenuItem value={180}>6 miesięcy</MenuItem>
+                                <MenuItem value={365}>1 rok</MenuItem>
+                                <MenuItem value={9999}>Permanentny</MenuItem>
+                            </Select>
+                        </FormControl>
                     </Card>
-
-
                 ))}
             </div>
         </div>
