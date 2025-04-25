@@ -3,7 +3,6 @@ import { AuthProvider } from '@/components/Items';
 import { Box } from '@mui/material';
 import {Google, GitHub, FacebookRounded as Facebook} from '@mui/icons-material';
 
-
 export const availableProviders = [
     // {providerName: 'spotify', displayName: 'Spotify', icon: <Spotify />}, //! has some problems, idk why
     //? https://supabase.com/docs/guides/auth/social-login/auth-spotify?queryGroups=language&language=js&queryGroups=environment&environment=server
