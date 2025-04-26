@@ -387,7 +387,7 @@ function SongCard({id}) {
                                     {followedUsersVotes.map((vote) => (
                                         <Tooltip
                                             key={vote.user_id}
-                                            title={`${vote.username} voted ${vote.vote === 1 ? '+1' : '-1'}`}
+                                            title={`${vote.username} ${vote.vote === 1 ? 'upvoted' : 'downvoted'}`}
                                             arrow
                                         >
                                             <Avatar sx={{bgcolor: vote.vote === 1 ? 'primary.main' : 'error.light'}}>
