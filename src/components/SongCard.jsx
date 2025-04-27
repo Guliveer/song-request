@@ -377,12 +377,34 @@ function SongCard({id}) {
                         {followedUsersVotes.length > 0 && (
                             <Box sx={{display: 'flex', width: '100%', alignItems: 'center', gap: '0.4em', mt: 0.5}}>
                                 <AvatarGroup
-                                    max={3}
+                                    max={4}  // Zmieniamy na 3, aby pokazywać 2 awatary + 1 z plusem
                                     sx={{
                                         '& .MuiAvatar-root': {
                                             width: 22,
                                             height: 22,
                                             fontSize: '0.75rem'
+                                        }
+                                    }}
+                                    slotProps={{
+                                        additionalAvatar: {
+                                            component: (props) => {
+                                                // Przygotowanie listy ukrytych użytkowników jako elementy React
+                                                const hiddenUsers = followedUsersVotes.slice(2).map(vote => (
+                                                    <div key={vote.user_id}>
+                                                        {`${vote.username} ${vote.vote === 1 ? 'upvoted' : 'downvoted'}`}
+                                                    </div>
+                                                ));
+
+                                                return (
+                                                    <Tooltip
+                                                        title={<React.Fragment>{hiddenUsers}</React.Fragment>}
+                                                        arrow
+                                                        placement="bottom"
+                                                    >
+                                                        <Avatar {...props} />
+                                                    </Tooltip>
+                                                );
+                                            }
                                         }
                                     }}
                                 >
