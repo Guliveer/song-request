@@ -9,7 +9,7 @@ import {
 import SkeletonSongCard from "@/components/skeletons/SkeletonSongCard";
 import {
     getUserInfo, getSongData, getCurrentUser, removeUserVote,
-    updateUserVote, playSound
+    updateUserVote, playSound, genUserAvatar
 } from "@/utils/actions";
 import debounce from 'lodash.debounce';
 import {
@@ -112,12 +112,14 @@ function SongCard({id}) {
                             .in('user_id', userData.followed_users);
 
                         if (!followedVotesError && followedVotes) {
-                            // Get usernames for votes
+                            // Get usernames and avatars for votes
                             const votesWithUsernames = await Promise.all(followedVotes.map(async (vote) => {
                                 const userInfo = await getUserInfo(vote.user_id);
+                                const avatarUrl = await genUserAvatar(vote.user_id);
                                 return {
                                     ...vote,
-                                    username: userInfo ? userInfo.username : 'User'
+                                    username: userInfo ? userInfo.username : 'User',
+                                    avatar: avatarUrl
                                 };
                             }));
 
@@ -390,7 +392,10 @@ function SongCard({id}) {
                                             title={`${vote.username} ${vote.vote === 1 ? 'upvoted' : 'downvoted'}`}
                                             arrow
                                         >
-                                            <Avatar sx={{bgcolor: vote.vote === 1 ? 'primary.main' : 'error.light'}}>
+                                            <Avatar
+                                                src={vote.avatar}
+                                                sx={{bgcolor: vote.vote === 1 ? 'primary.main' : 'error.light'}}
+                                            >
                                                 {vote.username.charAt(0).toUpperCase()}
                                             </Avatar>
                                         </Tooltip>
