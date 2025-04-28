@@ -45,7 +45,7 @@ export async function genUserAvatar(id) {
             .select("username, color")
             .eq("id", id)
             .single();
-        
+
         if (error) throw error;
 
         const { username, color } = user;
@@ -67,11 +67,17 @@ export async function genUserAvatar(id) {
 
         // 🔠 Litera
         ctx.globalCompositeOperation = "source-atop"; // Zachowujemy tylko literę
-        ctx.fillStyle = blendMode === "screen" ? "rgba(255,255,255,0.75)" : "rgba(0,0,0,0.75)";
-        ctx.font = "bold 18em Arial";
+
+        // Lepszy kontrast i bardziej subtelny wygląd literki
+        ctx.fillStyle = blendMode === "screen" ? "rgba(255,255,255,0.9)" : "rgba(0,0,0,0.85)";
+
+        // Medium zamiast Bold dla delikatniejszego wyglądu, który pasuje do Material UI
+        ctx.font = "500 12em 'Roboto', 'Helvetica', 'Arial', sans-serif";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText(initial, size / 2, size / 2);
+
+        // Delikatne przesunięcie dla lepszego optycznego wyśrodkowania
+        ctx.fillText(initial, size / 2, size / 2 + (size * 0.03));
 
         return canvas.toDataURL();
     } catch (error) {
