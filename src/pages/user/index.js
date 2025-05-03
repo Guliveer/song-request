@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { supabase } from "@/utils/supabase";
+import SetTitle from "@/components/SetTitle";
+import Account  from "@/components/User_Panel/Account";
+import Followers from "@/components/User_Panel/Followers";
+import Providers from "@/components/User_Panel/Providers";
+import {Box} from "@mui/material";
 
 export default function UserPanel() {
     const [isLoading, setIsLoading] = useState(true);
@@ -24,9 +29,14 @@ export default function UserPanel() {
     if (!isLoggedIn) return null;
 
     return (
-        <div>
-            <h1>User Panel</h1>
-            <p>Witaj w panelu użytkownika!</p>
-        </div>
+        <>
+            <SetTitle text={"User Panel"} />
+            <Box sx={{ display: 'flex', flexDirection: 'column', placeItems: 'center', gap: '2rem', }}>
+                <Account />
+                <Followers />
+                <Providers />
+            </Box>
+
+        </>
     );
 }

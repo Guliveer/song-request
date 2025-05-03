@@ -3,6 +3,104 @@ import PropTypes from "prop-types";
 import {supabase} from '@/utils/supabase';
 import {createCanvas} from 'canvas';
 
+export async function playSound(type, volume = 1.0) {
+    const basePath = '/audio'; // Base path for all sounds
+    let soundPath;
+
+    switch (type) {
+        case 'success':
+            soundPath = `${basePath}/mixkit-correct-answer-tone-2870.wav`;
+            break;
+        case 'swoosh':
+            soundPath = `${basePath}/mixkit-fast-small-sweep-transition-166.wav`;
+            break;
+        case 'click':
+            soundPath = `${basePath}/mixkit-modern-technology-select-3124.wav`;
+            break;
+        default:
+            console.error(`Sound type: "${type}" not found.`);
+            return;
+    }
+
+    try {
+        const audio = new Audio(soundPath);
+        audio.preload = 'auto';
+
+        audio.volume = Math.min(Math.max(volume, 0.0), 1.0);
+        await audio.play();
+    } catch (error) {
+        console.error(`Error playing sound "${type}":`, error.message);
+    }
+}
+
+playSound.propTypes = {
+    audio: PropTypes.oneOf(['success', 'swoosh', 'click']).isRequired,
+    volume: PropTypes.number,
+}
+
+export async function genUserAvatar(id) {
+    try {
+        const { data: user, error } = await supabase
+            .from("users")
+            .select("username, color")
+            .eq("id", id)
+            .single();
+
+        if (error) throw error;
+
+        const { username, color } = user;
+        const initial = username.charAt(0).toUpperCase();
+
+        const size = 256;
+        const canvas = createCanvas(size, size);
+        const ctx = canvas.getContext("2d");
+
+        // 🎨 Tło
+        ctx.fillStyle = color;
+        ctx.fillRect(0, 0, size, size);
+
+        // 🖌️ Tryb mieszania (blend mode)
+        const blendMode = getBlendModeForText(color);
+
+        // 🌟 Rysujemy "bazę" pod literę
+        ctx.fillRect(0, 0, size, size);
+
+        // 🔠 Litera
+        ctx.globalCompositeOperation = "source-atop"; // Zachowujemy tylko literę
+
+        // Lepszy kontrast i bardziej subtelny wygląd literki
+        ctx.fillStyle = blendMode === "screen" ? "rgba(255,255,255,0.9)" : "rgba(0,0,0,0.85)";
+
+        // Medium zamiast Bold dla delikatniejszego wyglądu, który pasuje do Material UI
+        ctx.font = "500 12em 'Roboto', 'Helvetica', 'Arial', sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+
+        // Delikatne przesunięcie dla lepszego optycznego wyśrodkowania
+        ctx.fillText(initial, size / 2, size / 2 + (size * 0.03));
+
+        return canvas.toDataURL();
+    } catch (error) {
+        console.error("Error generating user avatar:", error.message);
+        return null;
+    }
+}
+
+function getBlendModeForText(hex) {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+
+    if (luminance > 0.75) return "multiply";  // Bardzo jasne tło → litera ciemnieje
+    if (luminance < 0.35) return "screen";    // Bardzo ciemne tło → litera się rozjaśnia
+    return "overlay";                         // Średnie tło → naturalne wzmocnienie kontrastu
+}
+
+genUserAvatar.propTypes = {
+    id: PropTypes.string.isRequired
+}
 
 export async function isUserLoggedIn() {
     try {
@@ -195,4 +293,45 @@ updateUserVote.propTypes = {
     songId: PropTypes.number.isRequired,
     userId: PropTypes.string.isRequired,
     vote: PropTypes.number.isRequired
+}
+
+export function sortSongs(data, sortCriteria, sortOrder) {
+    return data.sort((a, b) => {
+        let comparison = 0;
+
+        // Primary sorting
+        if (sortCriteria === 'score') {
+            comparison = b.score - a.score; // Descending
+        } else if (sortCriteria === 'author') {
+            comparison = a.author.localeCompare(b.author); // Ascending
+        } else if (sortCriteria === 'title') {
+            comparison = a.title.localeCompare(b.title); // Ascending
+        } else if (sortCriteria === 'added_at') {
+            comparison = new Date(a.added_at) - new Date(b.added_at); // Ascending
+        }
+
+        // Apply primary sort order
+        if (sortOrder === 'asc') {
+            comparison = -comparison;
+        }
+
+        // Secondary sorting (fixed logic)
+        if (comparison === 0) {
+            if (sortCriteria === 'score' || sortCriteria === 'title') {
+                // Secondary: added_at (ascending)
+                comparison = new Date(a.added_at) - new Date(b.added_at);
+            } else {
+                // Secondary: score (ascending)
+                comparison = a.score - b.score;
+            }
+        }
+
+        return comparison;
+    });
+}
+
+sortSongs.propTypes = {
+    data: PropTypes.array.isRequired,
+    sortCriteria: PropTypes.oneOf(['score', 'author', 'title', 'added_at']).isRequired,
+    sortOrder: PropTypes.oneOf(['asc', 'desc']).isRequired
 }
