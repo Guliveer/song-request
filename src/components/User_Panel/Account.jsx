@@ -28,7 +28,7 @@ export default function Account() {
     const [openDialog, setOpenDialog] = useState(false);
     const [colorDialogOpen, setColorDialogOpen] = useState(false);
     const [emojiDialogOpen, setEmojiDialogOpen] = useState(false);
-    const [avatarColor, setAvatarColor] = useState("#3498db"); // Set null as default to avoid flashing color before loading data
+    const [avatarColor, setAvatarColor] = useState("");
     const [avatarEmoji, setAvatarEmoji] = useState("");
 
     useEffect(() => {
