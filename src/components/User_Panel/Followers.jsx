@@ -4,6 +4,7 @@ import {
     ListItemSecondaryAction, ListItemText, Paper,
     Stack, TextField, Typography, Box
 } from "@mui/material";
+import { FormField } from "@/components/Items";
 import { Delete, Settings } from "@mui/icons-material";
 import { supabase } from "@/utils/supabase";
 
@@ -164,7 +165,7 @@ export default function Followers() {
 
                 <Box sx={{ position: "relative", mt: 1 }}>
                     <Stack direction="row" spacing={1} alignItems="center">
-                        <TextField
+                        <FormField
                             label="Username"
                             value={friendUsername}
                             onChange={handleSearchChange}

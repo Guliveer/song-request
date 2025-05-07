@@ -19,6 +19,7 @@
     "@mui/system": "^7.0.2",
     "@supabase/supabase-js": "^2.49.1",
     "canvas": "^3.1.0",
+    "emoji-picker-react": "^4.12.2",
     "lodash.debounce": "^4.0.8",
     "next": "^15.2.4",
     "prop-types": "^15.8.1",
