@@ -353,7 +353,7 @@ export default function Followers() {
                                         sx={{ mt: 2 }}
                                         onClick={() => setVisibleFollowing((prev) => prev + 5)}
                                     >
-                                        Pokaż więcej
+                                        Show more
                                     </Button>
                                 )}
                             </>
