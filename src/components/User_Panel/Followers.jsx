@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import {
-    Button, Divider, IconButton, List, ListItem,
-    ListItemSecondaryAction, ListItemText, Paper,
-    Stack, TextField, Typography, Box
+    Button, Dialog, DialogTitle, DialogContent, DialogActions,
+    List, ListItem, ListItemText, Paper, Stack, TextField,
+    Typography, Box, IconButton, InputAdornment
 } from "@mui/material";
 import { FormField } from "@/components/Items";
-import { Delete, Settings } from "@mui/icons-material";
+import { DeleteIcon, PersonIcon } from "@mui/icons-material";
 import { supabase } from "@/utils/supabase";
+import Autocomplete from '@mui/material/Autocomplete';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
 
 export default function Followers() {
     const [userId, setUserId] = useState(null);
@@ -15,8 +18,14 @@ export default function Followers() {
     const [alreadyFollowing, setAlreadyFollowing] = useState(false);
     const [followedUsersData, setFollowedUsersData] = useState([]);
     const [followersData, setFollowersData] = useState([]);
-    const [editFollowMode, setEditFollowMode] = useState(false);
-    const [tempFollowedUsersData, setTempFollowedUsersData] = useState([]);
+    const [dialogOpen, setDialogOpen] = useState(false);
+    const [dialogType, setDialogType] = useState(null); // 'following' lub 'followers'
+
+    const [visibleFollowing, setVisibleFollowing] = useState(1);
+    const [visibleFollowers, setVisibleFollowers] = useState(1);
+
+    const [followingSearch, setFollowingSearch] = useState('');
+
 
     useEffect(() => {
         const fetchData = async () => {
@@ -46,7 +55,6 @@ export default function Followers() {
             }
 
             setFollowedUsersData(followedUsers);
-            setTempFollowedUsersData(followedUsers);
 
             // Get all users to find who follows current user
             const { data: allUsers } = await supabase
@@ -62,6 +70,11 @@ export default function Followers() {
 
         fetchData();
     }, []);
+
+    useEffect(() => {
+        if (dialogOpen && dialogType === "following") setVisibleFollowing(5);
+        if (dialogOpen && dialogType === "followers") setVisibleFollowers(5);
+    }, [dialogOpen, dialogType]);
 
     const handleAddFriend = async () => {
         if (!friendUsername.trim()) return;
@@ -105,36 +118,10 @@ export default function Followers() {
         setFollowedUsersData((prev) => [...prev, friendUser]);
     };
 
-    const handleRemoveFollower = (idToRemove) => {
-        setTempFollowedUsersData((prev) =>
-            prev.filter((u) => u.id !== idToRemove)
-        );
-    };
-
-    const handleCancelFollowChanges = () => {
-        setTempFollowedUsersData([...followedUsersData]);
-        setEditFollowMode(false);
-    };
-
-    const handleConfirmFollowChanges = async () => {
-        const newFollowed = tempFollowedUsersData.map((u) => u.id);
-
-        const { error } = await supabase
-            .from("users")
-            .update({ followed_users: newFollowed })
-            .eq("id", userId);
-
-        if (!error) {
-            setFollowedUsersData([...tempFollowedUsersData]);
-            setEditFollowMode(false);
-        } else {
-            console.error("Save failed", error);
-        }
-    };
-
     const handleSearchChange = async (e) => {
         const val = e.target.value;
         setFriendUsername(val);
+        setAlreadyFollowing(false); // RESETUJ komunikat za każdym razem, gdy zmieniasz pole
 
         if (val.length < 3) {
             setFriendSearchResults([]);
@@ -150,136 +137,258 @@ export default function Followers() {
         setFriendSearchResults(results);
     };
 
-    const toggleEditFollow = () => {
-        if (!editFollowMode) {
-            setTempFollowedUsersData([...followedUsersData]);
+
+    const handleOpenDialog = (type) => {
+        setDialogType(type);
+        setDialogOpen(true);
+    };
+
+    const handleCloseDialog = () => {
+        setDialogOpen(false);
+        setDialogType(null);
+    };
+
+    // Usuwanie obserwowanego użytkownika
+    const handleUnfollow = async (idToRemove) => {
+        const updated = followedUsersData.filter((u) => u.id !== idToRemove).map((u) => u.id);
+        const { error } = await supabase
+            .from("users")
+            .update({ followed_users: updated })
+            .eq("id", userId);
+        if (!error) {
+            setFollowedUsersData((prev) => prev.filter((u) => u.id !== idToRemove));
         }
-        setEditFollowMode((prev) => !prev);
     };
 
     return (
-        <Paper sx={{ p: 2, mb: -2, width: "40%", borderRadius: 4}}>
-            {/* Add friend */}
-            <Paper sx={{ p: 2, mb: 3 }}>
-                <Typography variant="h6">Add friend</Typography>
-
-                <Box sx={{ position: "relative", mt: 1 }}>
-                    <Stack direction="row" spacing={1} alignItems="center">
-                        <FormField
-                            label="Username"
-                            value={friendUsername}
-                            onChange={handleSearchChange}
-                            sx={{ flexGrow: 1, maxWidth: 300 }}
-                        />
-                        <Button variant="contained" onClick={handleAddFriend}>
-                            ADD
-                        </Button>
-                    </Stack>
-
-                    {alreadyFollowing && (
-                        <Typography variant="body2" color="error" sx={{ mt: 1 }}>
-                            You are already following this user.
-                        </Typography>
-                    )}
-
-                    {friendSearchResults.length > 0 && (
-                        <Paper
-                            sx={{
-                                position: "absolute",
-                                zIndex: 10,
-                                top: "100%",
-                                left: 0,
-                                right: 0,
-                                backgroundColor: (theme) => theme.palette.background.paper,
-                                color: (theme) => theme.palette.text.primary,
-                                boxShadow: 4,
-                                border: "1px solid",
-                                borderColor: "divider",
-                                borderRadius: 1,
-                                maxHeight: 200,
-                                overflowY: "auto",
-                                mt: 1,
+        <Paper sx={{ p: 3, borderRadius: 4, width:'40%', mx: 'auto' }}>
+            <Typography variant="h6" fontWeight="bold" mb={2}>
+                Add friend
+            </Typography>
+            <Box sx={{ maxWidth: 500, mb: 3, mx: "auto" }}>
+                <Stack direction="row" spacing={2} alignItems="center" justifyContent="center">
+                    {/* Stack pionowy dla TextField + komunikat */}
+                    <Box sx={{ position: "relative", minWidth: 250, height: 56, display: 'flex', alignItems: 'center' }}>
+                        <Autocomplete
+                            sx={{ width: '250px' }}
+                            freeSolo
+                            options={friendSearchResults}
+                            getOptionLabel={(option) =>
+                                typeof option === 'string' ? option : option.username
+                            }
+                            onInputChange={(event, newInputValue) =>
+                                handleSearchChange({ target: { value: newInputValue } })
+                            }
+                            onChange={(event, value) => {
+                                if (value && typeof value !== 'string') {
+                                    setFriendUsername(value.username);
+                                } else if (typeof value === 'string') {
+                                    setFriendUsername(value);
+                                }
                             }}
-                        >
-                            <List dense>
-                                {friendSearchResults.map((u) => (
-                                    <ListItem
-                                        key={u.id}
-                                        button
-                                        onClick={() => {
-                                            setFriendUsername(u.username);
-                                            setFriendSearchResults([]);
-                                        }}
-                                    >
-                                        <ListItemText primary={u.username} />
-                                    </ListItem>
-                                ))}
-                            </List>
-                        </Paper>
+                            inputValue={friendUsername}
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    label="Username"
+                                    InputProps={{
+                                        ...params.InputProps,
+                                        startAdornment: (
+                                            <InputAdornment position="start">
+                                                <PersonIcon sx={{ color: 'primary.main' }} />
+                                            </InputAdornment>
+                                        ),
+                                    }}
+                                    sx={{
+                                        bgcolor: 'background.paper',
+                                        borderRadius: 2,
+                                        input: { color: 'text.primary', fontWeight: 500 },
+                                        width: '250px'
+                                    }}
+                                />
+                            )}
+                        />
+                        {/* Komunikat absolutnie pod polem */}
+                        {alreadyFollowing && friendUsername && (
+                            <Box sx={{
+                                position: 'absolute',
+                                left: 0,
+                                top: '100%',
+                                width: '100%',
+                                mt: 0.5,
+                                display: 'flex',
+                                alignItems: 'center'
+                            }}>
+                                <Typography
+                                    variant="body2"
+                                    color="error"
+                                    sx={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 1,
+                                        ml: '2px'
+                                    }}
+                                >
+                                    <ErrorOutlineIcon fontSize="small" />
+                                    You are already following this user.
+                                </Typography>
+                            </Box>
+                        )}
+                    </Box>
 
-                    )}
-                </Box>
-            </Paper>
+                    <Button
+                        variant="contained"
+                        sx={{
+                            px: 3,
+                            fontWeight: 'bold',
+                            textTransform: 'none',
+                            borderRadius: 2,
+                            bgcolor: '#8FE6D5',
+                            color: '#111',
+                            '&:hover': { bgcolor: '#6fc3b2' },
+                        }}
+                        onClick={handleAddFriend}
+                        startIcon={<PersonAddIcon />}
+                    >
+                        ADD
+                    </Button>
 
-
-
-            {/* Following */}
-            <Paper sx={{ p: 2, mb: 3 }}>
-                <Stack direction="row" justifyContent="space-between" alignItems="center">
-                    <Typography variant="h6">Following ({followedUsersData.length})</Typography>
-                    <IconButton onClick={toggleEditFollow}>
-                        <Settings />
-                    </IconButton>
+                    <Box
+                        sx={{
+                            px: 3,
+                            py: 2,
+                            borderRadius: 2,
+                            bgcolor: '#8FE6D5',
+                            color: '#111',
+                            cursor: 'pointer',
+                            minWidth: 100,
+                            fontWeight: 'bold',
+                            boxShadow: 2,
+                            transition: 'background 0.2s',
+                            '&:hover': {
+                                bgcolor: '#6fc3b2',
+                            },
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            textAlign: 'center',
+                        }}
+                        onClick={() => handleOpenDialog('following')}
+                    >
+                        <Typography variant="h5" fontWeight="bold">{followedUsersData.length}</Typography>
+                        <Typography variant="body2" fontWeight="bold">Following</Typography>
+                    </Box>
+                    <Box
+                        sx={{
+                            px: 3,
+                            py: 2,
+                            borderRadius: 2,
+                            bgcolor: '#8FE6D5',
+                            color: '#111',
+                            cursor: 'pointer',
+                            minWidth: 100,
+                            fontWeight: 'bold',
+                            boxShadow: 2,
+                            transition: 'background 0.2s',
+                            '&:hover': {
+                                bgcolor: '#6fc3b2',
+                            },
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            textAlign: 'center',
+                        }}
+                        onClick={() => handleOpenDialog('followers')}
+                    >
+                        <Typography variant="h5" fontWeight="bold">{followersData.length}</Typography>
+                        <Typography variant="body2" fontWeight="bold">Followers</Typography>
+                    </Box>
                 </Stack>
-                <Divider sx={{ my: 1 }} />
-                {followedUsersData.length === 0 ? (
-                    <Typography variant="body2" color="text.secondary">
-                        You are not following any users.
-                    </Typography>
-                ) : (
-                    <List>
-                        {(editFollowMode ? tempFollowedUsersData : followedUsersData).map((u) => (
-                            <ListItem key={u.id}>
-                                <ListItemText primary={u.username} />
-                                {editFollowMode && (
-                                    <ListItemSecondaryAction>
-                                        <IconButton edge="end" onClick={() => handleRemoveFollower(u.id)}>
-                                            <Delete />
-                                        </IconButton>
-                                    </ListItemSecondaryAction>
-                                )}
-                            </ListItem>
-                        ))}
-                    </List>
-                )}
-                {editFollowMode && (
-                    <Stack direction="row" spacing={2} justifyContent="flex-end" mt={2}>
-                        <Button onClick={handleCancelFollowChanges}>Cancel</Button>
-                        <Button variant="contained" onClick={handleConfirmFollowChanges}>
-                            Confirm
-                        </Button>
-                    </Stack>
-                )}
-            </Paper>
 
-            {/* Followers */}
-            <Paper sx={{ p: 2 }}>
-                <Typography variant="h6">Followers ({followersData.length})</Typography>
-                <Divider sx={{ my: 1 }} />
-                {followersData.length === 0 ? (
-                    <Typography variant="body2" color="text.secondary">
-                        No one is following you yet.
-                    </Typography>
-                ) : (
-                    <ul>
-                        {followersData.map((f) => (
-                            <li key={f.id}>
-                                <Typography variant="body1">{f.username}</Typography>
-                            </li>
-                        ))}
-                    </ul>
-                )}
-            </Paper>
+            </Box>
+
+
+            {/* Dialog */}
+            <Dialog open={dialogOpen} onClose={handleCloseDialog} maxWidth="xs" fullWidth>
+                <DialogTitle>
+                    {dialogType === 'following' ? 'Following' : dialogType === 'followers' ? 'Followers' : ''}
+                </DialogTitle>
+                <DialogContent dividers>
+                    {dialogType === 'following' && (
+                        followedUsersData.length === 0 ? (
+                            <Typography color="text.secondary">You are not following any users.</Typography>
+                        ) : (
+                            <>
+                                <TextField
+                                    fullWidth
+                                    size="small"
+                                    placeholder="Search following..."
+                                    value={followingSearch}
+                                    onChange={e => setFollowingSearch(e.target.value)}
+                                    sx={{ mb: 2 }}
+                                />
+                                <List>
+                                    {followedUsersData
+                                        .filter(u => u.username.toLowerCase().includes(followingSearch.toLowerCase()))
+                                        .slice(0, visibleFollowing)
+                                        .map((u) => (
+                                            <ListItem
+                                                key={u.id}
+                                                secondaryAction={
+                                                    <IconButton edge="end" color="error" onClick={() => handleUnfollow(u.id)}>
+                                                        <DeleteIcon />
+                                                    </IconButton>
+                                                }
+                                            >
+                                                <ListItemText primary={u.username} />
+                                            </ListItem>
+                                        ))}
+                                </List>
+                                {visibleFollowing < followedUsersData.filter(u => u.username.toLowerCase().includes(followingSearch.toLowerCase())).length && (
+                                    <Button
+                                        variant="outlined"
+                                        fullWidth
+                                        sx={{ mt: 2 }}
+                                        onClick={() => setVisibleFollowing((prev) => prev + 5)}
+                                    >
+                                        Show more
+                                    </Button>
+                                )}
+                            </>
+                        )
+                    )}
+                    {dialogType === 'followers' && (
+                        followersData.length === 0 ? (
+                            <Typography color="text.secondary">No one is following you yet.</Typography>
+                        ) : (
+                            <>
+                                <List>
+                                    {followersData.slice(0, visibleFollowers).map((f) => (
+                                        <ListItem key={f.id}>
+                                            <ListItemText primary={f.username} />
+                                        </ListItem>
+                                    ))}
+                                </List>
+                                {visibleFollowers < followersData.length && (
+                                    <Button
+                                        variant="outlined"
+                                        fullWidth
+                                        sx={{ mt: 2 }}
+                                        onClick={() => setVisibleFollowers((prev) => prev + 5)}
+                                    >
+                                        Pokaż więcej
+                                    </Button>
+                                )}
+                            </>
+                        )
+                    )}
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleCloseDialog}>Close</Button>
+                </DialogActions>
+            </Dialog>
         </Paper>
     );
 }
