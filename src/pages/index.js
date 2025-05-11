@@ -1,6 +1,7 @@
 import AddSongForm from '@/components/AddSongForm';
 import Queue from '@/components/Queue';
 import SetTitle from "@/components/SetTitle";
+import TopSongsOlympicPodium from '@/components/TopSongsOlympicPodium';
 
 export default function Home() {
     return (
@@ -12,6 +13,7 @@ export default function Home() {
             placeItems: 'center',
             gap: '2rem',
         }}>
+            <TopSongsOlympicPodium />
             <AddSongForm />
             <Queue />
         </div>
