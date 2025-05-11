@@ -108,7 +108,7 @@ export default function TopSongsOlympicPodium() {
                         gap: 1
                     }}>
                         <EmojiEventsIcon sx={{color: '#facc15'}}/>
-                        Top utworów
+                        Top 3 Songs
                     </Typography>
                 </Box>
 
@@ -241,7 +241,7 @@ export default function TopSongsOlympicPodium() {
                                                     fontWeight: 500,
                                                     color: 'rgb(94, 234, 212)'
                                                 }}>
-                                                    {song.votes} głosów
+                                                    {song.votes} votes
                                                 </Typography>
                                             </Box>
                                         </Box>
@@ -333,7 +333,7 @@ export default function TopSongsOlympicPodium() {
                                                     fontWeight: 500,
                                                     color: 'rgb(94, 234, 212)'
                                                 }}>
-                                                    {sortedSongs[1]?.votes || 0} głosów
+                                                    {sortedSongs[1]?.votes || 0} score
                                                 </Typography>
                                             </Box>
                                         </Box>
@@ -433,7 +433,7 @@ export default function TopSongsOlympicPodium() {
                                                     fontWeight: 500,
                                                     color: 'rgb(153, 246, 228)'
                                                 }}>
-                                                    {sortedSongs[0]?.votes || 0} głosów
+                                                    {sortedSongs[0]?.votes || 0} score
                                                 </Typography>
                                             </Box>
                                         </Box>
@@ -535,7 +535,7 @@ export default function TopSongsOlympicPodium() {
                                                     fontWeight: 500,
                                                     color: 'rgb(94, 234, 212)'
                                                 }}>
-                                                    {sortedSongs[2]?.votes || 0} głosów
+                                                    {sortedSongs[2]?.votes || 0} score
                                                 </Typography>
                                             </Box>
                                         </Box>
@@ -558,7 +558,7 @@ export default function TopSongsOlympicPodium() {
                                                 width: 36,
                                                 height: 36,
                                                 bgcolor: '#b45309',
-                                                color: 'white',
+                                                color: 'black',
                                                 fontWeight: 'bold',
                                                 borderRadius: '50%',
                                                 display: 'flex',
