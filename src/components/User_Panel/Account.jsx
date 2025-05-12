@@ -101,17 +101,28 @@ export default function Account() {
         setOpenDialog(false);
     };
 
-    const handleEmojiSelect = async () => {
+    const handleEmojiSelect = async (clear = false) => {
         const { data: user } = await supabase.auth.getUser();
         if (!user) return;
 
-        const { error } = await supabase
-            .from("users")
-            .update({ emoji: avatarEmoji })
-            .eq("id", user.user.id);
+        if (clear === true) {
+            const { error } = await supabase
+                .from("users")
+                .update({ emoji: null })
+                .eq("id", user.user.id);
 
-        if (error) {
-            console.error("Error updating emoji:", error);
+            if (error) {
+                console.error("Error updating emoji:", error);
+            }
+        } else {
+            const {error} = await supabase
+                .from("users")
+                .update({emoji: avatarEmoji})
+                .eq("id", user.user.id);
+
+            if (error) {
+                console.error("Error updating emoji:", error);
+            }
         }
 
         setEmojiDialogOpen(false);
@@ -364,6 +375,13 @@ export default function Account() {
                     />
                 </DialogContent>
                 <DialogActions>
+                    <Button
+                        color="error"
+                        onClick={() => handleEmojiSelect(true)}
+                        disabled={!avatarEmoji}
+                    >
+                        Remove
+                    </Button>
                     <Button onClick={() => setEmojiDialogOpen(false)} color="primary">
                         Cancel
                     </Button>
