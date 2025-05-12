@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
     Box, Button, Dialog, DialogTitle, DialogContent,
     Fab, Tooltip, Stack, useTheme, CircularProgress
@@ -10,7 +10,7 @@ import {
     BlockRounded as BlockIcon,
     DoneRounded as SuccessIcon,
 } from '@mui/icons-material';
-import { playSound } from '@/utils/actions'
+import { playSound } from '@/utils/actions';
 import { keyframes } from '@mui/system';
 import { supabase } from '@/utils/supabase';
 import { useUser } from "@/context/UserContext";
@@ -18,11 +18,29 @@ import { FormField } from "@/components/Items";
 
 export default function AddSongForm() {
     const theme = useTheme();
-    const { isLoggedIn } = useUser(); // Use the global user state
+    const { isLoggedIn } = useUser(); // Globalny kontekst logowania
     const [open, setOpen] = useState(false);
     const [formData, setFormData] = useState({ title: '', author: '', url: '' });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [success, setSuccess] = useState(false);
+    const [user, setUser] = useState(null);
+
+    useEffect(() => {
+        const fetchUser = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            setUser(user);
+        };
+
+        fetchUser();
+
+        const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+            setUser(session?.user || null);
+        });
+
+        return () => {
+            listener.subscription.unsubscribe();
+        };
+    }, []);
 
     const handleChange = (event) => {
         const { id, value } = event.target;
@@ -34,15 +52,38 @@ export default function AddSongForm() {
 
     const handleSubmit = async (event) => {
         event.preventDefault();
-        if (!isLoggedIn) return;
+        if (!user) {
+            alert("Musisz być zalogowany, aby dodać piosenkę.");
+            return;
+        }
+
+        // Sprawdzenie statusu bana
+        const { data: userData, error: userError } = await supabase
+            .from('users')
+            .select('ban_status')
+            .eq('id', user.id)
+            .single();
+
+        if (userError) {
+            console.error('Błąd przy pobieraniu danych użytkownika:', userError.message);
+            alert('Błąd podczas sprawdzania statusu konta.');
+            return;
+        }
+
+        if (userData.ban_status > 0) {
+            alert('Nie możesz dodać piosenki, ponieważ Twoje konto ma aktywnego bana.');
+            return;
+        }
+
         setIsSubmitting(true);
 
         const { data, error } = await supabase
             .from('queue')
-            .insert([{ ...formData }]);
+            .insert([{ ...formData, user_id: user.id }]);
 
         if (error) {
-            console.error('Error:', error.message);
+            console.error('Błąd:', error.message);
+            alert('Błąd przy dodawaniu piosenki: ' + error.message);
         } else {
             setSuccess(true);
             setIsSubmitting(false);
@@ -177,7 +218,6 @@ export default function AddSongForm() {
                                 arrow
                                 placement="top"
                             >
-                                {/* Box is required for tooltip to work */}
                                 <Box sx={{
                                     display: 'flex',
                                     justifyContent: 'center',
@@ -190,8 +230,8 @@ export default function AddSongForm() {
                                         disabled={!isLoggedIn || isSubmitting}
                                         startIcon={
                                             success ? <SuccessIcon /> :
-                                            (!isLoggedIn ? <BlockIcon /> :
-                                            (!isSubmitting ? <SendIcon /> : null))
+                                                (!isLoggedIn ? <BlockIcon /> :
+                                                    (!isSubmitting ? <SendIcon /> : null))
                                         }
                                         sx={{
                                             minWidth: '50%',
@@ -203,8 +243,8 @@ export default function AddSongForm() {
                                         }}
                                     >
                                         {success ? "Done!" :
-                                        (isSubmitting ? <CircularProgress size={24} /> :
-                                        (isLoggedIn ? "Add to Queue" : "Login Required"))}
+                                            (isSubmitting ? <CircularProgress size={24} /> :
+                                                (isLoggedIn ? "Add to Queue" : "Login Required"))}
                                     </Button>
                                 </Box>
                             </Tooltip>

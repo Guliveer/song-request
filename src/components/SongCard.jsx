@@ -2,6 +2,7 @@ import PropTypes from 'prop-types';
 import React, {useState, useEffect, useCallback} from 'react';
 import Link from "next/link";
 import {supabase} from '@/utils/supabase';
+import { useRouter } from 'next/router';  // Importujemy useRouter
 import {
     Box, Card, Typography, IconButton, Snackbar, Divider, Button, Tooltip,
     Avatar, AvatarGroup
@@ -23,8 +24,9 @@ import {
     ThumbUpAltRounded as UpvoteIcon,
     ThumbDownAltRounded as DownvoteIcon,
 } from '@mui/icons-material';
+import { Delete as DeleteIcon, RestartAlt as RestartAltIcon, Block as BlockIcon } from '@mui/icons-material';
 
-const VoteButtons = React.memo(({userVote, handleVote, score}) => (
+const VoteButtons = React.memo(({userVote, handleVote, score, disabled}) => (
     <Box
         sx={{
             display: 'flex',
@@ -39,6 +41,7 @@ const VoteButtons = React.memo(({userVote, handleVote, score}) => (
             color={userVote === 1 ? "primary" : "disabled"}
             size="small"
             sx={{borderRadius: 3}}
+            disabled={disabled}
         >
             <VoteUpIcon color={userVote === 1 ? "primary" : "disabled"} sx={{fontSize: 30}}/>
         </IconButton>
@@ -56,11 +59,13 @@ const VoteButtons = React.memo(({userVote, handleVote, score}) => (
             color={userVote === -1 ? "primary" : "disabled"}
             size="small"
             sx={{borderRadius: 3}}
+            disabled={disabled}
         >
             <VoteDownIcon color={userVote === -1 ? "primary" : "disabled"} sx={{fontSize: 30}}/>
         </IconButton>
     </Box>
 ));
+
 
 function SongCard({id}) {
     const [songData, setSongData] = useState(null);
@@ -70,6 +75,10 @@ function SongCard({id}) {
     const [error, setError] = useState(null); // Error state
     const [isFollowing, setIsFollowing] = useState(false);
     const [followedUsersVotes, setFollowedUsersVotes] = useState([]);
+    const router = useRouter();  // Zainicjowaliśmy router
+    const [isBanned, setIsBanned] = useState(false);
+
+    const isAdminPanel = router.pathname.startsWith("/admin");
 
     const fetchData = useCallback(async () => {
         try {
@@ -77,6 +86,17 @@ function SongCard({id}) {
 
             if (currentUser) {
                 setUser(currentUser);
+
+                // Sprawdzenie czy użytkownik jest zbanowany
+                const { data: banData, error: banError } = await supabase
+                    .from('users')
+                    .select('ban_status')
+                    .eq('id', currentUser.id)
+                    .single();
+
+                if (!banError && banData?.ban_status > 0) {
+                    setIsBanned(true);
+                }
 
                 // Get user vote data
                 const {data: voteData, error: voteError} = await supabase
@@ -147,7 +167,6 @@ function SongCard({id}) {
     }, [fetchData]);
 
     const handleVote = useCallback(debounce(async (newVoteValue) => {
-        // debounce prevents multiple votes in a short time
         if (!user) {
             setError("You have to be logged in to vote.");
             return;
@@ -180,6 +199,57 @@ function SongCard({id}) {
             setUserVote(resultVoteVal);
         }
     }, 300), [user, userVote, id, fetchData]);
+
+    // funkcja do usuwania piosenki
+    const handleDelete = async () => {
+        const {error} = await supabase
+            .from('queue')
+            .delete()
+            .eq('id', id);
+
+        if (error) {
+            setError("Błąd podczas usuwania piosenki.");
+        } else {
+            router.reload();
+        }
+    };
+
+    // funkcja do resetowania głosów
+    const handleResetVotes = async () => {
+        const {error} = await supabase
+            .from('votes')
+            .delete()
+            .eq('song_id', id);
+
+        if (error) {
+            setError("Błąd podczas resetowania głosów.");
+        } else {
+            router.reload();
+        }
+    };
+
+    // funkcja do banowania url
+    const handleBanAndDelete = async () => {
+        const {error: insertError} = await supabase
+            .from('banned_url')
+            .insert([{url: songData.url}]);
+
+        if (insertError) {
+            setError("Błąd podczas banowania URL.");
+            return;
+        }
+
+        const {error: deleteError} = await supabase
+            .from('queue')
+            .delete()
+            .eq('id', id);
+
+        if (deleteError) {
+            setError("Błąd podczas usuwania piosenki.");
+        } else {
+            router.reload();
+        }
+    };
 
     const handleFollow = async () => {
         if (!user || !songData || user.id === songData.rawUserId) {
@@ -351,8 +421,6 @@ function SongCard({id}) {
                             <Typography variant="body2" color="text.secondary" sx={{fontSize: '0.9rem'}}>
                                 {username}
                             </Typography>
-
-                            {/* Follow Button - only if user is logged in, it's not themselves and they're not following yet */}
                             {user && songData.rawUserId !== user.id && !isFollowing && (
                                 <Tooltip title="Follow user">
                                     <IconButton
@@ -377,7 +445,7 @@ function SongCard({id}) {
                         {followedUsersVotes.length > 0 && (
                             <Box sx={{display: 'flex', width: '100%', alignItems: 'center', gap: '0.4em', mt: 0.5}}>
                                 <AvatarGroup
-                                    max={4}  // Zmieniamy na 3, aby pokazywać 2 awatary + 1 z plusem
+                                    max={4}
                                     sx={{
                                         '& .MuiAvatar-root': {
                                             width: 22,
@@ -388,7 +456,6 @@ function SongCard({id}) {
                                     slotProps={{
                                         additionalAvatar: {
                                             component: (props) => {
-                                                // Przygotowanie listy ukrytych użytkowników jako elementy React
                                                 const hiddenUsers = followedUsersVotes.slice(2).map(vote => (
                                                     <div key={vote.user_id}>
                                                         {`${vote.username} ${vote.vote === 1 ? 'upvoted' : 'downvoted'}`}
@@ -433,7 +500,39 @@ function SongCard({id}) {
                     userVote={userVote}
                     handleVote={handleVote}
                     score={score}
+                    disabled={isBanned}
                 />
+            </Box>
+
+            {/* Functionality Icons (Follow, Delete, Ban, etc.) */}
+            <Box sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                width: '100%',
+                alignItems: 'center',
+                mt: 2, // Added margin-top to separate from the previous section
+            }}>
+                <Box sx={{display: 'flex', gap: 2}}>
+                    {isAdminPanel && (
+                        <>
+                            <Tooltip title="Zbanuj URL">
+                                <IconButton onClick={handleBanAndDelete}>
+                                    <BlockIcon sx={{fontSize: 28}}/>
+                                </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Usuń piosenkę">
+                                <IconButton onClick={handleDelete}>
+                                    <DeleteIcon sx={{fontSize: 28}}/>
+                                </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Zresetuj głosy">
+                                <IconButton onClick={handleResetVotes}>
+                                    <RestartAltIcon sx={{fontSize: 28}}/>
+                                </IconButton>
+                            </Tooltip>
+                        </>
+                    )}
+                </Box>
             </Box>
 
             {error && (
@@ -450,12 +549,6 @@ function SongCard({id}) {
 
 SongCard.propTypes = {
     id: PropTypes.number.isRequired,
-};
-
-VoteButtons.propTypes = {
-    userVote: PropTypes.number,
-    handleVote: PropTypes.func.isRequired,
-    score: PropTypes.number.isRequired,
 };
 
 export default React.memo(SongCard);
