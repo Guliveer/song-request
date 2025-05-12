@@ -551,4 +551,4 @@ SongCard.propTypes = {
     id: PropTypes.number.isRequired,
 };
 
-export default SongCard;
+export default React.memo(SongCard);
