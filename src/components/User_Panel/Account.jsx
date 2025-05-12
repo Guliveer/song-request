@@ -177,8 +177,8 @@ export default function Account() {
                     <Button
                         variant="outlined"
                         size="small"
-                        onClick={() => setColorDialogOpen(true)
-                    }>
+                        onClick={() => setColorDialogOpen(true)}
+                    >
                         Edit
                     </Button>
                 </Stack>
