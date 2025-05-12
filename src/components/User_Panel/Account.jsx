@@ -29,7 +29,7 @@ export default function Account() {
     const [colorDialogOpen, setColorDialogOpen] = useState(false);
     const [emojiDialogOpen, setEmojiDialogOpen] = useState(false);
     const [avatarColor, setAvatarColor] = useState("");
-    const [avatarEmoji, setAvatarEmoji] = useState("");
+    const [avatarEmoji, setAvatarEmoji] = useState(null);
 
     useEffect(() => {
         const fetchProfile = async () => {
