@@ -42,14 +42,14 @@ export async function genUserAvatar(id) {
     try {
         const { data: user, error } = await supabase
             .from("users")
-            .select("username, color")
+            .select("username, color, emoji")
             .eq("id", id)
             .single();
 
         if (error) throw error;
 
         const { username, color } = user;
-        const initial = username.charAt(0).toUpperCase();
+        const icon = user.emoji;
 
         const size = 256;
         const canvas = createCanvas(size, size);
@@ -77,7 +77,7 @@ export async function genUserAvatar(id) {
         ctx.textBaseline = "middle";
 
         // Delikatne przesunięcie dla lepszego optycznego wyśrodkowania
-        ctx.fillText(initial, size / 2, size / 2 + (size * 0.03));
+        ctx.fillText(user.emoji ? icon : username.charAt(0).toUpperCase(), size / 2, size / 2 + (size * 0.03));
 
         return canvas.toDataURL();
     } catch (error) {

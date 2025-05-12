@@ -15,9 +15,9 @@ import {
 } from "@mui/material";
 import { SketchPicker } from "react-color";
 import { supabase } from "@/utils/supabase";
-
 import {availableProviders}  from "@/components/AuthProvidersList";
 import {AuthProvider} from "@/components/Items";
+import EmojiPicker, { Emoji } from "emoji-picker-react";
 
 export default function Account() {
     const theme = useTheme();
@@ -27,7 +27,9 @@ export default function Account() {
     const [usernameTaken, setUsernameTaken] = useState(false);
     const [openDialog, setOpenDialog] = useState(false);
     const [colorDialogOpen, setColorDialogOpen] = useState(false);
-    const [avatarColor, setAvatarColor] = useState("#3498db");
+    const [emojiDialogOpen, setEmojiDialogOpen] = useState(false);
+    const [avatarColor, setAvatarColor] = useState("");
+    const [avatarEmoji, setAvatarEmoji] = useState(null);
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -36,7 +38,7 @@ export default function Account() {
 
             const { data, error } = await supabase
                 .from("users")
-                .select("username, color")
+                .select("username, color, emoji")
                 .eq("id", user.user.id)
                 .single();
 
@@ -44,7 +46,8 @@ export default function Account() {
                 console.error("Error fetching profile:", error);
             } else {
                 setProfile({ username: data.username });
-                setAvatarColor(data.color || "#000000");
+                setAvatarColor(data.color || "#FFFFFF");
+                setAvatarEmoji(data.emoji || null);
             }
         };
 
@@ -98,31 +101,68 @@ export default function Account() {
         setOpenDialog(false);
     };
 
+    const handleEmojiSelect = async (clear = false) => {
+        const { data: user } = await supabase.auth.getUser();
+        if (!user) return;
+
+        if (clear === true) {
+            const { error } = await supabase
+                .from("users")
+                .update({ emoji: null })
+                .eq("id", user.user.id);
+
+            if (error) {
+                console.error("Error updating emoji:", error);
+            }
+        } else {
+            const {error} = await supabase
+                .from("users")
+                .update({emoji: avatarEmoji})
+                .eq("id", user.user.id);
+
+            if (error) {
+                console.error("Error updating emoji:", error);
+            }
+        }
+
+        setEmojiDialogOpen(false);
+
+        window.location.reload();
+    }
+
     return (
         <>
-            <Paper sx={{ p: 2, mb: -2, width: "40%", borderRadius: 4 }}>
+            <Paper sx={{
+                p: 2,
+                width: "40%",
+                maxWidth: "50em",
+                borderRadius: 4,
+                display: "flex",
+                flexDirection: "column",
+                gap: 1,
+            }}>
                 <Typography variant="h6">Account</Typography>
+                {/* Username */}
                 <Stack spacing={2} mt={1}>
-                    {profile && (
-                        <Stack direction="row" spacing={2} alignItems="center">
-                            <Typography variant="body1">
-                                Username: <strong>{profile.username}</strong>
-                            </Typography>
-                            <Button
-                                variant="outlined"
-                                size="small"
-                                onClick={() => {
-                                    setTempUsername("");
-                                    setUsernameTaken(false);
-                                    setOpenDialog(true);
-                                }}
-                            >
-                                Change
-                            </Button>
-                        </Stack>
-                    )}
+                    <Stack direction="row" spacing={2} alignItems="center">
+                        <Typography variant="body1">
+                            Username: <strong>{profile?.username}</strong>
+                        </Typography>
+                        <Button
+                            variant="outlined"
+                            size="small"
+                            onClick={() => {
+                                setTempUsername("");
+                                setUsernameTaken(false);
+                                setOpenDialog(true);
+                            }}
+                        >
+                            Edit
+                        </Button>
+                    </Stack>
                 </Stack>
-                <Divider sx={{ my: 2 }} />
+
+                {/* Color */}
                 <Stack direction="row" spacing={2} alignItems="center">
                     <Typography>Avatar color:</Typography>
                     <Box
@@ -134,10 +174,44 @@ export default function Account() {
                             border: "1px solid #ccc",
                         }}
                     />
-                    <Button size="small" onClick={() => setColorDialogOpen(true)}>
-                        Change color
+                    <Button
+                        variant="outlined"
+                        size="small"
+                        onClick={() => setColorDialogOpen(true)}
+                    >
+                        Edit
                     </Button>
                 </Stack>
+
+                {/* Emoji */}
+                <Stack direction="row" spacing={2} alignItems="center">
+                    <Typography>Avatar emoji:</Typography>
+                    {avatarEmoji ? (
+                        <Box
+                            sx={{
+                                width: 32,
+                                height: 32,
+                                borderRadius: "50%",
+                                border: "1px solid #777",
+                                display: "flex",
+                                placeContent: "center",
+                                placeItems: "center",
+                            }}
+                        >
+                            <span>{avatarEmoji}</span>
+                        </Box>
+                    ) : (
+                        <span>none</span>
+                    )}
+                    <Button
+                        variant="outlined"
+                        size="small"
+                        onClick={() => setEmojiDialogOpen(true)}
+                    >
+                        Edit
+                    </Button>
+                </Stack>
+
                 <Box
                     display="flex"
                     flexDirection="row"
@@ -248,6 +322,73 @@ export default function Account() {
                         onClick={handleUpdateProfile}
                         color="primary"
                         disabled={!tempUsername.trim()}
+                    >
+                        Save
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Dialog zmiany emoji */}
+            <Dialog
+                open={emojiDialogOpen}
+                onClose={() => setEmojiDialogOpen(false)}
+                fullWidth
+                maxWidth="sm"
+                PaperProps={{
+                    sx: {
+                        borderRadius: 4,
+                        p: 2,
+                        backdropFilter: "blur(16px)",
+                    },
+                }}
+            >
+                <DialogTitle
+                    sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        color: theme.palette.primary.main,
+                        fontWeight: "bold",
+                    }}
+                >
+                    Choose your avatar emoji
+                </DialogTitle>
+                <DialogContent>
+                    <Typography variant="h6" sx={{
+                        my: 2,
+                        textAlign: "center",
+                        display: "flex",
+                        flexDirection: "row",
+                        gap: 1,
+                    }}>
+                        <span>Selected:</span>
+                        <span>{avatarEmoji}</span>
+                    </Typography>
+                    <EmojiPicker
+                        lazyLoadEmojis={true}
+                        theme="dark"
+                        onEmojiClick={(emojiObject, event) => {
+                            setAvatarEmoji(emojiObject.emoji);
+                        }}
+                        width="100%"
+                        suggestedEmojisMode="recent"
+                    />
+                </DialogContent>
+                <DialogActions>
+                    <Button
+                        color="error"
+                        onClick={() => handleEmojiSelect(true)}
+                        disabled={!avatarEmoji}
+                    >
+                        Remove
+                    </Button>
+                    <Button onClick={() => setEmojiDialogOpen(false)} color="primary">
+                        Cancel
+                    </Button>
+                    <Button
+                        onClick={handleEmojiSelect}
+                        color="primary"
+                        disabled={!avatarEmoji} // Disable save if no emoji is selected
                     >
                         Save
                     </Button>

@@ -4,8 +4,7 @@ import {
     List, ListItem, ListItemText, Paper, Stack, TextField,
     Typography, Box, IconButton, InputAdornment
 } from "@mui/material";
-import DeleteIcon from '@mui/icons-material/Delete';
-import PersonIcon from '@mui/icons-material/Person';
+import { Delete as DeleteIcon, Person as PersonIcon } from "@mui/icons-material";
 import { supabase } from "@/utils/supabase";
 import Autocomplete from '@mui/material/Autocomplete';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
