@@ -8,16 +8,18 @@ import {
     DialogContent,
     DialogTitle,
     Divider,
-    Paper,
-    Stack,
-    TextField,
     Typography,
+    TextField,
+    IconButton,
 } from "@mui/material";
 import { SketchPicker } from "react-color";
 import { supabase } from "@/utils/supabase";
 import {availableProviders}  from "@/components/AuthProvidersList";
-import {AuthProvider} from "@/components/Items";
-import EmojiPicker, { Emoji } from "emoji-picker-react";
+import EmojiPicker from "emoji-picker-react";
+import EditIcon from '@mui/icons-material/Edit';
+import PersonIcon from '@mui/icons-material/Person';
+import PaletteIcon from '@mui/icons-material/Palette';
+import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
 
 export default function Account() {
     const theme = useTheme();
@@ -126,146 +128,181 @@ export default function Account() {
         }
 
         setEmojiDialogOpen(false);
-
         window.location.reload();
-    }
+    };
 
     return (
         <>
-            <Paper sx={{
-                p: 2,
-                width: "40%",
-                maxWidth: "50em",
-                borderRadius: 4,
-                display: "flex",
-                flexDirection: "column",
-                gap: 1,
-            }}>
-                <Typography variant="h6">Account</Typography>
-                {/* Username */}
-                <Stack spacing={2} mt={1}>
-                    <Stack direction="row" spacing={2} alignItems="center">
-                        <Typography variant="body1">
-                            Username: <strong>{profile?.username}</strong>
-                        </Typography>
-                        <Button
-                            variant="outlined"
-                            size="small"
-                            onClick={() => {
-                                setTempUsername("");
-                                setUsernameTaken(false);
-                                setOpenDialog(true);
-                            }}
-                        >
-                            Edit
-                        </Button>
-                    </Stack>
-                </Stack>
+            <Typography variant="h5" component="h2" sx={{ color: 'white', mb: 3, fontWeight: 500 }}>
+                Account Settings
+            </Typography>
+            <Divider sx={{ mb: 3, backgroundColor: '#333' }} />
 
-                {/* Color */}
-                <Stack direction="row" spacing={2} alignItems="center">
-                    <Typography>Avatar color:</Typography>
-                    <Box
-                        sx={{
-                            width: 32,
-                            height: 32,
-                            borderRadius: "50%",
-                            backgroundColor: avatarColor,
-                            border: "1px solid #ccc",
-                        }}
-                    />
-                    <Button
-                        variant="outlined"
-                        size="small"
-                        onClick={() => setColorDialogOpen(true)}
-                    >
-                        Edit
-                    </Button>
-                </Stack>
-
-                {/* Emoji */}
-                <Stack direction="row" spacing={2} alignItems="center">
-                    <Typography>Avatar emoji:</Typography>
-                    {avatarEmoji ? (
-                        <Box
-                            sx={{
-                                width: 32,
-                                height: 32,
-                                borderRadius: "50%",
-                                border: "1px solid #777",
-                                display: "flex",
-                                placeContent: "center",
-                                placeItems: "center",
-                            }}
-                        >
-                            <span>{avatarEmoji}</span>
+            {/* Account settings list */}
+            <Box>
+                {/* Username setting */}
+                <Box sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    py: 3,
+                    borderBottom: '1px solid #333'
+                }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <PersonIcon sx={{ color: '#8FE6D5', mr: 2 }} />
+                        <Box>
+                            <Typography variant="body1" sx={{ color: 'white', fontWeight: 500 }}>
+                                Username
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: '#aaa', mt: 0.5 }}>
+                                {profile?.username}
+                            </Typography>
                         </Box>
-                    ) : (
-                        <span>none</span>
-                    )}
-                    <Button
-                        variant="outlined"
-                        size="small"
-                        onClick={() => setEmojiDialogOpen(true)}
+                    </Box>
+                    <IconButton
+                        onClick={() => {
+                            setTempUsername("");
+                            setUsernameTaken(false);
+                            setOpenDialog(true);
+                        }}
+                        sx={{ color: '#8FE6D5' }}
                     >
-                        Edit
-                    </Button>
-                </Stack>
-
-                <Box
-                    display="flex"
-                    flexDirection="row"
-                    gap={2}
-                    sx={{ mt: 2, mb: 2 }} // Adds top and bottom margins
-                >
-                    {availableProviders.map((provider) => (
-                        <AuthProvider
-                            key={provider.providerName}
-                            providerName={provider.providerName}
-                            displayName={provider.displayName}
-                            icon={provider.icon}
-                        />
-                    ))}
+                        <EditIcon />
+                    </IconButton>
                 </Box>
-            </Paper>
 
-            {/* Dialog zmiany koloru */}
+                {/* Avatar color setting */}
+                <Box sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    py: 3,
+                    borderBottom: '1px solid #333'
+                }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <PaletteIcon sx={{ color: '#8FE6D5', mr: 2 }} />
+                        <Box>
+                            <Typography variant="body1" sx={{ color: 'white', fontWeight: 500 }}>
+                                Avatar Color
+                            </Typography>
+                            <Box sx={{
+                                width: 24,
+                                height: 24,
+                                borderRadius: '50%',
+                                backgroundColor: avatarColor,
+                                border: '1px solid #555',
+                                mt: 0.5
+                            }} />
+                        </Box>
+                    </Box>
+                    <IconButton
+                        onClick={() => setColorDialogOpen(true)}
+                        sx={{ color: '#8FE6D5' }}
+                    >
+                        <EditIcon />
+                    </IconButton>
+                </Box>
+
+                {/* Avatar emoji setting */}
+                <Box sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    py: 3,
+                }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <EmojiEmotionsIcon sx={{ color: '#8FE6D5', mr: 2 }} />
+                        <Box>
+                            <Typography variant="body1" sx={{ color: 'white', fontWeight: 500 }}>
+                                Avatar Emoji
+                            </Typography>
+                            {avatarEmoji ? (
+                                <Box sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    mt: 0.5
+                                }}>
+                                    <Typography component="span" sx={{ fontSize: '24px' }}>
+                                        {avatarEmoji}
+                                    </Typography>
+                                </Box>
+                            ) : (
+                                <Typography variant="body2" sx={{ color: '#aaa', mt: 0.5 }}>
+                                    None
+                                </Typography>
+                            )}
+                        </Box>
+                    </Box>
+                    <IconButton
+                        onClick={() => setEmojiDialogOpen(true)}
+                        sx={{ color: '#8FE6D5' }}
+                    >
+                        <EditIcon />
+                    </IconButton>
+                </Box>
+            </Box>
+
+            {/* Color picker dialog */}
             <Dialog
                 open={colorDialogOpen}
                 onClose={() => setColorDialogOpen(false)}
-                fullWidth
                 PaperProps={{
                     sx: {
                         borderRadius: "16px",
-                        backdropFilter: "blur(5px)",
+                        backgroundColor: '#2a2a2a',
+                        color: 'white'
                     },
                 }}
             >
-                <DialogTitle sx={{ textAlign: "center" }}>Wybierz kolor awatara</DialogTitle>
+                <DialogTitle sx={{ color: 'white' }}>Choose Avatar Color</DialogTitle>
                 <DialogContent>
-                    <Stack direction="row" spacing={2} justifyContent="center" alignItems="center">
+                    <Box sx={{ display: 'flex', flexDirection: 'row', gap: 2, justifyContent: 'center', alignItems: 'center' }}>
                         <SketchPicker
                             color={avatarColor}
                             onChangeComplete={(color) => setAvatarColor(color.hex)}
                         />
                         <Box
                             sx={{
-                                width: 150,
-                                height: 150,
+                                width: 100,
+                                height: 100,
                                 borderRadius: "50%",
                                 backgroundColor: avatarColor,
-                                border: "1px solid #000",
+                                border: "1px solid #555",
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
                             }}
-                        />
-                    </Stack>
+                        >
+                            {avatarEmoji && (
+                                <Typography component="span" sx={{ fontSize: '40px' }}>
+                                    {avatarEmoji}
+                                </Typography>
+                            )}
+                        </Box>
+                    </Box>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setColorDialogOpen(false)}>Anuluj</Button>
-                    <Button onClick={handleUpdateColor}>Zapisz</Button>
+                    <Button
+                        onClick={() => setColorDialogOpen(false)}
+                        sx={{ color: '#aaa' }}
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        onClick={handleUpdateColor}
+                        sx={{
+                            color: '#8FE6D5',
+                            '&:hover': {
+                                backgroundColor: 'rgba(143, 230, 213, 0.08)'
+                            }
+                        }}
+                    >
+                        Save
+                    </Button>
                 </DialogActions>
             </Dialog>
 
-            {/* Dialog zmiany nazwy użytkownika */}
+            {/* Username change dialog */}
             <Dialog
                 open={openDialog}
                 onClose={() => setOpenDialog(false)}
@@ -274,25 +311,17 @@ export default function Account() {
                 PaperProps={{
                     sx: {
                         borderRadius: 4,
-                        p: 2,
-                        backdropFilter: "blur(16px)",
+                        backgroundColor: '#2a2a2a',
+                        color: 'white'
                     },
                 }}
             >
-                <DialogTitle
-                    sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1,
-                        color: theme.palette.primary.main,
-                        fontWeight: "bold",
-                    }}
-                >
+                <DialogTitle sx={{ color: 'white' }}>
                     Change username
                 </DialogTitle>
                 <DialogContent>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                        Old username: <strong>{profile?.username}</strong>
+                    <Typography variant="body2" sx={{ mb: 1, color: '#aaa' }}>
+                        Old username: <strong style={{ color: 'white' }}>{profile?.username}</strong>
                     </Typography>
                     <TextField
                         placeholder="New username"
@@ -305,6 +334,16 @@ export default function Account() {
                         sx={{
                             "& .MuiOutlinedInput-root": {
                                 borderRadius: "16px",
+                                color: 'white',
+                                "& fieldset": {
+                                    borderColor: "#555",
+                                },
+                                "&:hover fieldset": {
+                                    borderColor: "#8FE6D5",
+                                },
+                                "&.Mui-focused fieldset": {
+                                    borderColor: "#8FE6D5",
+                                },
                             },
                         }}
                     />
@@ -315,20 +354,28 @@ export default function Account() {
                     )}
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setOpenDialog(false)} color="primary">
+                    <Button
+                        onClick={() => setOpenDialog(false)}
+                        sx={{ color: '#aaa' }}
+                    >
                         Cancel
                     </Button>
                     <Button
                         onClick={handleUpdateProfile}
-                        color="primary"
                         disabled={!tempUsername.trim()}
+                        sx={{
+                            color: tempUsername.trim() ? '#8FE6D5' : '#aaa',
+                            '&:hover': {
+                                backgroundColor: tempUsername.trim() ? 'rgba(143, 230, 213, 0.08)' : 'transparent'
+                            }
+                        }}
                     >
                         Save
                     </Button>
                 </DialogActions>
             </Dialog>
 
-            {/* Dialog zmiany emoji */}
+            {/* Emoji picker dialog */}
             <Dialog
                 open={emojiDialogOpen}
                 onClose={() => setEmojiDialogOpen(false)}
@@ -337,37 +384,48 @@ export default function Account() {
                 PaperProps={{
                     sx: {
                         borderRadius: 4,
-                        p: 2,
-                        backdropFilter: "blur(16px)",
+                        backgroundColor: '#2a2a2a',
+                        color: 'white'
                     },
                 }}
             >
-                <DialogTitle
-                    sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1,
-                        color: theme.palette.primary.main,
-                        fontWeight: "bold",
-                    }}
-                >
+                <DialogTitle sx={{ color: 'white' }}>
                     Choose your avatar emoji
                 </DialogTitle>
                 <DialogContent>
-                    <Typography variant="h6" sx={{
+                    <Box sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
                         my: 2,
-                        textAlign: "center",
-                        display: "flex",
-                        flexDirection: "row",
-                        gap: 1,
                     }}>
-                        <span>Selected:</span>
-                        <span>{avatarEmoji}</span>
-                    </Typography>
+                        <Typography variant="body1" sx={{ mb: 1, color: 'white' }}>
+                            Selected:
+                        </Typography>
+                        <Box sx={{
+                            width: 70,
+                            height: 70,
+                            borderRadius: '50%',
+                            backgroundColor: avatarColor,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            border: '1px solid #555',
+                            mb: 2
+                        }}>
+                            {avatarEmoji ? (
+                                <Typography component="span" sx={{ fontSize: '2.5rem' }}>
+                                    {avatarEmoji}
+                                </Typography>
+                            ) : (
+                                <Typography sx={{ color: '#aaa' }}>None</Typography>
+                            )}
+                        </Box>
+                    </Box>
                     <EmojiPicker
                         lazyLoadEmojis={true}
                         theme="dark"
-                        onEmojiClick={(emojiObject, event) => {
+                        onEmojiClick={(emojiObject) => {
                             setAvatarEmoji(emojiObject.emoji);
                         }}
                         width="100%"
@@ -382,13 +440,21 @@ export default function Account() {
                     >
                         Remove
                     </Button>
-                    <Button onClick={() => setEmojiDialogOpen(false)} color="primary">
+                    <Button
+                        onClick={() => setEmojiDialogOpen(false)}
+                        sx={{ color: '#aaa' }}
+                    >
                         Cancel
                     </Button>
                     <Button
                         onClick={handleEmojiSelect}
-                        color="primary"
-                        disabled={!avatarEmoji} // Disable save if no emoji is selected
+                        disabled={!avatarEmoji}
+                        sx={{
+                            color: avatarEmoji ? '#8FE6D5' : '#aaa',
+                            '&:hover': {
+                                backgroundColor: avatarEmoji ? 'rgba(143, 230, 213, 0.08)' : 'transparent'
+                            }
+                        }}
                     >
                         Save
                     </Button>
