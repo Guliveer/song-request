@@ -4,7 +4,7 @@ import {supabase} from '@/utils/supabase';
 import {sortSongs} from '@/utils/actions';
 import {
     Box, Typography, Paper, Grid, useMediaQuery,
-    useTheme, CircularProgress
+    useTheme, CircularProgress, Skeleton
 } from '@mui/material';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
@@ -15,7 +15,10 @@ export default function TopSongsOlympicPodium() {
     const [topSongs, setTopSongs] = useState([]);
     const [loading, setLoading] = useState(true);
     const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+    const isMobile = useMediaQuery(theme.breakpoints.down('md'), { noSsr: true });
+    const [mounted, setMounted] = useState(false);
+    const [isHydrated, setIsHydrated] = useState(false);
+    const isMobileScreen = useMediaQuery(theme.breakpoints.down('md'), { noSsr: true });
 
     // Dodajemy stany dla kryteriów sortowania - domyślnie score/desc
     const [sortCriteria, setSortCriteria] = useState('score');
@@ -55,15 +58,208 @@ export default function TopSongsOlympicPodium() {
         }
 
         fetchTopSongs();
+        setMounted(true);
     }, [sortCriteria, sortOrder]);
 
+    const showMobileLayout = mounted ? isMobile : false; // domyślnie używamy layoutu desktopowego
     // Sort songs by position
     const sortedSongs = [...topSongs].sort((a, b) => a.position - b.position);
 
     if (loading) return (
-        <Box sx={{textAlign: 'center', py: 4}}>
-            <CircularProgress/>
-            <Typography sx={{mt: 2}}>Wczytywanie najlepszych utworów...</Typography>
+        <Box sx={{
+            width: '100%',
+            mb: 4,
+            mt: 4,
+            px: {xs: 1, md: 2}
+        }}>
+            <Paper sx={{
+                position: 'relative',
+                overflow: 'hidden',
+                background: 'linear-gradient(to bottom, rgba(20, 184, 166, 0.2), rgba(20, 184, 166, 0.05))',
+                borderRadius: 2,
+                p: 3
+            }}>
+                {/* Title skeleton */}
+                <Box sx={{
+                    position: 'relative',
+                    textAlign: 'center',
+                    mb: 4,
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    gap: 1
+                }}>
+                    <Skeleton variant="circular" width={32} height={32} sx={{bgcolor: 'rgba(250, 204, 21, 0.2)'}}/>
+                    <Skeleton variant="text" width={180} height={40} sx={{bgcolor: 'rgba(255, 255, 255, 0.1)'}}/>
+                </Box>
+
+                {showMobileLayout ? (
+                    // Mobile skeleton
+                    <Box sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 2,
+                        px: 1,
+                        pb: 3
+                    }}>
+                        {[1, 2, 3].map((position) => (
+                            <Box key={position} sx={{
+                                p: 2,
+                                borderRadius: 2,
+                                bgcolor: `rgba(255, 255, 255, ${0.1 - position * 0.02})`,
+                                display: 'flex',
+                                gap: 1.5,
+                                transform: `scale(${1 - (position - 1) * 0.05})`,
+                                transformOrigin: 'center top'
+                            }}>
+                                <Skeleton variant="rounded" width={64} height={64}
+                                          sx={{bgcolor: 'rgba(255, 255, 255, 0.05)', flexShrink: 0}}/>
+                                <Box sx={{width: '100%'}}>
+                                    <Box sx={{display: 'flex', alignItems: 'center', gap: 1, mb: 0.5}}>
+                                        <Skeleton variant="circular" width={20} height={20}
+                                                  sx={{bgcolor: 'rgba(255, 255, 255, 0.05)'}}/>
+                                        <Skeleton variant="text" width="70%" height={24}
+                                                  sx={{bgcolor: 'rgba(255, 255, 255, 0.05)'}}/>
+                                    </Box>
+                                    <Box sx={{display: 'flex', alignItems: 'center', gap: 0.5, mb: 1}}>
+                                        <Skeleton variant="circular" width={14} height={14}
+                                                  sx={{bgcolor: 'rgba(255, 255, 255, 0.05)'}}/>
+                                        <Skeleton variant="text" width="50%" height={18}
+                                                  sx={{bgcolor: 'rgba(255, 255, 255, 0.05)'}}/>
+                                    </Box>
+                                    <Skeleton variant="rounded" width={80} height={24}
+                                              sx={{bgcolor: 'rgba(255, 255, 255, 0.05)'}}/>
+                                </Box>
+                            </Box>
+                        ))}
+                    </Box>
+                ) : (
+                    // Desktop skeleton - podium
+                    <Box sx={{
+                        position: 'relative',
+                        height: 360,
+                        mx: 'auto',
+                        maxWidth: '3xl'
+                    }}>
+                        <Grid container justifyContent="center" alignItems="flex-end">
+                            {/* Second Place Skeleton */}
+                            <Grid item xs={4} sx={{height: 296}}>
+                                <Box sx={{
+                                    height: '100%',
+                                    display: 'flex',
+                                    flexDirection: 'column'
+                                }}>
+                                    <Box sx={{
+                                        flex: 1,
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        justifyContent: 'flex-end',
+                                        pb: 1
+                                    }}>
+                                        <Skeleton variant="circular" width={64} height={64}
+                                                  sx={{bgcolor: 'rgba(209, 213, 219, 0.2)', mb: 1}}/>
+                                        <Skeleton variant="text" width={120} height={24}
+                                                  sx={{bgcolor: 'rgba(255, 255, 255, 0.1)'}}/>
+                                        <Skeleton variant="text" width={100} height={16}
+                                                  sx={{bgcolor: 'rgba(255, 255, 255, 0.1)', mt: 0.5}}/>
+                                        <Skeleton variant="rounded" width={80} height={24}
+                                                  sx={{bgcolor: 'rgba(255, 255, 255, 0.1)', mt: 1, borderRadius: 10}}/>
+                                    </Box>
+                                    <Skeleton variant="rectangular" height={176} sx={{
+                                        bgcolor: 'rgba(107, 114, 128, 0.2)',
+                                        borderRadius: '8px 8px 0 0'
+                                    }}/>
+                                </Box>
+                            </Grid>
+
+                            {/* First Place Skeleton */}
+                            <Grid item xs={4} sx={{height: 360, zIndex: 10}}>
+                                <Box sx={{
+                                    height: '100%',
+                                    display: 'flex',
+                                    flexDirection: 'column'
+                                }}>
+                                    <Box sx={{
+                                        flex: 1,
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        justifyContent: 'flex-end',
+                                        pb: 1
+                                    }}>
+                                        <Skeleton variant="circular" width={80} height={80}
+                                                  sx={{bgcolor: 'rgba(250, 204, 21, 0.2)', mb: 1}}/>
+                                        <Skeleton variant="text" width={140} height={32}
+                                                  sx={{bgcolor: 'rgba(255, 255, 255, 0.1)'}}/>
+                                        <Skeleton variant="text" width={120} height={20}
+                                                  sx={{bgcolor: 'rgba(255, 255, 255, 0.1)', mt: 0.5}}/>
+                                        <Skeleton variant="rounded" width={100} height={30}
+                                                  sx={{bgcolor: 'rgba(255, 255, 255, 0.1)', mt: 1, borderRadius: 10}}/>
+                                    </Box>
+                                    <Skeleton variant="rectangular" height={240} sx={{
+                                        bgcolor: 'rgba(234, 179, 8, 0.2)',
+                                        borderRadius: '8px 8px 0 0'
+                                    }}/>
+                                </Box>
+                            </Grid>
+
+                            {/* Third Place Skeleton */}
+                            <Grid item xs={4} sx={{height: 240}}>
+                                <Box sx={{
+                                    height: '100%',
+                                    display: 'flex',
+                                    flexDirection: 'column'
+                                }}>
+                                    <Box sx={{
+                                        flex: 1,
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        justifyContent: 'flex-end',
+                                        pb: 1
+                                    }}>
+                                        <Skeleton variant="circular" width={64} height={64}
+                                                  sx={{bgcolor: 'rgba(180, 83, 9, 0.2)', mb: 1}}/>
+                                        <Skeleton variant="text" width={120} height={24}
+                                                  sx={{bgcolor: 'rgba(255, 255, 255, 0.1)'}}/>
+                                        <Skeleton variant="text" width={100} height={16}
+                                                  sx={{bgcolor: 'rgba(255, 255, 255, 0.1)', mt: 0.5}}/>
+                                        <Skeleton variant="rounded" width={80} height={24}
+                                                  sx={{bgcolor: 'rgba(255, 255, 255, 0.1)', mt: 1, borderRadius: 10}}/>
+                                    </Box>
+                                    <Skeleton variant="rectangular" height={120} sx={{
+                                        bgcolor: 'rgba(180, 83, 9, 0.2)',
+                                        borderRadius: '8px 8px 0 0'
+                                    }}/>
+                                </Box>
+                            </Grid>
+                        </Grid>
+
+                        {/* Spotlight Effects */}
+                        <Box sx={{
+                            position: 'absolute',
+                            bottom: 80,
+                            left: '25%',
+                            width: 100,
+                            height: 180,
+                            bgcolor: 'rgba(20, 184, 166, 0.15)',
+                            borderRadius: '50%',
+                            filter: 'blur(30px)'
+                        }}/>
+                        <Box sx={{
+                            position: 'absolute',
+                            bottom: 80,
+                            right: '25%',
+                            width: 100,
+                            height: 180,
+                            bgcolor: 'rgba(20, 184, 166, 0.15)',
+                            borderRadius: '50%',
+                            filter: 'blur(30px)'
+                        }}/>
+                    </Box>
+                )}
+            </Paper>
         </Box>
     );
 
@@ -108,7 +304,7 @@ export default function TopSongsOlympicPodium() {
                         gap: 1
                     }}>
                         <EmojiEventsIcon sx={{color: '#facc15'}}/>
-                        Top utworów
+                        Top 3 Songs
                     </Typography>
                 </Box>
 
@@ -241,7 +437,7 @@ export default function TopSongsOlympicPodium() {
                                                     fontWeight: 500,
                                                     color: 'rgb(94, 234, 212)'
                                                 }}>
-                                                    {song.votes} głosów
+                                                    {song.votes} votes
                                                 </Typography>
                                             </Box>
                                         </Box>
@@ -333,7 +529,7 @@ export default function TopSongsOlympicPodium() {
                                                     fontWeight: 500,
                                                     color: 'rgb(94, 234, 212)'
                                                 }}>
-                                                    {sortedSongs[1]?.votes || 0} głosów
+                                                    Score: {sortedSongs[1]?.votes || 0}
                                                 </Typography>
                                             </Box>
                                         </Box>
@@ -433,7 +629,7 @@ export default function TopSongsOlympicPodium() {
                                                     fontWeight: 500,
                                                     color: 'rgb(153, 246, 228)'
                                                 }}>
-                                                    {sortedSongs[0]?.votes || 0} głosów
+                                                    Score: {sortedSongs[0]?.votes || 0}
                                                 </Typography>
                                             </Box>
                                         </Box>
@@ -535,7 +731,7 @@ export default function TopSongsOlympicPodium() {
                                                     fontWeight: 500,
                                                     color: 'rgb(94, 234, 212)'
                                                 }}>
-                                                    {sortedSongs[2]?.votes || 0} głosów
+                                                    Score: {sortedSongs[2]?.votes || 0}
                                                 </Typography>
                                             </Box>
                                         </Box>
@@ -558,7 +754,7 @@ export default function TopSongsOlympicPodium() {
                                                 width: 36,
                                                 height: 36,
                                                 bgcolor: '#b45309',
-                                                color: 'white',
+                                                color: 'black',
                                                 fontWeight: 'bold',
                                                 borderRadius: '50%',
                                                 display: 'flex',
