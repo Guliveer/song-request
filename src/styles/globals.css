@@ -36,3 +36,13 @@ small {font-size: 0.750rem; /* 12px */}
         transform: translateX(-100%);
     }
 }
+
+@keyframes bounce {
+    0%, 100% {
+        transform: scaleY(0.4);
+    }
+    50% {
+        transform: scaleY(1);
+    }
+}
+

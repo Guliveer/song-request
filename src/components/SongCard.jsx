@@ -21,10 +21,10 @@ import {
     MusicNoteRounded as SongIcon,
     NumbersRounded as RankIcon,
     PersonAddRounded as FollowIcon,
-    ThumbUpAltRounded as UpvoteIcon,
-    ThumbDownAltRounded as DownvoteIcon,
 } from '@mui/icons-material';
 import { Delete as DeleteIcon, RestartAlt as RestartAltIcon, Block as BlockIcon } from '@mui/icons-material';
+import { extractYoutubeVideoId } from "@/utils/youtube";
+import YouTube from 'react-youtube';
 
 const VoteButtons = React.memo(({userVote, handleVote, score, disabled}) => (
     <Box
@@ -67,7 +67,7 @@ const VoteButtons = React.memo(({userVote, handleVote, score, disabled}) => (
 ));
 
 
-function SongCard({id}) {
+function SongCard({id, currentlyPreviewingSongId, setCurrentlyPreviewingSongId}) {
     const [songData, setSongData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState(null);
@@ -214,6 +214,12 @@ function SongCard({id}) {
         }
     };
 
+    {/* DODANE TERAZ */}
+    const handleYouTubeReady = (event) => {
+        event.target.playVideo();
+    };
+
+
     // funkcja do resetowania głosów
     const handleResetVotes = async () => {
         const {error} = await supabase
@@ -298,6 +304,7 @@ function SongCard({id}) {
     }
 
     const {title, author, url, added_at, score, rank, username} = songData;
+    const youtubeVideoId = extractYoutubeVideoId(url);
 
     return (
         <Card variant="outlined" sx={{
@@ -503,6 +510,19 @@ function SongCard({id}) {
                     disabled={isBanned}
                 />
             </Box>
+            {/* DODANE TERAZ */}
+            <Button
+                variant="outlined"
+                color="error"
+                onClick={() =>
+                    currentlyPreviewingSongId === id
+                        ? setCurrentlyPreviewingSongId(null) // Zatrzymaj
+                        : setCurrentlyPreviewingSongId(id)   // Włącz
+                }
+            >
+                {currentlyPreviewingSongId === id ? "Stop Preview" : "Preview"}
+            </Button>
+
 
             {/* Functionality Icons (Follow, Delete, Ban, etc.) */}
             <Box sx={{
@@ -534,6 +554,39 @@ function SongCard({id}) {
                     )}
                 </Box>
             </Box>
+            {currentlyPreviewingSongId === id && (
+                <Box sx={{ display: 'flex', gap: '4px', mt: 1 }}>
+                    {[...Array(5)].map((_, i) => (
+                        <Box
+                            key={i}
+                            sx={{
+                                width: '4px',
+                                height: '20px',
+                                background: '#FF0000',
+                                animation: 'bounce 1s infinite ease-in-out',
+                                animationDelay: `${i * 0.1}s`,
+                            }}
+                        />
+                    ))}
+                </Box>
+            )}
+            {currentlyPreviewingSongId === id && youtubeVideoId && (
+                <YouTube
+                    videoId={youtubeVideoId}
+                    opts={{
+                        height: '1',
+                        width: '1',
+                        playerVars: {
+                            autoplay: 1,
+                            controls: 0,
+                            modestbranding: 1,
+                        },
+                    }}
+                    onReady={handleYouTubeReady}
+                />
+            )}
+
+
 
             {error && (
                 <Snackbar

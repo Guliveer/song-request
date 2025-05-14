@@ -11,6 +11,7 @@ import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import SearchField from '@/components/SearchField';
 
+
 export default function Queue() {
     const [songs, setSongs] = useState([]);
     const [sortCriteria, setSortCriteria] = useState('score');
@@ -23,6 +24,8 @@ export default function Queue() {
 
     const [searchQuery, setSearchQuery] = useState('');
     const [searchFilter, setSearchFilter] = useState('title');
+    const [currentlyPreviewingSongId, setCurrentlyPreviewingSongId] = useState(null); // DODANE
+
 
     const handleSearchChange = useCallback((query, filter) => {
         setSearchQuery(query);
@@ -157,8 +160,13 @@ export default function Queue() {
                 {songs.length === 0 ? (
                     <Box sx={{ textAlign: 'center', color: '#ccc' }}>Not found...</Box>
                 ) : (
-                    songs.map((song) => (
-                        <SongCard key={song.id} id={song.id} />
+                    songs.map((song) => ( // DODANE
+                        <SongCard
+                            key={song.id}
+                            id={song.id}
+                            currentlyPreviewingSongId={currentlyPreviewingSongId}
+                            setCurrentlyPreviewingSongId={setCurrentlyPreviewingSongId}
+                        />
                     ))
                 )}
             </Box>
