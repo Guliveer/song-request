@@ -352,7 +352,7 @@ export default function AdminPanel() {
                                                 fontSize: 16,
                                                 color: "#ff4646",
                                                 border: 0,
-                                                pl: 3
+                                                pr: 3
                                             }}>
                                                 Actions
                                             </TableCell>
@@ -389,7 +389,7 @@ export default function AdminPanel() {
                                                         )}
                                                     </Box>
                                                 </TableCell>
-                                                <TableCell sx={{color: "#fff", pl: 3, borderBottom: "1px solid #333"}}>
+                                                <TableCell sx={{color: "#fff", pr: 3, borderBottom: "1px solid #333"}}>
                                                     <Grid container spacing={1} alignItems="center" wrap="nowrap">
                                                         <Grid item>
                                                             <Tooltip title="Reset user votes">
@@ -628,7 +628,14 @@ export default function AdminPanel() {
                                                             fontSize: "0.9rem"
                                                         }}
                                                     >
-                                                        {song.url}
+                                                        <a
+                                                            href={song.url}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            style={{ color: "#ff4646", textDecoration: "underline" }}
+                                                        >
+                                                            {song.url}
+                                                        </a>
                                                     </Typography>
                                                 </TableCell>
                                                 <TableCell sx={{color: "#fff", pl: 3, borderBottom: "1px solid #333"}}>
