@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 import {
     Button, Dialog, DialogTitle, DialogContent, DialogActions,
     List, ListItem, ListItemText, Divider, Stack, TextField,
@@ -6,15 +6,18 @@ import {
 } from "@mui/material";
 import {
     Delete as DeleteIcon,
-    Person as PersonIcon,
-    ErrorOutline as ErrorOutlineIcon,
     PersonAdd as PersonAddIcon,
-    Search as SearchIcon
+    Search as SearchIcon,
+    ErrorOutline as ErrorOutlineIcon,
 } from "@mui/icons-material";
-import { supabase } from "@/utils/supabase";
+import {supabase} from "@/utils/supabase";
 
-export default function Followers() {
-    const [userId, setUserId] = useState(null);
+export default function Followers({
+                                      userId,
+                                      followingCount,
+                                      followersCount,
+                                      onFollowAction
+                                  }) {
     const [friendUsername, setFriendUsername] = useState("");
     const [friendSearchResults, setFriendSearchResults] = useState([]);
     const [alreadyFollowing, setAlreadyFollowing] = useState(false);
@@ -26,18 +29,16 @@ export default function Followers() {
     const [visibleFollowers, setVisibleFollowers] = useState(5);
     const [followingSearch, setFollowingSearch] = useState('');
 
+    // Fetch followed users and followers
     useEffect(() => {
         const fetchData = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
-
-            setUserId(user.id);
+            if (!userId) return;
 
             // Get list of followed user IDs
-            const { data: currentUser } = await supabase
+            const {data: currentUser} = await supabase
                 .from("users")
                 .select("followed_users")
-                .eq("id", user.id)
+                .eq("id", userId)
                 .single();
 
             const followedIds = currentUser?.followed_users ?? [];
@@ -45,7 +46,7 @@ export default function Followers() {
             // Get full user data for followed users
             let followedUsers = [];
             if (followedIds.length > 0) {
-                const { data: users } = await supabase
+                const {data: users} = await supabase
                     .from("users")
                     .select("id, username")
                     .in("id", followedIds);
@@ -56,19 +57,19 @@ export default function Followers() {
             setFollowedUsersData(followedUsers);
 
             // Get all users to find who follows current user
-            const { data: allUsers } = await supabase
+            const {data: allUsers} = await supabase
                 .from("users")
                 .select("id, username, followed_users");
 
             const yourFollowers = (allUsers || []).filter(u =>
-                u.followed_users?.includes(user.id)
+                Array.isArray(u.followed_users) && u.followed_users.includes(userId)
             );
 
             setFollowersData(yourFollowers);
         };
 
         fetchData();
-    }, []);
+    }, [userId, dialogOpen]); // re-fetch when dialog opens, or userId changes
 
     useEffect(() => {
         if (dialogOpen && dialogType === "following") setVisibleFollowing(5);
@@ -78,7 +79,7 @@ export default function Followers() {
     const handleAddFriend = async () => {
         if (!friendUsername.trim()) return;
 
-        const { data: friendUser } = await supabase
+        const {data: friendUser} = await supabase
             .from("users")
             .select("id, username")
             .eq("username", friendUsername)
@@ -92,7 +93,7 @@ export default function Followers() {
             return;
         }
 
-        const { data: currentUser } = await supabase
+        const {data: currentUser} = await supabase
             .from("users")
             .select("followed_users")
             .eq("id", userId)
@@ -101,9 +102,9 @@ export default function Followers() {
         const currentFollows = currentUser?.followed_users ?? [];
         const updated = [...currentFollows, friendUser.id];
 
-        const { error } = await supabase
+        const {error} = await supabase
             .from("users")
-            .update({ followed_users: updated })
+            .update({followed_users: updated})
             .eq("id", userId);
 
         if (error) {
@@ -115,6 +116,7 @@ export default function Followers() {
         setFriendSearchResults([]);
         setAlreadyFollowing(false);
         setFollowedUsersData((prev) => [...prev, friendUser]);
+        if (onFollowAction) onFollowAction(); // Inform parent to refresh counts
     };
 
     const handleSearchChange = async (e) => {
@@ -127,7 +129,7 @@ export default function Followers() {
             return;
         }
 
-        const { data: results } = await supabase
+        const {data: results} = await supabase
             .from("users")
             .select("id, username")
             .ilike("username", `%${val}%`)
@@ -148,24 +150,25 @@ export default function Followers() {
 
     const handleUnfollow = async (idToRemove) => {
         const updated = followedUsersData.filter((u) => u.id !== idToRemove).map((u) => u.id);
-        const { error } = await supabase
+        const {error} = await supabase
             .from("users")
-            .update({ followed_users: updated })
+            .update({followed_users: updated})
             .eq("id", userId);
         if (!error) {
             setFollowedUsersData((prev) => prev.filter((u) => u.id !== idToRemove));
+            if (onFollowAction) onFollowAction(); // Inform parent to refresh counts
         }
     };
 
     return (
         <>
-            <Typography variant="h5" component="h2" sx={{ color: 'white', mb: 3, fontWeight: 500 }}>
+            <Typography variant="h5" component="h2" sx={{color: 'white', mb: 3, fontWeight: 500}}>
                 Find Friends
             </Typography>
-            <Divider sx={{ mb: 3, backgroundColor: '#333' }} />
+            <Divider sx={{mb: 3, backgroundColor: '#333'}}/>
 
-            <Box sx={{ mb: 4 }}>
-                <Typography variant="body1" sx={{ color: 'white', mb: 2 }}>
+            <Box sx={{mb: 4}}>
+                <Typography variant="body1" sx={{color: 'white', mb: 2}}>
                     Search for users to follow:
                 </Typography>
 
@@ -177,7 +180,7 @@ export default function Followers() {
                             typeof option === 'string' ? option : option.username
                         }
                         onInputChange={(event, newInputValue) =>
-                            handleSearchChange({ target: { value: newInputValue } })
+                            handleSearchChange({target: {value: newInputValue}})
                         }
                         onChange={(event, value) => {
                             if (value && typeof value !== 'string') {
@@ -195,7 +198,7 @@ export default function Followers() {
                                     ...params.InputProps,
                                     startAdornment: (
                                         <InputAdornment position="start">
-                                            <SearchIcon sx={{ color: '#8FE6D5' }} />
+                                            <SearchIcon sx={{color: '#8FE6D5'}}/>
                                         </InputAdornment>
                                     ),
                                 }}
@@ -216,13 +219,13 @@ export default function Followers() {
                                 }}
                             />
                         )}
-                        sx={{ flex: 1 }}
+                        sx={{flex: 1}}
                     />
 
                     <Button
                         variant="contained"
                         onClick={handleAddFriend}
-                        startIcon={<PersonAddIcon />}
+                        startIcon={<PersonAddIcon/>}
                         sx={{
                             px: 3,
                             py: 1,
@@ -231,7 +234,7 @@ export default function Followers() {
                             borderRadius: 2,
                             bgcolor: '#8FE6D5',
                             color: '#111',
-                            '&:hover': { bgcolor: '#6fc3b2' },
+                            '&:hover': {bgcolor: '#6fc3b2'},
                         }}
                     >
                         Follow
@@ -242,16 +245,16 @@ export default function Followers() {
                     <Typography
                         variant="body2"
                         color="error"
-                        sx={{ mt: 1, display: 'flex', alignItems: 'center', gap: 1 }}
+                        sx={{mt: 1, display: 'flex', alignItems: 'center', gap: 1}}
                     >
-                        <ErrorOutlineIcon fontSize="small" />
+                        <ErrorOutlineIcon fontSize="small"/>
                         You are already following this user.
                     </Typography>
                 )}
             </Box>
 
-            <Box sx={{ mt: 4 }}>
-                <Typography variant="h6" sx={{ color: 'white', mb: 2 }}>
+            <Box sx={{mt: 4}}>
+                <Typography variant="h6" sx={{color: 'white', mb: 2}}>
                     Your Network
                 </Typography>
 
@@ -275,10 +278,23 @@ export default function Followers() {
                             }
                         }}
                     >
-                        <Typography variant="h5" color="#8FE6D5" fontWeight="bold">
-                            {followedUsersData.length}
+                        <Typography
+                            variant="h4"
+                            color="#8FE6D5"
+                            fontWeight="bold"
+                            sx={{ letterSpacing: 1, mb: 0.5 }}
+                        >
+                            {followingCount}
                         </Typography>
-                        <Typography variant="body2" sx={{ color: '#aaa', mt: 1 }}>
+                        <Typography
+                            variant="subtitle1"
+                            sx={{
+                                color: '#8FE6D5',
+                                fontWeight: 600,
+                                letterSpacing: 0.5,
+                                // textTransform: 'uppercase',  // USUNIĘTE
+                            }}
+                        >
                             Following
                         </Typography>
                     </Box>
@@ -302,10 +318,23 @@ export default function Followers() {
                             }
                         }}
                     >
-                        <Typography variant="h5" color="#8FE6D5" fontWeight="bold">
-                            {followersData.length}
+                        <Typography
+                            variant="h4"
+                            color="#8FE6D5"
+                            fontWeight="bold"
+                            sx={{ letterSpacing: 1, mb: 0.5 }}
+                        >
+                            {followersCount}
                         </Typography>
-                        <Typography variant="body2" sx={{ color: '#aaa', mt: 1 }}>
+                        <Typography
+                            variant="subtitle1"
+                            sx={{
+                                color: '#8FE6D5',
+                                fontWeight: 600,
+                                letterSpacing: 0.5,
+                                // textTransform: 'uppercase',  // USUNIĘTE
+                            }}
+                        >
                             Followers
                         </Typography>
                     </Box>
@@ -326,13 +355,13 @@ export default function Followers() {
                     }
                 }}
             >
-                <DialogTitle sx={{ color: 'white', borderBottom: '1px solid #444' }}>
+                <DialogTitle sx={{color: 'white', borderBottom: '1px solid #444'}}>
                     {dialogType === 'following' ? 'People You Follow' : 'Your Followers'}
                 </DialogTitle>
-                <DialogContent dividers sx={{ borderColor: '#444', p: 0 }}>
+                <DialogContent dividers sx={{borderColor: '#444', p: 0}}>
                     {dialogType === 'following' && (
                         followedUsersData.length === 0 ? (
-                            <Typography sx={{ p: 3, color: '#aaa', textAlign: 'center' }}>
+                            <Typography sx={{p: 3, color: '#aaa', textAlign: 'center'}}>
                                 You are not following any users.
                             </Typography>
                         ) : (
@@ -363,12 +392,12 @@ export default function Followers() {
                                     InputProps={{
                                         startAdornment: (
                                             <InputAdornment position="start">
-                                                <SearchIcon sx={{ color: '#8FE6D5' }} />
+                                                <SearchIcon sx={{color: '#8FE6D5'}}/>
                                             </InputAdornment>
                                         ),
                                     }}
                                 />
-                                <List sx={{ p: 0 }}>
+                                <List sx={{p: 0}}>
                                     {followedUsersData
                                         .filter(u => u.username.toLowerCase().includes(followingSearch.toLowerCase()))
                                         .slice(0, visibleFollowing)
@@ -379,12 +408,12 @@ export default function Followers() {
                                                         <IconButton
                                                             size="small"
                                                             onClick={() => handleUnfollow(user.id)}
-                                                            sx={{ color: '#f44336' }}
+                                                            sx={{color: '#f44336'}}
                                                         >
-                                                            <DeleteIcon />
+                                                            <DeleteIcon/>
                                                         </IconButton>
                                                     }
-                                                    sx={{ pl: 3 }}
+                                                    sx={{pl: 3}}
                                                 >
                                                     <ListItemText
                                                         primary={user.username}
@@ -395,7 +424,7 @@ export default function Followers() {
                                                     />
                                                 </ListItem>
                                                 {index < followedUsersData.filter(u => u.username.toLowerCase().includes(followingSearch.toLowerCase())).slice(0, visibleFollowing).length - 1 && (
-                                                    <Divider sx={{ backgroundColor: '#444' }} />
+                                                    <Divider sx={{backgroundColor: '#444'}}/>
                                                 )}
                                             </React.Fragment>
                                         ))}
@@ -423,15 +452,15 @@ export default function Followers() {
                     )}
                     {dialogType === 'followers' && (
                         followersData.length === 0 ? (
-                            <Typography sx={{ p: 3, color: '#aaa', textAlign: 'center' }}>
+                            <Typography sx={{p: 3, color: '#aaa', textAlign: 'center'}}>
                                 No one is following you yet.
                             </Typography>
                         ) : (
                             <>
-                                <List sx={{ p: 0 }}>
+                                <List sx={{p: 0}}>
                                     {followersData.slice(0, visibleFollowers).map((follower, index) => (
                                         <React.Fragment key={follower.id}>
-                                            <ListItem sx={{ pl: 3 }}>
+                                            <ListItem sx={{pl: 3}}>
                                                 <ListItemText
                                                     primary={follower.username}
                                                     primaryTypographyProps={{
@@ -441,7 +470,7 @@ export default function Followers() {
                                                 />
                                             </ListItem>
                                             {index < followersData.slice(0, visibleFollowers).length - 1 && (
-                                                <Divider sx={{ backgroundColor: '#444' }} />
+                                                <Divider sx={{backgroundColor: '#444'}}/>
                                             )}
                                         </React.Fragment>
                                     ))}
@@ -468,7 +497,7 @@ export default function Followers() {
                         )
                     )}
                 </DialogContent>
-                <DialogActions sx={{ borderTop: '1px solid #444' }}>
+                <DialogActions sx={{borderTop: '1px solid #444'}}>
                     <Button
                         onClick={handleCloseDialog}
                         sx={{
