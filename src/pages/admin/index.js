@@ -1,37 +1,58 @@
-import { useEffect, useState } from "react";
-import { useRouter } from "next/router";
-import { isUserAdmin, isUserLoggedIn } from "@/utils/actions";
-import { supabase } from "@/utils/supabase";
-import SongCard from "@/components/SongCard";
+import {useEffect, useState} from "react";
+import {useRouter} from "next/router";
+import {isUserAdmin, isUserLoggedIn, genUserAvatar} from "@/utils/actions";
+import {supabase} from "@/utils/supabase";
 import {
-    Card,
-    Typography,
     Box,
+    Tabs,
+    Tab,
+    Typography,
+    Avatar,
+    Divider,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    Paper,
     IconButton,
+    FormControl,
+    InputLabel,
     Select,
     MenuItem,
-    FormControl,
-    InputLabel
+    TextField,
+    Tooltip,
+    Chip,
+    Grid,
+    Container
 } from "@mui/material";
-import RestartAltIcon from '@mui/icons-material/RestartAlt';
+import PersonIcon from '@mui/icons-material/Person';
+import LibraryMusicIcon from '@mui/icons-material/LibraryMusic';
+import RestoreIcon from '@mui/icons-material/Restore';
 import DeleteIcon from '@mui/icons-material/Delete';
+import BlockIcon from '@mui/icons-material/Block';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import SearchIcon from '@mui/icons-material/Search';
 
 export default function AdminPanel() {
     const [isLoading, setIsLoading] = useState(true);
     const [isAdmin, setIsAdmin] = useState(false);
     const [songs, setSongs] = useState([]);
     const [users, setUsers] = useState([]);
+    const [activeTab, setActiveTab] = useState(0);
+    const [searchSong, setSearchSong] = useState("");
+    const [searchUser, setSearchUser] = useState("");
+    const [avatars, setAvatars] = useState({});
+
     const router = useRouter();
 
-    // Sprawdzanie, czy użytkownik jest administratorem
     useEffect(() => {
         async function checkAdmin() {
             const checkLoggedIn = await isUserLoggedIn();
             if (!checkLoggedIn) return router.replace("/404");
-
             const checkAdmin = await isUserAdmin();
             if (!checkAdmin) return router.replace("/404");
-
             setIsAdmin(true);
             setIsLoading(false);
         }
@@ -39,181 +60,672 @@ export default function AdminPanel() {
         checkAdmin();
     }, [router]);
 
-    // Pobieranie piosenek
     useEffect(() => {
         async function fetchSongs() {
             const {data, error} = await supabase
                 .from("queue")
-                .select("id, title, author, url")
+                .select("id, title, author, url, user_id")
                 .order("added_at", {ascending: false});
-
             if (!error) setSongs(data);
         }
 
         if (isAdmin) fetchSongs();
     }, [isAdmin]);
 
-    // Pobieranie użytkowników
     useEffect(() => {
         async function fetchUsers() {
             const {data, error} = await supabase
                 .from("users")
-                .select("id, username, ban_status");
-
+                .select("id, username, ban_status, emoji, color");
             if (!error) setUsers(data);
         }
 
         if (isAdmin) fetchUsers();
     }, [isAdmin]);
 
-    // Funkcja resetowania głosów
-    const handleResetVotesForUser = async (userId) => {
-        const {error} = await supabase
-            .from("votes")
-            .delete()
-            .eq("user_id", userId);
+    // Generate user avatars for the users list
+    useEffect(() => {
+        if (users.length === 0) return;
+        let cancelled = false;
 
+        async function generateAvatars() {
+            const newAvatars = {};
+            await Promise.all(
+                users.map(async (user) => {
+                    try {
+                        // Use the avatar generator function for real user avatars
+                        const avatarDataUrl = await genUserAvatar(user.id);
+                        newAvatars[user.id] = avatarDataUrl;
+                    } catch {
+                        newAvatars[user.id] = null;
+                    }
+                })
+            );
+            if (!cancelled) setAvatars(newAvatars);
+        }
+
+        generateAvatars();
+        return () => {
+            cancelled = true;
+        };
+    }, [users]);
+
+    // --- User actions ---
+    const handleResetVotesForUser = async (userId) => {
+        const {error} = await supabase.from("votes").delete().eq("user_id", userId);
         if (error) {
-            alert(`Błąd resetowania głosów dla użytkownika: ${error.message}`);
+            alert(`Error resetting votes for user: ${error.message}`);
         } else {
-            alert("Głosy użytkownika zostały zresetowane.");
+            alert("User votes have been reset.");
         }
     };
 
-    // Funkcja usuwania piosenek użytkownika
     const handleDeleteUserSongs = async (userId) => {
-        const {error} = await supabase
-            .from("queue")
-            .delete()
-            .eq("user_id", userId);
-
+        const {error} = await supabase.from("queue").delete().eq("user_id", userId);
         if (error) {
-            alert(`Błąd usuwania piosenek użytkownika: ${error.message}`);
+            alert(`Error deleting user songs: ${error.message}`);
         } else {
-            alert("Piosenki użytkownika zostały usunięte.");
-
+            alert("User songs have been deleted.");
+            // Refresh songs:
             const {data, error: fetchError} = await supabase
                 .from("queue")
-                .select("id")
+                .select("id, title, author, url, user_id")
                 .order("added_at", {ascending: false});
             if (!fetchError) setSongs(data);
         }
     };
 
-    // Funkcja nakładania bana
     const handleBanChange = async (userId, days) => {
-        console.log("Ban request → userId:", userId, "| Days:", days);
-        const {data: updateData, error} = await supabase
+        const {error} = await supabase
             .from("users")
             .update({ban_status: days})
-            .eq("id", userId)
-            .select("id, username, ban_status");
-
+            .eq("id", userId);
         if (error) {
-            console.error("Błąd przy update:", error);
-            alert(`Błąd ustawiania bana: ${error.message}`);
+            alert(`Error setting ban: ${error.message}`);
         } else {
-            console.log("Update result:", updateData);
-            alert(`Ban ustawiony na ${days === 0 ? "brak" : days + " dni"}.`);
-
-            const {data: usersData, error: usersError} = await supabase
+            alert(`Ban set to ${days === 0 ? "none" : days + " days"}.`);
+            // Refresh users:
+            const {data, error: usersError} = await supabase
                 .from("users")
-                .select("id, username, ban_status");
-
-            if (usersError) {
-                console.error("Błąd przy pobieraniu użytkowników:", usersError);
-            } else {
-                setUsers(usersData);
-            }
+                .select("id, username, ban_status, emoji, color");
+            if (!usersError) setUsers(data);
         }
     };
+
+    // --- Song actions ---
+    const handleDeleteSong = async (songId) => {
+        const {error} = await supabase.from("queue").delete().eq("id", songId);
+        if (error) {
+            alert(`Error deleting song: ${error.message}`);
+        } else {
+            alert("Song has been deleted.");
+            const {data, error: fetchError} = await supabase
+                .from("queue")
+                .select("id, title, author, url, user_id")
+                .order("added_at", {ascending: false});
+            if (!fetchError) setSongs(data);
+        }
+    };
+
+    const handleResetVotesForSong = async (songId) => {
+        const {error} = await supabase.from("votes").delete().eq("song_id", songId);
+        if (error) {
+            alert(`Error resetting votes for song: ${error.message}`);
+        } else {
+            alert("Song votes have been reset.");
+        }
+    };
+
+    const handleBanUrl = async (url) => {
+        // Tu zaimplementuj logikę banowania URL
+        alert(`URL ${url} został zbanowany`);
+    };
+
+    // --- Filters ---
+    const filteredSongs = songs.filter(
+        (s) =>
+            s.title?.toLowerCase().includes(searchSong.toLowerCase()) ||
+            s.author?.toLowerCase().includes(searchSong.toLowerCase()) ||
+            s.url?.toLowerCase().includes(searchSong.toLowerCase())
+    );
+    const filteredUsers = users.filter((u) =>
+        u.username?.toLowerCase().includes(searchUser.toLowerCase())
+    );
+
+    // Ban count (users with ban_status > 0)
+    const bansCount = users.filter(u => u.ban_status && u.ban_status > 0).length;
 
     if (!isAdmin || isLoading) return null;
 
     return (
-        <div
-            style={{
-                display: "grid",
-                gridTemplateColumns: "45% 45%",
-                gap: "2rem",
-                maxWidth: "1200px",
-                margin: "0 auto",
-                padding: "2rem",
-                alignItems: "start" // start → wyrównanie do góry
-            }}
-        >
-            {/* Lewa kolumna - Piosenki */}
-            <div>
-                <Typography variant="h5" gutterBottom textAlign={"center"}>Piosenki w kolejce</Typography>
-                <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                    {songs.map((song) => (
-                        <SongCard key={song.id} id={song.id} />
-                    ))}
-                </div>
-            </div>
+        <Container maxWidth="md" sx={{mt: 3, mb: 5}}>
+            {/* Admin Profile & Stats Section */}
+            <Box
+                sx={{
+                    maxWidth: 1200,
+                    mx: "auto",
+                    mt: 6,
+                    mb: 4,
+                    px: {xs: 1, md: 4},
+                    py: {xs: 2, md: 5},
+                    borderRadius: 4,
+                    bgcolor: "#232323",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    boxShadow: 4,
+                }}
+            >
+                <Avatar
+                    sx={{
+                        bgcolor: "#ff4646",
+                        width: 92,
+                        height: 92,
+                        mb: 2,
+                        fontSize: 54,
+                        boxShadow: 2,
+                    }}
+                >
+                    <AdminPanelSettingsIcon sx={{fontSize: 54}}/>
+                </Avatar>
+                <Typography variant="h4" sx={{fontWeight: "bold", color: "#fff", mb: 2, textAlign: "center"}}>
+                    Admin Panel
+                </Typography>
+                <Box sx={{
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    width: "100%",
+                    maxWidth: 480,
+                    mt: 1,
+                    mb: 2,
+                }}>
+                    {/* Stats */}
+                    <Box sx={{flex: 1, textAlign: "center"}}>
+                        <Typography variant="h5" sx={{fontWeight: 700, color: "#fff"}}>
+                            {users.length}
+                        </Typography>
+                        <Typography variant="body2" sx={{color: "#aaa", mt: 0.5}}>
+                            Users
+                        </Typography>
+                    </Box>
+                    <Divider orientation="vertical" flexItem sx={{
+                        mx: 0,
+                        bgcolor: "#fff",
+                        opacity: 0.11,
+                        width: "2px",
+                        height: 40,
+                        borderRadius: 2,
+                    }}/>
+                    <Box sx={{flex: 1, textAlign: "center"}}>
+                        <Typography variant="h5" sx={{fontWeight: 700, color: "#fff"}}>
+                            {songs.length}
+                        </Typography>
+                        <Typography variant="body2" sx={{color: "#aaa", mt: 0.5}}>
+                            Songs
+                        </Typography>
+                    </Box>
+                    <Divider orientation="vertical" flexItem sx={{
+                        mx: 0,
+                        bgcolor: "#fff",
+                        opacity: 0.11,
+                        width: "2px",
+                        height: 40,
+                        borderRadius: 2,
+                    }}/>
+                    <Box sx={{flex: 1, textAlign: "center"}}>
+                        <Typography variant="h5" sx={{fontWeight: 700, color: "#fff"}}>
+                            {bansCount}
+                        </Typography>
+                        <Typography variant="body2" sx={{color: "#aaa", mt: 0.5}}>
+                            Bans
+                        </Typography>
+                    </Box>
+                </Box>
+            </Box>
 
-            {/* Prawa kolumna - Użytkownicy */}
-            <div>
-                <Typography variant="h5" gutterBottom textAlign={"center"}>Użytkownicy</Typography>
-                <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                    {users.map((user) => (
-                        <Card
-                            key={user.id}
-                            variant="outlined"
-                            sx={{
-                                display: "flex",
-                                flexDirection: "column",
-                                width: "100%",
-                                maxWidth: 500,
-                                px: 3,
-                                py: 3,
-                                borderRadius: "1em",
-                                backgroundColor: "background.paper",
-                                gap: 2,
-                                marginTop: "1rem",
-                                alignItems: "flex-start"
-                            }}
-                        >
-                            <Typography variant="subtitle1" sx={{ fontWeight: 'bold', marginBottom: "0.5rem" }}>
-                                {user.username}
-                            </Typography>
+            {/* Tabs */}
+            <Box
+                sx={{
+                    maxWidth: 900,
+                    mx: "auto",
+                    bgcolor: "#232323",
+                    borderRadius: 3,
+                    boxShadow: 2,
+                    overflow: "hidden"
+                }}
+            >
+                <Tabs
+                    value={activeTab}
+                    onChange={(_, v) => setActiveTab(v)}
+                    variant="fullWidth"
+                    textColor="inherit"
+                    TabIndicatorProps={{style: {background: "#ff4646", height: 3}}}
+                    sx={{
+                        "& .MuiTab-root": {
+                            fontWeight: "bold",
+                            fontSize: 16,
+                            color: "#fff",
+                            textTransform: "none",
+                            py: 2,
+                        },
+                        "& .Mui-selected": {
+                            color: "#ff4646 !important",
+                        },
+                        bgcolor: "#18191a",
+                    }}
+                >
+                    <Tab icon={<PersonIcon/>} label="Users"/>
+                    <Tab icon={<LibraryMusicIcon/>} label="Songs"/>
+                </Tabs>
 
-                            <Box sx={{ display: "flex", gap: 1, marginBottom: "0.75rem" }}>
-                                <IconButton
-                                    onClick={() => handleResetVotesForUser(user.id)}
-                                    title="Resetuj wszystkie głosy użytkownika"
-                                >
-                                    <RestartAltIcon />
-                                </IconButton>
-                                <IconButton
-                                    onClick={() => handleDeleteUserSongs(user.id)}
-                                    title="Usuń wszystkie piosenki użytkownika"
-                                >
-                                    <DeleteIcon />
-                                </IconButton>
+                <Box sx={{p: 3, width: "100%"}}>
+                    {/* Users Tab */}
+                    {activeTab === 0 && (
+                        <>
+                            <Box sx={{display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2}}>
+                                <Typography variant="h6" sx={{fontWeight: "bold", color: "#ff4646"}}>
+                                    User List
+                                </Typography>
+                                <TextField
+                                    size="small"
+                                    variant="outlined"
+                                    placeholder="Search user..."
+                                    value={searchUser}
+                                    onChange={e => setSearchUser(e.target.value)}
+                                    InputProps={{
+                                        startAdornment: <SearchIcon sx={{color: "#ff4646", mr: 1}}/>,
+                                    }}
+                                    sx={{
+                                        bgcolor: "#232323",
+                                        borderRadius: 2,
+                                        '& .MuiOutlinedInput-root': {
+                                            color: "#fff",
+                                            '& fieldset': {
+                                                borderColor: "#444",
+                                            },
+                                            '&:hover fieldset': {
+                                                borderColor: "#ff4646",
+                                            },
+                                            '&.Mui-focused fieldset': {
+                                                borderColor: "#ff4646",
+                                            },
+                                        },
+                                        input: {
+                                            color: "#fff",
+                                        },
+                                    }}
+                                />
                             </Box>
+                            <TableContainer component={Paper} sx={{
+                                bgcolor: "#222",
+                                borderRadius: 2,
+                                boxShadow: 0,
+                                px: 0
+                            }}>
+                                <Table>
+                                    <TableHead>
+                                        <TableRow>
+                                            <TableCell width="60%" sx={{
+                                                fontWeight: "bold",
+                                                fontSize: 16,
+                                                color: "#ff4646",
+                                                border: 0,
+                                                pl: 3
+                                            }}>
+                                                Name
+                                            </TableCell>
+                                            <TableCell width="40%" sx={{
+                                                fontWeight: "bold",
+                                                fontSize: 16,
+                                                color: "#ff4646",
+                                                border: 0,
+                                                pr: 3
+                                            }}>
+                                                Actions
+                                            </TableCell>
+                                        </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                        {filteredUsers.map((user) => (
+                                            <TableRow key={user.id} hover>
+                                                <TableCell sx={{color: "#fff", pl: 3, borderBottom: "1px solid #333"}}>
+                                                    <Box sx={{display: "flex", alignItems: "center", gap: 1}}>
+                                                        <Avatar
+                                                            src={avatars[user.id] || undefined}
+                                                            sx={{
+                                                                width: 32,
+                                                                height: 32,
+                                                                bgcolor: user.color || "#ff4646",
+                                                                fontSize: 16,
+                                                                fontWeight: "bold"
+                                                            }}
+                                                        >
+                                                            {user.emoji ? (
+                                                                <Typography component="span" sx={{fontSize: "1rem", lineHeight: 1}}>
+                                                                    {user.emoji}
+                                                                </Typography>
+                                                            ) : (user.username?.[0]?.toUpperCase() || 'U')}
+                                                        </Avatar>
+                                                        <Typography
+                                                            sx={{fontWeight: "bold"}}>{user.username}</Typography>
+                                                        {user.ban_status > 0 && (
+                                                            <Chip
+                                                                label={user.ban_status === 9999 ? "PermBan" : `Ban ${user.ban_status}d`}
+                                                                size="small"
+                                                                color="error"
+                                                                sx={{ml: 1}}
+                                                            />
+                                                        )}
+                                                    </Box>
+                                                </TableCell>
+                                                <TableCell sx={{color: "#fff", pr: 3, borderBottom: "1px solid #333"}}>
+                                                    <Grid container spacing={1} alignItems="center" wrap="nowrap">
+                                                        <Grid item>
+                                                            <Tooltip title="Reset user votes">
+                                                                <IconButton
+                                                                    size="small"
+                                                                    onClick={() => handleResetVotesForUser(user.id)}
+                                                                    sx={{
+                                                                        bgcolor: "#353535",
+                                                                        color: "#ff4646",
+                                                                        "&:hover": {bgcolor: "#454545"}
+                                                                    }}
+                                                                >
+                                                                    <RestoreIcon/>
+                                                                </IconButton>
+                                                            </Tooltip>
+                                                        </Grid>
+                                                        <Grid item>
+                                                            <Tooltip title="Delete user songs">
+                                                                <IconButton
+                                                                    size="small"
+                                                                    onClick={() => handleDeleteUserSongs(user.id)}
+                                                                    sx={{
+                                                                        bgcolor: "#ff4646",
+                                                                        color: "#fff",
+                                                                        "&:hover": {bgcolor: "#ff6060"}
+                                                                    }}
+                                                                >
+                                                                    <DeleteIcon/>
+                                                                </IconButton>
+                                                            </Tooltip>
+                                                        </Grid>
+                                                        <Grid item>
+                                                            <Tooltip title="Block user (perm)">
+                                                                <IconButton
+                                                                    size="small"
+                                                                    onClick={() => handleBanChange(user.id, 9999)}
+                                                                    sx={{
+                                                                        bgcolor: "#353535",
+                                                                        color: "#ff4646",
+                                                                        "&:hover": {bgcolor: "#454545"}
+                                                                    }}
+                                                                >
+                                                                    <BlockIcon/>
+                                                                </IconButton>
+                                                            </Tooltip>
+                                                        </Grid>
+                                                        <Grid item sx={{minWidth: 120}}>
+                                                            <FormControl
+                                                                size="small"
+                                                                sx={{
+                                                                    minWidth: 110,
+                                                                    bgcolor: "#353535",
+                                                                    borderRadius: 1,
+                                                                    '& .MuiInputLabel-root': {
+                                                                        color: "#ccc",
+                                                                    },
+                                                                    '& .MuiSelect-icon': {
+                                                                        color: "#ff4646",
+                                                                    },
+                                                                }}
+                                                            >
+                                                                <InputLabel
+                                                                    id={`ban-select-label-${user.id}`}
+                                                                    sx={{
+                                                                        color: "#ccc",
+                                                                        '&.Mui-focused': {color: "#ff4646"}
+                                                                    }}
+                                                                >
+                                                                    Ban period
+                                                                </InputLabel>
+                                                                <Select
+                                                                    labelId={`ban-select-label-${user.id}`}
+                                                                    value={user.ban_status || 0}
+                                                                    label="Ban period"
+                                                                    onChange={(e) => handleBanChange(user.id, e.target.value)}
+                                                                    sx={{
+                                                                        color: "#fff",
+                                                                        '& .MuiOutlinedInput-notchedOutline': {
+                                                                            borderColor: "#444",
+                                                                        },
+                                                                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                                                                            borderColor: "#ff4646",
+                                                                        },
+                                                                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                                                            borderColor: "#ff4646",
+                                                                        },
+                                                                    }}
+                                                                    MenuProps={{
+                                                                        PaperProps: {
+                                                                            sx: {
+                                                                                bgcolor: "#232323",
+                                                                                color: "#fff",
+                                                                            }
+                                                                        }
+                                                                    }}
+                                                                >
+                                                                    <MenuItem value={0} sx={{
+                                                                        color: "#fff",
+                                                                        bgcolor: "#232323"
+                                                                    }}>None</MenuItem>
+                                                                    <MenuItem value={7}
+                                                                              sx={{color: "#fff", bgcolor: "#232323"}}>7
+                                                                        days</MenuItem>
+                                                                    <MenuItem value={30}
+                                                                              sx={{color: "#fff", bgcolor: "#232323"}}>30
+                                                                        days</MenuItem>
+                                                                    <MenuItem value={90}
+                                                                              sx={{color: "#fff", bgcolor: "#232323"}}>90
+                                                                        days</MenuItem>
+                                                                    <MenuItem value={180}
+                                                                              sx={{color: "#fff", bgcolor: "#232323"}}>180
+                                                                        days</MenuItem>
+                                                                    <MenuItem value={365}
+                                                                              sx={{color: "#fff", bgcolor: "#232323"}}>365
+                                                                        days</MenuItem>
+                                                                    <MenuItem value={9999} sx={{
+                                                                        color: "#fff",
+                                                                        bgcolor: "#232323"
+                                                                    }}>Perm</MenuItem>
+                                                                </Select>
+                                                            </FormControl>
+                                                        </Grid>
+                                                    </Grid>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </TableContainer>
+                        </>
+                    )}
 
-                            <FormControl size="small" fullWidth>
-                                <InputLabel id={`ban-select-label-${user.id}`}>Ban</InputLabel>
-                                <Select
-                                    labelId={`ban-select-label-${user.id}`}
-                                    value={user.ban_status || 0}
-                                    label="Ban"
-                                    onChange={(e) => handleBanChange(user.id, e.target.value)}
-                                >
-                                    <MenuItem value={0}>Brak</MenuItem>
-                                    <MenuItem value={7}>7 dni</MenuItem>
-                                    <MenuItem value={30}>30 dni</MenuItem>
-                                    <MenuItem value={90}>90 dni</MenuItem>
-                                    <MenuItem value={180}>180 dni</MenuItem>
-                                    <MenuItem value={365}>365 dni</MenuItem>
-                                    <MenuItem value={9999}>Perm</MenuItem>
-                                </Select>
-                            </FormControl>
-                        </Card>
-                    ))}
-                </div>
-            </div>
-        </div>
+                    {/* Songs Tab */}
+                    {activeTab === 1 && (
+                        <>
+                            <Box sx={{display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2}}>
+                                <Typography variant="h6" sx={{fontWeight: "bold", color: "#ff4646"}}>
+                                    Song Queue
+                                </Typography>
+                                <TextField
+                                    size="small"
+                                    variant="outlined"
+                                    placeholder="Search song..."
+                                    value={searchSong}
+                                    onChange={e => setSearchSong(e.target.value)}
+                                    InputProps={{
+                                        startAdornment: <SearchIcon sx={{color: "#ff4646", mr: 1}}/>,
+                                    }}
+                                    sx={{
+                                        bgcolor: "#232323",
+                                        borderRadius: 2,
+                                        '& .MuiOutlinedInput-root': {
+                                            color: "#fff",
+                                            '& fieldset': {
+                                                borderColor: "#444",
+                                            },
+                                            '&:hover fieldset': {
+                                                borderColor: "#ff4646",
+                                            },
+                                            '&.Mui-focused fieldset': {
+                                                borderColor: "#ff4646",
+                                            },
+                                        },
+                                        input: {
+                                            color: "#fff",
+                                        },
+                                    }}
+                                />
+                            </Box>
+                            <TableContainer component={Paper} sx={{
+                                bgcolor: "#222",
+                                borderRadius: 2,
+                                boxShadow: 0,
+                                px: 0
+                            }}>
+                                <Table>
+                                    <TableHead>
+                                        <TableRow>
+                                            <TableCell width="25%" sx={{
+                                                fontWeight: "bold",
+                                                fontSize: 16,
+                                                color: "#ff4646",
+                                                border: 0,
+                                                pl: 3
+                                            }}>
+                                                Title
+                                            </TableCell>
+                                            <TableCell width="20%" sx={{
+                                                fontWeight: "bold",
+                                                fontSize: 16,
+                                                color: "#ff4646",
+                                                border: 0,
+                                                pl: 3
+                                            }}>
+                                                Artist
+                                            </TableCell>
+                                            <TableCell width="35%" sx={{
+                                                fontWeight: "bold",
+                                                fontSize: 16,
+                                                color: "#ff4646",
+                                                border: 0,
+                                                pl: 3
+                                            }}>
+                                                URL
+                                            </TableCell>
+                                            <TableCell width="20%" sx={{
+                                                fontWeight: "bold",
+                                                fontSize: 16,
+                                                color: "#ff4646",
+                                                border: 0,
+                                                pl: 3
+                                            }}>
+                                                Actions
+                                            </TableCell>
+                                        </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                        {filteredSongs.map((song) => (
+                                            <TableRow key={song.id} hover>
+                                                <TableCell sx={{
+                                                    color: "#fff",
+                                                    fontWeight: "bold",
+                                                    pl: 3,
+                                                    borderBottom: "1px solid #333"
+                                                }}>
+                                                    {song.title}
+                                                </TableCell>
+                                                <TableCell sx={{color: "#fff", pl: 3, borderBottom: "1px solid #333"}}>
+                                                    {song.author}
+                                                </TableCell>
+                                                <TableCell sx={{color: "#fff", pl: 3, borderBottom: "1px solid #333"}}>
+                                                    <Typography
+                                                        sx={{
+                                                            color: "#ff4646",
+                                                            wordBreak: "break-all",
+                                                            fontSize: "0.9rem"
+                                                        }}
+                                                    >
+                                                        <a
+                                                            href={song.url}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            style={{color: "#ff4646", textDecoration: "underline"}}
+                                                        >
+                                                            {song.url}
+                                                        </a>
+                                                    </Typography>
+                                                </TableCell>
+                                                <TableCell sx={{color: "#fff", pl: 3, borderBottom: "1px solid #333"}}>
+                                                    <Grid container spacing={1} alignItems="center" wrap="nowrap">
+                                                        <Grid item>
+                                                            <Tooltip title="Reset song votes">
+                                                                <IconButton
+                                                                    size="small"
+                                                                    onClick={() => handleResetVotesForSong(song.id)}
+                                                                    sx={{
+                                                                        bgcolor: "#353535",
+                                                                        color: "#ff4646",
+                                                                        "&:hover": {bgcolor: "#454545"}
+                                                                    }}
+                                                                >
+                                                                    <RestoreIcon/>
+                                                                </IconButton>
+                                                            </Tooltip>
+                                                        </Grid>
+                                                        <Grid item>
+                                                            <Tooltip title="Delete song">
+                                                                <IconButton
+                                                                    size="small"
+                                                                    onClick={() => handleDeleteSong(song.id)}
+                                                                    sx={{
+                                                                        bgcolor: "#ff4646",
+                                                                        color: "#fff",
+                                                                        "&:hover": {bgcolor: "#ff6060"}
+                                                                    }}
+                                                                >
+                                                                    <DeleteIcon/>
+                                                                </IconButton>
+                                                            </Tooltip>
+                                                        </Grid>
+                                                        <Grid item>
+                                                            <Tooltip title="Ban URL">
+                                                                <IconButton
+                                                                    size="small"
+                                                                    onClick={() => handleBanUrl(song.url)}
+                                                                    sx={{
+                                                                        bgcolor: "#353535",
+                                                                        color: "#ff4646",
+                                                                        "&:hover": {bgcolor: "#454545"}
+                                                                    }}
+                                                                >
+                                                                    <BlockIcon/>
+                                                                </IconButton>
+                                                            </Tooltip>
+                                                        </Grid>
+                                                    </Grid>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </TableContainer>
+                        </>
+                    )}
+                </Box>
+            </Box>
+        </Container>
     );
 }
