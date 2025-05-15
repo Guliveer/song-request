@@ -1,6 +1,6 @@
 import {useEffect, useState} from "react";
 import {useRouter} from "next/router";
-import {isUserAdmin, isUserLoggedIn} from "@/utils/actions";
+import {isUserAdmin, isUserLoggedIn, genUserAvatar} from "@/utils/actions";
 import {supabase} from "@/utils/supabase";
 import {
     Box,
@@ -43,6 +43,7 @@ export default function AdminPanel() {
     const [activeTab, setActiveTab] = useState(0);
     const [searchSong, setSearchSong] = useState("");
     const [searchUser, setSearchUser] = useState("");
+    const [avatars, setAvatars] = useState({});
 
     const router = useRouter();
 
@@ -81,6 +82,33 @@ export default function AdminPanel() {
 
         if (isAdmin) fetchUsers();
     }, [isAdmin]);
+
+    // Generate user avatars for the users list
+    useEffect(() => {
+        if (users.length === 0) return;
+        let cancelled = false;
+
+        async function generateAvatars() {
+            const newAvatars = {};
+            await Promise.all(
+                users.map(async (user) => {
+                    try {
+                        // Use the avatar generator function for real user avatars
+                        const avatarDataUrl = await genUserAvatar(user.id);
+                        newAvatars[user.id] = avatarDataUrl;
+                    } catch {
+                        newAvatars[user.id] = null;
+                    }
+                })
+            );
+            if (!cancelled) setAvatars(newAvatars);
+        }
+
+        generateAvatars();
+        return () => {
+            cancelled = true;
+        };
+    }, [users]);
 
     // --- User actions ---
     const handleResetVotesForUser = async (userId) => {
@@ -363,19 +391,21 @@ export default function AdminPanel() {
                                             <TableRow key={user.id} hover>
                                                 <TableCell sx={{color: "#fff", pl: 3, borderBottom: "1px solid #333"}}>
                                                     <Box sx={{display: "flex", alignItems: "center", gap: 1}}>
-                                                        <Avatar sx={{
-                                                            width: 32,
-                                                            height: 32,
-                                                            bgcolor: user.color || "#ff4646",
-                                                            fontSize: 16,
-                                                            fontWeight: "bold"
-                                                        }}>
+                                                        <Avatar
+                                                            src={avatars[user.id] || undefined}
+                                                            sx={{
+                                                                width: 32,
+                                                                height: 32,
+                                                                bgcolor: user.color || "#ff4646",
+                                                                fontSize: 16,
+                                                                fontWeight: "bold"
+                                                            }}
+                                                        >
                                                             {user.emoji ? (
-                                                                <Typography component="span"
-                                                                            sx={{fontSize: "1rem", lineHeight: 1}}>
+                                                                <Typography component="span" sx={{fontSize: "1rem", lineHeight: 1}}>
                                                                     {user.emoji}
                                                                 </Typography>
-                                                            ) : (user.username?.[0]?.toUpperCase() || "U")}
+                                                            ) : (user.username?.[0]?.toUpperCase() || 'U')}
                                                         </Avatar>
                                                         <Typography
                                                             sx={{fontWeight: "bold"}}>{user.username}</Typography>
@@ -436,7 +466,7 @@ export default function AdminPanel() {
                                                                 </IconButton>
                                                             </Tooltip>
                                                         </Grid>
-                                                        <Grid item sx={{ minWidth: 120 }}>
+                                                        <Grid item sx={{minWidth: 120}}>
                                                             <FormControl
                                                                 size="small"
                                                                 sx={{
@@ -632,7 +662,7 @@ export default function AdminPanel() {
                                                             href={song.url}
                                                             target="_blank"
                                                             rel="noopener noreferrer"
-                                                            style={{ color: "#ff4646", textDecoration: "underline" }}
+                                                            style={{color: "#ff4646", textDecoration: "underline"}}
                                                         >
                                                             {song.url}
                                                         </a>
