@@ -56,6 +56,7 @@ export default function AddSongForm() {
             alert("Musisz być zalogowany, aby dodać piosenkę.");
             return;
         }
+        console.log('Sprawdzany URL:', formData.url); // LOGI DO DEBUGU
 
         // Sprawdzenie statusu bana
         const { data: userData, error: userError } = await supabase
@@ -72,6 +73,18 @@ export default function AddSongForm() {
 
         if (userData.ban_status > 0) {
             alert('Nie możesz dodać piosenki, ponieważ Twoje konto ma aktywnego bana.');
+            return;
+        }
+
+        // SPRAWDZAMY CZY URL JEST ZBANOWANY
+        const { data: bannedUrl, error: bannedError } = await supabase
+            .from('banned_url')
+            .select('id')
+            .eq('url', formData.url)
+            .maybeSingle();
+
+        if (bannedUrl) {
+            alert("Ten link został zbanowany i nie może zostać dodany do kolejki.");
             return;
         }
 
