@@ -2,7 +2,7 @@ import PropTypes from 'prop-types';
 import React, {useState, useEffect, useCallback} from 'react';
 import Link from "next/link";
 import {supabase} from '@/utils/supabase';
-import { useRouter } from 'next/router';  // Importujemy useRouter
+import { useRouter } from 'next/router';
 import {
     Box, Card, Typography, IconButton, Snackbar, Divider, Button, Tooltip,
     Avatar, AvatarGroup
@@ -21,8 +21,7 @@ import {
     MusicNoteRounded as SongIcon,
     NumbersRounded as RankIcon,
     PersonAddRounded as FollowIcon,
-    ThumbUpAltRounded as UpvoteIcon,
-    ThumbDownAltRounded as DownvoteIcon,
+    OpenInNewRounded as ExternalLinkIcon,
 } from '@mui/icons-material';
 import { Delete as DeleteIcon, RestartAlt as RestartAltIcon, Block as BlockIcon } from '@mui/icons-material';
 
@@ -416,12 +415,24 @@ function SongCard({id}) {
                         gap: 1,
                         width: '100%',
                     }}>
-                        <Box sx={{display: 'flex', alignItems: 'center', gap: '0.4em'}}>
-                            <WhoAddedIcon fontSize="small" sx={{color: 'text.disabled'}}/>
-                            <Typography variant="body2" color="text.secondary" sx={{fontSize: '0.9rem'}}>
-                                {username}
+                        <Box sx={{display: 'flex', alignItems: 'center', gap: '0.4em'}} >
+                            <WhoAddedIcon fontSize="small" sx={{color: 'text.disabled'}} />
+                            <Typography variant="body2" color="text.secondary" sx={{
+                                fontSize: '0.9rem',
+                                display: 'flex',
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                gap: 0.5,
+                            }}>
+                                <Link href={`/user/${songData.rawUserId}`}>
+                                    {username}
+                                </Link>
+                                <ExternalLinkIcon sx={{
+                                    color: 'text.secondary',
+                                    fontSize: '0.9rem',
+                                }} />
                             </Typography>
-                            {user && songData.rawUserId !== user.id && !isFollowing && (
+                            {user && (songData.rawUserId !== user.id) && !isFollowing && (
                                 <Tooltip title="Follow user">
                                     <IconButton
                                         size="small"
@@ -505,6 +516,7 @@ function SongCard({id}) {
             </Box>
 
             {/* Functionality Icons (Follow, Delete, Ban, etc.) */}
+            {isAdminPanel && (
             <Box sx={{
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -513,27 +525,24 @@ function SongCard({id}) {
                 mt: 2, // Added margin-top to separate from the previous section
             }}>
                 <Box sx={{display: 'flex', gap: 2}}>
-                    {isAdminPanel && (
-                        <>
-                            <Tooltip title="Zbanuj URL">
-                                <IconButton onClick={handleBanAndDelete}>
-                                    <BlockIcon sx={{fontSize: 28}}/>
-                                </IconButton>
-                            </Tooltip>
-                            <Tooltip title="Usuń piosenkę">
-                                <IconButton onClick={handleDelete}>
-                                    <DeleteIcon sx={{fontSize: 28}}/>
-                                </IconButton>
-                            </Tooltip>
-                            <Tooltip title="Zresetuj głosy">
-                                <IconButton onClick={handleResetVotes}>
-                                    <RestartAltIcon sx={{fontSize: 28}}/>
-                                </IconButton>
-                            </Tooltip>
-                        </>
-                    )}
+                    <Tooltip title="Ban URL">
+                        <IconButton onClick={handleBanAndDelete}>
+                            <BlockIcon sx={{fontSize: 28}}/>
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Remove song">
+                        <IconButton onClick={handleDelete}>
+                            <DeleteIcon sx={{fontSize: 28}}/>
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Reset votes">
+                        <IconButton onClick={handleResetVotes}>
+                            <RestartAltIcon sx={{fontSize: 28}}/>
+                        </IconButton>
+                    </Tooltip>
                 </Box>
             </Box>
+            )}
 
             {error && (
                 <Snackbar
