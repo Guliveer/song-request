@@ -41,6 +41,7 @@ import {
     isUserAdmin,
     isFollowingUser,
     genUserAvatar,
+    isUserLoggedIn,
 } from "@/utils/actions"
 
 function TabPanel(props) {
@@ -74,24 +75,21 @@ export default function UserProfile({ userData }) {
     const [followLoading, setFollowLoading] = useState(false)
     const [isAdmin, setIsAdmin] = useState(false)
     const [isSameUser, setIsSameUser] = useState(false)
+    const [isLoggedIn, setIsLoggedIn] = useState(false)
     const [avatarUrl, setAvatarUrl] = useState("")
 
     useEffect(() => {
         async function fetchData() {
             try {
-                const songsData = await getUserSongs(userData.id)
-                const votesData = await getUserVotes(userData.id)
                 const curUser = await getCurrentUser()
-                const currentUserData = await getUserInfo(curUser.id)
-                const adminData = await isUserAdmin()
-                const followState = await isFollowingUser(userData.id)
-                const avatar = await genUserAvatar(userData.id)
-                setSongs(songsData)
-                setVotes(votesData)
-                setUserFollowed(followState) // Check if the current user is following the viewed user
-                setIsAdmin(adminData) // Check if the current user is an admin
-                setAvatarUrl(avatar) // Set the avatar URL
-                setIsSameUser(currentUserData.id === userData.id) // Check if the current user is the same as the viewed user
+                const currentUserData = await getUserInfo(curUser?.id)
+                setSongs(await getUserSongs(userData.id))
+                setVotes(await getUserVotes(userData.id))
+                setUserFollowed(await isFollowingUser(userData.id)) // Check if the current user is following the viewed user
+                setIsAdmin(await isUserAdmin()) // Check if the current user is an admin
+                setAvatarUrl(await genUserAvatar(userData.id)) // Set the avatar URL
+                setIsSameUser(currentUserData?.id === userData.id) // Check if the current user is the same as the viewed user
+                setIsLoggedIn(await isUserLoggedIn())
             } catch (error) {
                 console.error("Error fetching data:", error)
                 setSnackbar({
@@ -231,7 +229,7 @@ export default function UserProfile({ userData }) {
                         {userData.username}
                     </Typography>
                     <Box sx={{ display: "flex", gap: 2 }}>
-                        {!isSameUser && (
+                        {(!isSameUser && isLoggedIn) && (
                             <Button
                                 variant="outlined"
                                 color="primary"

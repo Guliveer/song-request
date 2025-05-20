@@ -1,18 +1,8 @@
-import { isUserLoggedIn, getUserInfo, isFollowingUser } from "@/utils/actions";
+import { getUserInfo } from "@/utils/actions";
 import UserProfile from "@/components/User_Panel/UserProfile";
 
 export async function getServerSideProps(context) {
-    const { user: targetUser } = context.params; // Get the targetUser parameter from the URL
-
-    // Get the currently logged-in user
-    if (await isUserLoggedIn()) {
-        return {
-            redirect: {
-                destination: "/login",
-                permanent: false,
-            },
-        };
-    }
+    const targetUser = context.params.user[0]; // Extract the first segment of the catch-all route
 
     // Query the database to find the targetUser by UUID
     const userData = await getUserInfo(targetUser);
@@ -23,12 +13,9 @@ export async function getServerSideProps(context) {
         };
     }
 
-    const isFollowing = await isFollowingUser(targetUser);
-
     return {
         props: {
             userData: userData,
-            isFollowing: isFollowing,
         },
     };
 }
