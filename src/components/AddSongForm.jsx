@@ -56,7 +56,7 @@ export default function AddSongForm() {
             alert("Musisz być zalogowany, aby dodać piosenkę.");
             return;
         }
-        console.log('Sprawdzany URL:', formData.url); // LOGI DO DEBUGU
+        console.debug('Debug - Sprawdzany URL:', formData.url); // This is a debug log and can be disabled in production
 
         // Sprawdzenie statusu bana
         const { data: userData, error: userError } = await supabase
