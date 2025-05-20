@@ -22,6 +22,7 @@ import {
     HomeRounded as HomeIcon,
 } from '@mui/icons-material';
 import {genUserAvatar, logOut} from "@/utils/actions";
+import NotificationBell from "@/components/NotificationBell";
 
 export default function NavMenu() {
     const { isLoggedIn, isAdmin, uuid } = useUser();
@@ -54,6 +55,7 @@ export default function NavMenu() {
             { name: "Admin Panel", href: "/admin", icon: <AdminPanelIcon /> }
         ],
     };
+
 
     const userMenu = {
         loggedIn: [
@@ -190,13 +192,15 @@ export default function NavMenu() {
                         }
 
                         {isLoggedIn && (
-                        <Tooltip title="Open settings">
-                            <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                                <Avatar alt="Avatar" src={avatarUrl} />
-                            </IconButton>
-                        </Tooltip>
+                            <>
+                                <NotificationBell userId={uuid} />
+                                <Tooltip title="Open settings">
+                                    <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
+                                        <Avatar alt="Avatar" src={avatarUrl} />
+                                    </IconButton>
+                                </Tooltip>
+                            </>
                         )}
-
                         {/* Menu użytkownika */}
                         <Menu
                             sx={{ mt: "45px" }}

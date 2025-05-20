@@ -171,7 +171,7 @@ function SongCard({id}) {
             return;
         }
 
-        let resultVoteVal = null; // variable to sync data update
+        let resultVoteVal = null;
 
         try {
             if (userVote === newVoteValue) {
@@ -187,6 +187,44 @@ function SongCard({id}) {
                     return;
                 }
                 resultVoteVal = newVoteValue;
+
+                // --- ANTY-SPAM: tylko jedno powiadomienie o lajku na piosenkę od danego usera ---
+                if (
+                    user.id !== songData.rawUserId && // nie wysyłaj powiadomień do siebie
+                    newVoteValue === 1                // tylko dla lajka (upvote)
+                ) {
+                    // Używaj props.id jako identyfikatora piosenki!
+                    const { data: existingNotifications } = await supabase
+                        .from("notifications")
+                        .select("id")
+                        .eq("user_id", songData.rawUserId)
+                        .eq("sender_id", user.id)
+                        .eq("type", "song_like")
+                        .eq("link", `/song/${id}`);
+
+                    if (!existingNotifications || existingNotifications.length === 0) {
+                        let username = user?.username;
+                        if (!username) {
+                            const { data: userInfo } = await supabase
+                                .from('users')
+                                .select('username')
+                                .eq('id', user.id)
+                                .single();
+                            username = userInfo?.username || user.id;
+                        }
+                        await supabase
+                            .from("notifications")
+                            .insert([{
+                                user_id: songData.rawUserId,
+                                sender_id: user.id,
+                                type: "song_like",
+                                message: `User ${username} liked your song "${songData.title}".`,
+                                link: `/song/${id}`,
+                                read: false
+                            }]);
+                    }
+                }
+                // --- KONIEC ANTY-SPAMU ---
             }
 
             await playSound('click', 0.75);
@@ -197,7 +235,7 @@ function SongCard({id}) {
             await fetchData();
             setUserVote(resultVoteVal);
         }
-    }, 300), [user, userVote, id, fetchData]);
+    }, 300), [user, userVote, id, fetchData, songData]);
 
     // funkcja do usuwania piosenki
     const handleDelete = async () => {
@@ -269,8 +307,6 @@ function SongCard({id}) {
             }
 
             const currentFollowed = userData.followed_users || [];
-
-            // Add new user to the followed users list
             const updatedFollowed = [...currentFollowed, songData.rawUserId];
 
             // Update the database
@@ -283,6 +319,29 @@ function SongCard({id}) {
                 setError("Cannot update followed users list");
                 return;
             }
+
+            // --- DODAJ TEN FRAGMENT: pobierz username i wyślij powiadomienie ---
+            let username = user.username;
+            if (!username) {
+                const { data: userInfo } = await supabase
+                    .from('users')
+                    .select('username')
+                    .eq('id', user.id)
+                    .single();
+                username = userInfo?.username || user.id;
+            }
+
+            await supabase
+                .from("notifications")
+                .insert([{
+                    user_id: songData.rawUserId, // odbiorca powiadomienia (autor piosenki)
+                    sender_id: user.id,          // kto dodał (Ty)
+                    type: "new_follower",
+                    message: `User ${username} started following you!`,
+                    link: `/user/${user.id}`,
+                    read: false
+                }]);
+            // --- KONIEC FRAGMENTU ---
 
             setIsFollowing(true);
             await playSound('click', 0.5);
