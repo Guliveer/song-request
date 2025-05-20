@@ -6,7 +6,8 @@ import { getSongData } from '@/utils/actions';
 
 export default function SongPage() {
     const router = useRouter();
-    const { song } = router.query; // Extract song ID from the URL
+    const { song: songQuery } = router.query; // Extract song ID from the URL
+    const song = Array.isArray(songQuery) ? songQuery[0] : songQuery; // Handle catch-all route
     const [exists, setExists] = useState(null);
 
     useEffect(() => {
