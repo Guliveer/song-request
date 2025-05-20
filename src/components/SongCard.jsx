@@ -327,6 +327,20 @@ function SongCard({id}) {
                         {rank}
                     </Typography>
                 </Box>
+                <IconButton
+                    onClick={() => router.push(`/song/${id}`)}
+                    size="small"
+                    sx={{
+                        fontSize: "small",
+                        color: "text.secondary",
+                        position: 'absolute',
+                        top: 21,
+                        right: 21,
+                        zIndex: 1,
+                    }}
+                >
+                    <ExternalLinkIcon />
+                </IconButton>
             </Box>
 
             <Divider variant="fullWidth" flexItem/>

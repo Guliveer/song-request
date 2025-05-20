@@ -18,7 +18,7 @@ export default function Queue() {
     const [anchorEl, setAnchorEl] = useState(null);
 
     const [page, setPage] = useState(1);
-    const [pageSize] = useState(10);
+    const [pageSize] = useState(12);
     const [totalPages, setTotalPages] = useState(1);
 
     const [searchQuery, setSearchQuery] = useState('');
