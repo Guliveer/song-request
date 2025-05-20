@@ -489,7 +489,7 @@ removeVotes.propTypes = {
     userId: PropTypes.string.isRequired
 }
 
-export async function hardBanUser(userId, banDuration) {
+export async function hardBanUser(userId, banDuration = '99999h') {
     try {
         const { data: user, error } = await supabase.auth.admin.updateUserById(
             userId,
@@ -504,7 +504,6 @@ export async function hardBanUser(userId, banDuration) {
         return null;
     }
 }
-
 hardBanUser.propTypes = {
     userId: PropTypes.string.isRequired,
     banDuration: PropTypes.string.isRequired

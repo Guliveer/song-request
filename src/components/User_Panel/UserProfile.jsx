@@ -151,10 +151,10 @@ export default function UserProfile({ userData }) {
 
     const handleBanConfirm = async () => {
         try {
-            await hardBanUser(userData.id, !userData.is_banned)
+            await hardBanUser(userData.id)
             setSnackbar({
                 open: true,
-                message: `User ${userData.is_banned ? "unbanned" : "banned"} successfully`,
+                message: `User ${userData.ban_status = 0 ? "unbanned" : "banned"} successfully`,
                 severity: "success",
             })
 
