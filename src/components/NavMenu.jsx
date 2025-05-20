@@ -1,10 +1,8 @@
 import { useUser } from "@/context/UserContext";
-import { useRouter } from "next/router";
 import {useEffect, useState} from "react";
 import {
     AppBar,
     Toolbar,
-    Typography,
     Box,
     MenuItem,
     Tooltip,
@@ -27,7 +25,6 @@ import {genUserAvatar, logOut} from "@/utils/actions";
 
 export default function NavMenu() {
     const { isLoggedIn, isAdmin, uuid } = useUser();
-    const router = useRouter();
     const [avatarUrl, setAvatarUrl] = useState(undefined);
 
     useEffect(() => {
@@ -82,8 +79,8 @@ export default function NavMenu() {
         handleCloseUserMenu();
         if (item.action === "logout") {
             logOut();
-        } else if (item.href) {
-            router.push(item.href);
+        // } else if (item.href) {
+        //     router.push(item.href);
         }
     };
 
@@ -114,13 +111,23 @@ export default function NavMenu() {
                         >
                             {pages.public.map((page) => (
                                 <MenuItem key={page.name} onClick={handleCloseNavMenu}>
-                                    <Typography sx={{ textAlign: "center" }}>{page.name}</Typography>
+                                    <Link sx={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: 1,
+                                        textTransform: "uppercase"
+                                    }} href={page.href} underline={"none"}>{page.name}</Link>
                                 </MenuItem>
                             ))}
                             {isAdmin &&
                                 pages.admin.map((page) => (
                                     <MenuItem key={page.name} onClick={handleCloseNavMenu}>
-                                        <Typography sx={{ textAlign: "center" }}>{page.name}</Typography>
+                                        <Link sx={{
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: 1,
+                                            textTransform: "uppercase"
+                                        }} href={page.href} underline={"none"}>{page.name}</Link>
                                     </MenuItem>
                                 ))}
                         </Menu>
@@ -203,15 +210,15 @@ export default function NavMenu() {
                         >
                             {isLoggedIn && userMenu.loggedIn.map((item) => (
                                 <MenuItem key={item.name} onClick={() => handleUserMenuClick(item)}>
-                                    <Typography sx={{
+                                    <Link sx={{
                                         display: "flex",
                                         justifyContent: "flex-start",
                                         alignItems: "center",
                                         gap: 1.5,
-                                    }}>
+                                    }} href={item.href} underline="none">
                                         {item.icon}
                                         {item.name}
-                                    </Typography>
+                                    </Link>
                                 </MenuItem>
                             ))}
                         </Menu>

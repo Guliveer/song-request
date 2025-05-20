@@ -32,7 +32,6 @@ export async function playSound(type, volume = 1.0) {
         console.error(`Error playing sound "${type}":`, error.message);
     }
 }
-
 playSound.propTypes = {
     audio: PropTypes.oneOf(['success', 'swoosh', 'click']).isRequired,
     volume: PropTypes.number,
@@ -77,7 +76,7 @@ export async function genUserAvatar(id) {
         ctx.textBaseline = "middle";
 
         // Delikatne przesunięcie dla lepszego optycznego wyśrodkowania
-        ctx.fillText(user.emoji ? icon : username.charAt(0).toUpperCase(), size / 2, size / 2 + (size * 0.03));
+        ctx.fillText(user.emoji ? icon : username.charAt(0).toUpperCase(), size / 2, size*1.02 / 2);
 
         return canvas.toDataURL();
     } catch (error) {
@@ -85,7 +84,6 @@ export async function genUserAvatar(id) {
         return null;
     }
 }
-
 function getBlendModeForText(hex) {
     const r = parseInt(hex.slice(1, 3), 16);
     const g = parseInt(hex.slice(3, 5), 16);
@@ -97,7 +95,6 @@ function getBlendModeForText(hex) {
     if (luminance < 0.35) return "screen";    // Bardzo ciemne tło → litera się rozjaśnia
     return "overlay";                         // Średnie tło → naturalne wzmocnienie kontrastu
 }
-
 genUserAvatar.propTypes = {
     id: PropTypes.string.isRequired
 }
@@ -126,7 +123,7 @@ export async function getUserInfo(id) {
     try {
         const { data, error } = await supabase
             .from('users')
-            .select()
+            .select("*")
             .eq('id', id)
             .single();
 
@@ -138,7 +135,6 @@ export async function getUserInfo(id) {
         return null;
     }
 }
-
 getUserInfo.propTypes = {
     id: PropTypes.string.isRequired
 }
@@ -176,7 +172,6 @@ export async function isUsernameAvailable(username) {
 
     return true;
 }
-
 isUsernameAvailable.propTypes = {
     username: PropTypes.string.isRequired
 }
@@ -198,7 +193,6 @@ export async function signUp(email, password, username, captchaToken) {
 
     return user;
 }
-
 signUp.propTypes = {
     email: PropTypes.string.isRequired,
     password: PropTypes.string.isRequired,
@@ -244,7 +238,6 @@ export async function getSongData(id) {
         return null;
     }
 }
-
 getSongData.propTypes = {
     id: PropTypes.number.isRequired
 }
@@ -264,7 +257,6 @@ export async function removeUserVote(songId, userId) {
         return error;
     }
 }
-
 removeUserVote.propTypes = {
     songId: PropTypes.number.isRequired,
     userId: PropTypes.string.isRequired
@@ -288,7 +280,6 @@ export async function updateUserVote(songId, userId, vote) {
         return error;
     }
 }
-
 updateUserVote.propTypes = {
     songId: PropTypes.number.isRequired,
     userId: PropTypes.string.isRequired,
@@ -329,9 +320,191 @@ export function sortSongs(data, sortCriteria, sortOrder) {
         return comparison;
     });
 }
-
 sortSongs.propTypes = {
     data: PropTypes.array.isRequired,
     sortCriteria: PropTypes.oneOf(['score', 'author', 'title', 'added_at']).isRequired,
     sortOrder: PropTypes.oneOf(['asc', 'desc']).isRequired
 }
+
+export async function isFollowingUser(userId) {
+    const curUser = await getCurrentUser();
+    try {
+        const { data: user, error } = await supabase
+            .from('users')
+            .select('followed_users')
+            .eq('id', curUser.id)
+            .single();
+
+        if (error) throw error;
+
+        const followedUsers = user.followed_users || [];
+        return followedUsers.includes(userId);
+    } catch (error) {
+        console.error('Error checking if following user:', error.message);
+        return false;
+    }
+}
+
+export async function followUser(userId) {
+    // users.followed_users [text array]
+    const curUser = await getCurrentUser();
+    try {
+        const { data: user, error } = await supabase
+            .from('users')
+            .select('followed_users')
+            .eq('id', curUser.id)
+            .single();
+
+        if (error) throw error;
+
+        const followedUsers = user.followed_users || [];
+        const newFollowedUsers = [...followedUsers, userId];
+
+        const { error: updateError } = await supabase
+            .from('users')
+            .update({ followed_users: newFollowedUsers })
+            .eq('id', curUser.id);
+
+        if (updateError) throw updateError;
+
+        return true;
+    } catch (error) {
+        console.error('Error following user:', error.message);
+        return false;
+    }
+}
+followUser.propTypes = {
+    userId: PropTypes.string.isRequired
+}
+
+export async function unfollowUser(userId) {
+    const curUser = await getCurrentUser();
+    try {
+        const { data: user, error } = await supabase
+            .from('users')
+            .select('followed_users')
+            .eq('id', curUser.id)
+            .single();
+
+        if (error) throw error;
+
+        const followedUsers = user.followed_users || [];
+        const newFollowedUsers = followedUsers.filter(id => id !== userId);
+
+        const { error: updateError } = await supabase
+            .from('users')
+            .update({ followed_users: newFollowedUsers })
+            .eq('id', curUser.id);
+
+        if (updateError) throw updateError;
+
+        return true;
+    } catch (error) {
+        console.error('Error unfollowing user:', error.message);
+        return false;
+    }
+}
+
+export async function getUserSongs(userId) {
+    try {
+        const { data, error } = await supabase
+            .from('queue')
+            .select('*')
+            .eq('user_id', userId)
+            .order('added_at', { ascending: false });
+
+        if (error) throw error;
+
+        return data;
+    } catch (error) {
+        console.error('Error fetching user songs:', error.message);
+        return null;
+    }
+}
+getUserSongs.propTypes = {
+    userId: PropTypes.string.isRequired
+}
+
+export async function getUserVotes(userId) {
+    try {
+        const { data, error } = await supabase
+            .from('votes')
+            .select(`
+                *,
+                queue (
+                    title,
+                    author,
+                    added_at
+                )
+            `)
+            .eq('user_id', userId);
+
+        if (error) throw error;
+
+        return data;
+    } catch (error) {
+        console.error('Error fetching user votes with queue data:', error.message);
+        return null;
+    }
+}
+getUserVotes.propTypes = {
+    userId: PropTypes.string.isRequired
+}
+
+export async function removeSong(songId) {
+    try {
+        const { error } = await supabase
+            .from('queue')
+            .delete()
+            .eq('id', songId);
+
+        if (error) throw error;
+
+        return true;
+    } catch (error) {
+        console.error('Error removing song:', error.message);
+        return false;
+    }
+}
+removeSong.propTypes = {
+    songId: PropTypes.number.isRequired
+}
+
+export async function removeVotes(userId) {
+    try {
+        const { error } = await supabase
+            .from('votes')
+            .delete()
+            .eq('user_id', userId);
+
+        if (error) throw error;
+
+        return true;
+    } catch (error) {
+        console.error('Error removing votes:', error.message);
+        return false;
+    }
+}
+removeVotes.propTypes = {
+    userId: PropTypes.string.isRequired
+}
+
+export async function hardBanUser(userId, banDuration = '99999h') {
+    try {
+        const { data: user, error } = await supabase.auth.admin.updateUserById(
+            userId,
+            { ban_duration: banDuration }
+        );
+
+        if (error) throw error;
+
+        return user;
+    } catch (error) {
+        console.error('Error banning user:', error.message);
+        return null;
+    }
+}
+hardBanUser.propTypes = {
+    userId: PropTypes.string.isRequired,
+    banDuration: PropTypes.string.isRequired
+};
