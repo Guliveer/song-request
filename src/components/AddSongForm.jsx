@@ -10,6 +10,7 @@ import {
     BlockRounded as BlockIcon,
     DoneRounded as SuccessIcon,
 } from '@mui/icons-material';
+import { useRouter } from 'next/router';
 import { playSound } from '@/utils/actions';
 import { keyframes } from '@mui/system';
 import { supabase } from '@/utils/supabase';
@@ -18,12 +19,14 @@ import { FormField } from "@/components/Items";
 
 export default function AddSongForm() {
     const theme = useTheme();
+    const router = useRouter();
     const { isLoggedIn } = useUser(); // Globalny kontekst logowania
     const [open, setOpen] = useState(false);
     const [formData, setFormData] = useState({ title: '', author: '', url: '' });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [success, setSuccess] = useState(false);
     const [user, setUser] = useState(null);
+    const [existingSong, setExistingSong] = useState(null);
 
     useEffect(() => {
         const fetchUser = async () => {
@@ -88,6 +91,25 @@ export default function AddSongForm() {
             return;
         }
 
+        // Check if the song already exists
+        const { data: existing, error: existingError } = await supabase
+            .from('queue')
+            .select('id, title, artist')
+            .eq('url', formData.url)
+            .maybeSingle();
+
+        if (existingError) {
+            console.error('Error checking for existing song:', existingError.message);
+            alert('Error checking for existing song.');
+            return;
+        }
+
+        if (existing) {
+            setExistingSong(existing); // Set the existing song data
+            return;
+        }
+
+        // Proceed with adding the song
         setIsSubmitting(true);
 
         const { data, error } = await supabase
@@ -265,6 +287,34 @@ export default function AddSongForm() {
                     </Box>
                 </DialogContent>
             </Dialog>
+
+            {/* Dialog for existing song */}
+            {existingSong && (
+                <Dialog
+                    open={!!existingSong}
+                    onClose={() => setExistingSong(null)}
+                    fullWidth
+                    maxWidth="sm"
+                >
+                    <DialogTitle>Song Already Exists</DialogTitle>
+                    <DialogContent>
+                        <Typography>
+                            "{existingSong.title}" is already in the queue
+                        </Typography>
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={() => {
+                                setExistingSong(null);
+                                router.push(`/song/${existingSong.id}`);
+                            }}
+                            sx={{ mt: 2 }}
+                        >
+                            Go to Song
+                        </Button>
+                    </DialogContent>
+                </Dialog>
+            )}
         </>
     );
 }
