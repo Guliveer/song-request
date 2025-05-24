@@ -4,7 +4,7 @@ import { supabase } from '@/utils/supabase';
 import { sortSongs } from '@/utils/actions';
 import SongCard from '@/components/SongCard';
 import {
-    IconButton, Menu, MenuItem, Box, Pagination
+    IconButton, Menu, MenuItem, Box, Pagination, Tooltip
 } from '@mui/material';
 import SortIcon from '@mui/icons-material/Sort';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
@@ -112,26 +112,53 @@ export default function Queue() {
             width: '100vw',
             p: '1rem 2rem',
         }}>
-
-
-            <Box style={{
-                width: '100%',
+            {/* One big bar, centered and wide */}
+            <Box sx={{
+                width: "100%",
+                maxWidth: 1100,
+                mx: "auto",
                 display: "flex",
                 flexDirection: 'row',
-                flexWrap: 'nowrap',
                 alignItems: "center",
                 justifyContent: 'center',
-                gap: "1rem",
+                p: "28px 36px",
+                background: "linear-gradient(90deg, #23253a 60%, #22253a 100%)",
+                borderRadius: "32px",
+                boxShadow: "0 1.5px 12px 0 #13162c42",
+                gap: 3,
+                mb: 3,
             }}>
-
                 <SearchField onSearchChange={handleSearchChange} />
-
-                <IconButton onClick={handleSortClick}>
-                    <SortIcon />
-                </IconButton>
-                <IconButton onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}>
-                    {sortOrder === 'asc' ? <ArrowUpwardIcon /> : <ArrowDownwardIcon />}
-                </IconButton>
+                <Tooltip title="Sort by">
+                    <IconButton
+                        onClick={handleSortClick}
+                        sx={{
+                            borderRadius: "50%",
+                            width: 48,
+                            height: 48,
+                            background: "none",
+                            border: "1px solid #6beaf733",
+                            color: "#bff6ff",
+                        }}
+                    >
+                        <SortIcon />
+                    </IconButton>
+                </Tooltip>
+                <Tooltip title={sortOrder === "asc" ? "Ascending" : "Descending"}>
+                    <IconButton
+                        onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                        sx={{
+                            borderRadius: "50%",
+                            width: 48,
+                            height: 48,
+                            background: "none",
+                            border: "1px solid #6beaf733",
+                            color: "#bff6ff",
+                        }}
+                    >
+                        {sortOrder === 'asc' ? <ArrowUpwardIcon /> : <ArrowDownwardIcon />}
+                    </IconButton>
+                </Tooltip>
             </Box>
 
             <Menu
@@ -168,7 +195,7 @@ export default function Queue() {
                 page={page}
                 onChange={handlePageChange}
                 color="primary"
-                style={{ alignSelf: "center" }}
+                sx={{ alignSelf: "center" }}
             />
         </Box>
     );

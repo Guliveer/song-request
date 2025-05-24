@@ -265,7 +265,7 @@ export default function Followers({
                             flex: 1,
                             p: 2,
                             borderRadius: 2,
-                            bgcolor: '#2a2a2a',
+                            bgcolor: '#23293a', // CIEMNIEJSZY, spójny odcień
                             color: 'white',
                             cursor: 'pointer',
                             textAlign: 'center',
@@ -282,7 +282,7 @@ export default function Followers({
                             variant="h4"
                             color="#8FE6D5"
                             fontWeight="bold"
-                            sx={{ letterSpacing: 1, mb: 0.5 }}
+                            sx={{letterSpacing: 1, mb: 0.5}}
                         >
                             {followingCount}
                         </Typography>
@@ -292,7 +292,6 @@ export default function Followers({
                                 color: '#8FE6D5',
                                 fontWeight: 600,
                                 letterSpacing: 0.5,
-                                // textTransform: 'uppercase',  // USUNIĘTE
                             }}
                         >
                             Following
@@ -305,7 +304,7 @@ export default function Followers({
                             flex: 1,
                             p: 2,
                             borderRadius: 2,
-                            bgcolor: '#2a2a2a',
+                            bgcolor: '#23293a', // CIEMNIEJSZY, spójny odcień
                             color: 'white',
                             cursor: 'pointer',
                             textAlign: 'center',
@@ -322,7 +321,7 @@ export default function Followers({
                             variant="h4"
                             color="#8FE6D5"
                             fontWeight="bold"
-                            sx={{ letterSpacing: 1, mb: 0.5 }}
+                            sx={{letterSpacing: 1, mb: 0.5}}
                         >
                             {followersCount}
                         </Typography>
@@ -332,13 +331,13 @@ export default function Followers({
                                 color: '#8FE6D5',
                                 fontWeight: 600,
                                 letterSpacing: 0.5,
-                                // textTransform: 'uppercase',  // USUNIĘTE
                             }}
                         >
                             Followers
                         </Typography>
                     </Box>
                 </Stack>
+
             </Box>
 
             {/* Dialog for following/followers */}

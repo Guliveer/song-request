@@ -209,7 +209,7 @@ export default function AdminPanel() {
                     px: {xs: 1, md: 4},
                     py: {xs: 2, md: 5},
                     borderRadius: 4,
-                    bgcolor: "#232323",
+                    bgcolor: "background.paper", // zmiana na taki sam jak w user panelu
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
@@ -289,7 +289,7 @@ export default function AdminPanel() {
                 sx={{
                     maxWidth: 900,
                     mx: "auto",
-                    bgcolor: "#232323",
+                    bgcolor: "background.paper", // zmiana na taki sam jak w user panelu
                     borderRadius: 3,
                     boxShadow: 2,
                     overflow: "hidden"
@@ -300,7 +300,7 @@ export default function AdminPanel() {
                     onChange={(_, v) => setActiveTab(v)}
                     variant="fullWidth"
                     textColor="inherit"
-                    TabIndicatorProps={{style: {background: "#ff4646", height: 3}}}
+                    TabIndicatorProps={{style: {background: "#8FE6D5", height: 3}}} // jak w user panelu
                     sx={{
                         "& .MuiTab-root": {
                             fontWeight: "bold",
@@ -310,9 +310,9 @@ export default function AdminPanel() {
                             py: 2,
                         },
                         "& .Mui-selected": {
-                            color: "#ff4646 !important",
+                            color: "#8FE6D5 !important", // jak w user panelu
                         },
-                        bgcolor: "#18191a",
+                        bgcolor: "#191c2a", // jak w user panelu
                     }}
                 >
                     <Tab icon={<PersonIcon/>} label="Users"/>
@@ -337,7 +337,7 @@ export default function AdminPanel() {
                                         startAdornment: <SearchIcon sx={{color: "#ff4646", mr: 1}}/>,
                                     }}
                                     sx={{
-                                        bgcolor: "#232323",
+                                        bgcolor: "#23273a", // zmiana z szarego na panelowy
                                         borderRadius: 2,
                                         '& .MuiOutlinedInput-root': {
                                             color: "#fff",
@@ -350,6 +350,7 @@ export default function AdminPanel() {
                                             '&.Mui-focused fieldset': {
                                                 borderColor: "#ff4646",
                                             },
+                                            bgcolor: "#23273a", // panelowy
                                         },
                                         input: {
                                             color: "#fff",
@@ -358,7 +359,7 @@ export default function AdminPanel() {
                                 />
                             </Box>
                             <TableContainer component={Paper} sx={{
-                                bgcolor: "#222",
+                                bgcolor: "#23273a", // panelowy, lekko jaśniejszy
                                 borderRadius: 2,
                                 boxShadow: 0,
                                 px: 0
@@ -427,9 +428,9 @@ export default function AdminPanel() {
                                                                     size="small"
                                                                     onClick={() => handleResetVotesForUser(user.id)}
                                                                     sx={{
-                                                                        bgcolor: "#353535",
-                                                                        color: "#ff4646",
-                                                                        "&:hover": {bgcolor: "#454545"}
+                                                                        bgcolor: "#23273a", // panelowy
+                                                                        color: "#8FE6D5",
+                                                                        "&:hover": {bgcolor: "#31364a"}
                                                                     }}
                                                                 >
                                                                     <RestoreIcon/>
@@ -457,9 +458,9 @@ export default function AdminPanel() {
                                                                     size="small"
                                                                     onClick={() => handleBanChange(user.id, 9999)}
                                                                     sx={{
-                                                                        bgcolor: "#353535",
+                                                                        bgcolor: "#23273a", // panelowy
                                                                         color: "#ff4646",
-                                                                        "&:hover": {bgcolor: "#454545"}
+                                                                        "&:hover": {bgcolor: "#31364a"}
                                                                     }}
                                                                 >
                                                                     <BlockIcon/>
@@ -471,7 +472,7 @@ export default function AdminPanel() {
                                                                 size="small"
                                                                 sx={{
                                                                     minWidth: 110,
-                                                                    bgcolor: "#353535",
+                                                                    bgcolor: "#23273a", // panelowy
                                                                     borderRadius: 1,
                                                                     '& .MuiInputLabel-root': {
                                                                         color: "#ccc",
@@ -497,6 +498,7 @@ export default function AdminPanel() {
                                                                     onChange={(e) => handleBanChange(user.id, e.target.value)}
                                                                     sx={{
                                                                         color: "#fff",
+                                                                        bgcolor: "#23273a", // panelowy
                                                                         '& .MuiOutlinedInput-notchedOutline': {
                                                                             borderColor: "#444",
                                                                         },
@@ -510,7 +512,7 @@ export default function AdminPanel() {
                                                                     MenuProps={{
                                                                         PaperProps: {
                                                                             sx: {
-                                                                                bgcolor: "#232323",
+                                                                                bgcolor: "#23273a", // panelowy
                                                                                 color: "#fff",
                                                                             }
                                                                         }
@@ -518,26 +520,26 @@ export default function AdminPanel() {
                                                                 >
                                                                     <MenuItem value={0} sx={{
                                                                         color: "#fff",
-                                                                        bgcolor: "#232323"
+                                                                        bgcolor: "#23273a" // panelowy
                                                                     }}>None</MenuItem>
                                                                     <MenuItem value={7}
-                                                                              sx={{color: "#fff", bgcolor: "#232323"}}>7
+                                                                              sx={{color: "#fff", bgcolor: "#23273a"}}>7
                                                                         days</MenuItem>
                                                                     <MenuItem value={30}
-                                                                              sx={{color: "#fff", bgcolor: "#232323"}}>30
+                                                                              sx={{color: "#fff", bgcolor: "#23273a"}}>30
                                                                         days</MenuItem>
                                                                     <MenuItem value={90}
-                                                                              sx={{color: "#fff", bgcolor: "#232323"}}>90
+                                                                              sx={{color: "#fff", bgcolor: "#23273a"}}>90
                                                                         days</MenuItem>
                                                                     <MenuItem value={180}
-                                                                              sx={{color: "#fff", bgcolor: "#232323"}}>180
+                                                                              sx={{color: "#fff", bgcolor: "#23273a"}}>180
                                                                         days</MenuItem>
                                                                     <MenuItem value={365}
-                                                                              sx={{color: "#fff", bgcolor: "#232323"}}>365
+                                                                              sx={{color: "#fff", bgcolor: "#23273a"}}>365
                                                                         days</MenuItem>
                                                                     <MenuItem value={9999} sx={{
                                                                         color: "#fff",
-                                                                        bgcolor: "#232323"
+                                                                        bgcolor: "#23273a" // panelowy
                                                                     }}>Perm</MenuItem>
                                                                 </Select>
                                                             </FormControl>
@@ -569,7 +571,7 @@ export default function AdminPanel() {
                                         startAdornment: <SearchIcon sx={{color: "#ff4646", mr: 1}}/>,
                                     }}
                                     sx={{
-                                        bgcolor: "#232323",
+                                        bgcolor: "#23273a", // panelowy
                                         borderRadius: 2,
                                         '& .MuiOutlinedInput-root': {
                                             color: "#fff",
@@ -582,6 +584,7 @@ export default function AdminPanel() {
                                             '&.Mui-focused fieldset': {
                                                 borderColor: "#ff4646",
                                             },
+                                            bgcolor: "#23273a", // panelowy
                                         },
                                         input: {
                                             color: "#fff",
@@ -590,7 +593,7 @@ export default function AdminPanel() {
                                 />
                             </Box>
                             <TableContainer component={Paper} sx={{
-                                bgcolor: "#222",
+                                bgcolor: "#23273a", // panelowy, lekko jaśniejszy
                                 borderRadius: 2,
                                 boxShadow: 0,
                                 px: 0
@@ -676,9 +679,9 @@ export default function AdminPanel() {
                                                                     size="small"
                                                                     onClick={() => handleResetVotesForSong(song.id)}
                                                                     sx={{
-                                                                        bgcolor: "#353535",
-                                                                        color: "#ff4646",
-                                                                        "&:hover": {bgcolor: "#454545"}
+                                                                        bgcolor: "#23273a", // panelowy
+                                                                        color: "#8FE6D5",
+                                                                        "&:hover": {bgcolor: "#31364a"}
                                                                     }}
                                                                 >
                                                                     <RestoreIcon/>
@@ -706,9 +709,9 @@ export default function AdminPanel() {
                                                                     size="small"
                                                                     onClick={() => handleBanUrl(song.url)}
                                                                     sx={{
-                                                                        bgcolor: "#353535",
+                                                                        bgcolor: "#23273a", // panelowy
                                                                         color: "#ff4646",
-                                                                        "&:hover": {bgcolor: "#454545"}
+                                                                        "&:hover": {bgcolor: "#31364a"}
                                                                     }}
                                                                 >
                                                                     <BlockIcon/>
@@ -729,3 +732,4 @@ export default function AdminPanel() {
         </Container>
     );
 }
+
