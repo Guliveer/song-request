@@ -192,14 +192,14 @@ export default function NavMenu() {
                         }
 
                         {isLoggedIn && (
-                            <>
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                                 <NotificationBell userId={uuid} />
                                 <Tooltip title="Open settings">
                                     <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
                                         <Avatar alt="Avatar" src={avatarUrl} />
                                     </IconButton>
                                 </Tooltip>
-                            </>
+                            </Box>
                         )}
                         {/* Menu użytkownika */}
                         <Menu

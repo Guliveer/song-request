@@ -188,12 +188,12 @@ function SongCard({id}) {
                 }
                 resultVoteVal = newVoteValue;
 
-                // --- ANTY-SPAM: tylko jedno powiadomienie o lajku na piosenkę od danego usera ---
+                // --- ANTI-SPAM: only one notification about liking a song per user ---
                 if (
-                    user.id !== songData.rawUserId && // nie wysyłaj powiadomień do siebie
-                    newVoteValue === 1                // tylko dla lajka (upvote)
+                    user.id !== songData.rawUserId && // do not send notifications to yourself
+                    newVoteValue === 1                // only for likes (upvotes)
                 ) {
-                    // Używaj props.id jako identyfikatora piosenki!
+                    // Use props.id as the song identifier!
                     const { data: existingNotifications } = await supabase
                         .from("notifications")
                         .select("id")
