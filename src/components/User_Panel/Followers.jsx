@@ -99,6 +99,12 @@ export default function Followers({
             .eq("id", userId)
             .single();
 
+        const {data: currentUserData} = await supabase
+            .from("users")
+            .select("username")
+            .eq("id", userId)
+            .single();
+
         const currentFollows = currentUser?.followed_users ?? [];
         const updated = [...currentFollows, friendUser.id];
 
@@ -107,16 +113,27 @@ export default function Followers({
             .update({followed_users: updated})
             .eq("id", userId);
 
-        if (error) {
-            console.error("Failed to add friend:", error);
-            return;
+        if (!error) {
+            // Dodaj powiadomienie do tabeli notifications
+            await supabase
+                .from("notifications")
+                .insert([{
+                    user_id: friendUser.id, // odbiorca powiadomienia
+                    sender_id: userId,      // kto dodał
+                    type: "new_follower",   // typ powiadomienia (zgodnie z enumem)
+                    message: `User ${currentUserData?.username || userId} started following you!`,
+                    link: `/user/${userId}`,
+                    read: false
+                }]);
+            setFriendUsername("");
+            setFriendSearchResults([]);
+            setAlreadyFollowing(false);
+            setFollowedUsersData((prev) => [...prev, friendUser]);
+            if (onFollowAction) onFollowAction();
         }
-
-        setFriendUsername("");
-        setFriendSearchResults([]);
-        setAlreadyFollowing(false);
-        setFollowedUsersData((prev) => [...prev, friendUser]);
-        if (onFollowAction) onFollowAction(); // Inform parent to refresh counts
+        else {
+            console.error("Failed to add friend:", error);
+        }
     };
 
     const handleSearchChange = async (e) => {
