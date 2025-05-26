@@ -8,7 +8,7 @@ export default function SkeletonSongCard() {
             sx={{
                 background: `linear-gradient(135deg, rgba(135, 229, 221, 0.08) 0%, rgba(161, 113, 248, 0.08) 100%)`,
                 border: `1px solid rgba(255,255,255,0.08)`,
-                borderRadius: 1,
+                borderRadius: 3,
                 overflow: "hidden",
                 position: "relative",
                 maxWidth: 500,
@@ -34,9 +34,9 @@ export default function SkeletonSongCard() {
                         width={28}
                         height={28}
                         sx={{
-                            position: 'absolute',
+                            position: 'relative',
                             top: 0,
-                            right: 0,
+                            right: 9.5,
                             borderRadius: 1,
                         }}
                     />
@@ -83,39 +83,6 @@ export default function SkeletonSongCard() {
                         <Skeleton variant="circular" width={32} height={32} sx={{borderRadius: 1}}/>
                         <Skeleton variant="text" width={24} height={18} sx={{borderRadius: 1, my: 0.5}}/>
                         <Skeleton variant="circular" width={32} height={32} sx={{borderRadius: 1}}/>
-                    </Box>
-                </Box>
-
-                {/* Bottom Row - Tags and Voters */}
-                <Box
-                    sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        mt: 2,
-                        pt: 1.5,
-                        borderTop: `1px solid rgba(255, 255, 255, 0.06)`,
-                    }}
-                >
-                    {/* Tag */}
-                    <Skeleton variant="rectangular" width={56} height={24} sx={{borderRadius: 1}}/>
-                    {/* Avatar group */}
-                    <Box sx={{display: "flex", alignItems: "center", gap: 1}}>
-                        {[...Array(2)].map((_, i) => (
-                            <Skeleton
-                                key={i}
-                                variant="circular"
-                                width={20}
-                                height={20}
-                                sx={{borderRadius: 1}}
-                            />
-                        ))}
-                        <Skeleton
-                            variant="circular"
-                            width={20}
-                            height={20}
-                            sx={{borderRadius: 1}}
-                        />
                     </Box>
                 </Box>
             </CardContent>

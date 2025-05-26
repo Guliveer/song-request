@@ -288,7 +288,7 @@ function SongCard({id}) {
         return <SkeletonSongCard/>
     }
 
-    const {title, author, url, added_at, score, rank, username, genre, duration} = songData;
+    const {title, author, url, added_at, score, rank, username, duration} = songData;
 
     // Score coloring like v0
     const getScoreColor = () => {
@@ -328,7 +328,7 @@ function SongCard({id}) {
                 overflow: "hidden",
                 position: "relative",
                 transition: "all 0.2s ease-in-out",
-                cursor: "pointer",
+                cursor: "default",
                 "&:hover": {
                     transform: "translateY(-2px)",
                     boxShadow: `0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 1px ${theme.palette.primary.main}20`,
@@ -363,19 +363,20 @@ function SongCard({id}) {
                         #{rank}
                     </Typography>
                     <IconButton
-                        onClick={() => router.push(`/song/${id}`)}
                         size="small"
                         sx={{
                             color: "text.secondary",
-                            position: 'absolute',
+                            position: 'relative',
                             top: 0,
-                            right: 0,
+                            right: 3,
                             zIndex: 1,
                         }}
                     >
-                        <Tooltip title="Open song page" arrow>
-                            <ExternalLinkIcon/>
-                        </Tooltip>
+                        <Link href={`/song/${id}`}>
+                            <Tooltip title="Open song page" arrow>
+                                <ExternalLinkIcon/>
+                            </Tooltip>
+                        </Link>
                     </IconButton>
                 </Box>
 
@@ -448,24 +449,33 @@ function SongCard({id}) {
 
                     {/* Song Info */}
                     <Box sx={{flex: 1, minWidth: 0, mr: 1}}>
-                        <Typography
-                            variant="body1"
-                            sx={{
-                                fontWeight: 600,
-                                fontSize: "1rem",
-                                color: theme.palette.text.primary,
-                                mb: 0.25,
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                whiteSpace: "nowrap",
-                                lineHeight: 1.3,
-                            }}
-                            component="div"
-                        >
-                            <Link href={url} target="_blank" style={{textDecoration: 'none', color: 'inherit'}}>
-                                {title}
-                            </Link>
-                        </Typography>
+                        <Box sx={{
+                            display: 'inline-block',
+                            position: 'relative',
+                            width: 300, // Define the visible area
+                            overflow: 'hidden', // Hide overflowing text
+                            whiteSpace: 'nowrap',
+                        }}>
+                            <Typography
+                                variant="body1"
+                                sx={{
+                                    display: 'inline-block',
+                                    fontWeight: 600,
+                                    fontSize: "1rem",
+                                    color: theme.palette.text.primary,
+                                    mb: 0.25,
+                                    overflow: "hidden",
+                                    whiteSpace: "nowrap",
+                                    lineHeight: 1.3,
+                                    animation: title.length > 15 ? 'scrollText 10s linear infinite' : 'none',
+                                }}
+                                component="div"
+                            >
+                                <Link href={url} target="_blank" style={{color: 'inherit'}}>
+                                    {title}
+                                </Link>
+                            </Typography>
+                        </Box>
 
                         <Typography
                             variant="body2"
@@ -496,13 +506,13 @@ function SongCard({id}) {
                                             sx={{fontSize: "0.75rem", display: 'flex', alignItems: 'center', gap: 0.5}}>
                                     <Link href={`/user/${songData.rawUserId}`}>
                                         {username}
+                                        <Tooltip title="Open user profile" arrow>
+                                            <ExternalLinkIcon sx={{
+                                                color: 'text.secondary',
+                                                fontSize: '0.9rem',
+                                            }}/>
+                                        </Tooltip>
                                     </Link>
-                                    <Tooltip title="Open user profile" arrow>
-                                        <ExternalLinkIcon sx={{
-                                            color: 'text.secondary',
-                                            fontSize: '0.9rem',
-                                        }}/>
-                                    </Tooltip>
                                 </Typography>
                                 {user && (songData.rawUserId !== user.id) && !isFollowing && (
                                     <Tooltip title="Follow user">
@@ -552,7 +562,6 @@ function SongCard({id}) {
                             onClick={() => handleVote(1)}
                             sx={{
                                 color: userVote === 1 ? theme.palette.primary.main : theme.palette.text.disabled,
-                                backgroundColor: userVote === 1 ? `${theme.palette.primary.main}20` : "transparent",
                                 width: 32,
                                 height: 32,
                                 "&:hover": {
@@ -583,7 +592,6 @@ function SongCard({id}) {
                             onClick={() => handleVote(-1)}
                             sx={{
                                 color: userVote === -1 ? theme.palette.error.main : theme.palette.text.disabled,
-                                backgroundColor: userVote === -1 ? `${theme.palette.error.main}20` : "transparent",
                                 width: 32,
                                 height: 32,
                                 "&:hover": {
@@ -599,77 +607,55 @@ function SongCard({id}) {
                 </Box>
 
                 {/* Bottom Row - Tags and Voters */}
+                {followedUsersVotes.length > 0 && (
                 <Box
                     sx={{
                         display: "flex",
                         alignItems: "center",
-                        justifyContent: "space-between",
+                        justifyContent: "flex-end",
                         mt: 2,
                         pt: 1.5,
-                        borderTop: `1px solid rgba(255, 255, 255, 0.06)`,
                     }}
                 >
-                    {/* Tags */}
-                    <Box sx={{display: "flex", gap: 1, alignItems: "center"}}>
-                        {genre && (
-                            <Chip
-                                label={genre}
-                                size="small"
-                                sx={{
-                                    height: 24,
-                                    backgroundColor: `${theme.palette.secondary.main}15`,
-                                    color: theme.palette.secondary.main,
-                                    border: `1px solid ${theme.palette.secondary.main}30`,
-                                    fontSize: "0.7rem",
-                                    fontWeight: 500,
-                                    "& .MuiChip-label": {
-                                        px: 1,
-                                    },
-                                }}
-                            />
-                        )}
-                    </Box>
-
                     {/* Voters */}
-                    {followedUsersVotes.length > 0 && (
-                        <Box sx={{display: "flex", alignItems: "center", gap: 1}}>
-                            <AvatarGroup
-                                max={3}
-                                sx={{
-                                    "& .MuiAvatar-root": {
-                                        width: 20,
-                                        height: 20,
-                                        fontSize: "0.65rem",
-                                        border: `1px solid ${theme.palette.background.paper}`,
-                                    },
-                                }}
-                                slotProps={{
-                                    additionalAvatar: {
-                                        component: additionalAvatarsTooltip
-                                    }
-                                }}
-                            >
-                                {followedUsersVotes.map((vote) => (
-                                    <Tooltip
-                                        key={vote.user_id}
-                                        title={`${vote.username} ${vote.vote === 1 ? 'upvoted' : 'downvoted'}`}
-                                        arrow
+                    <Box sx={{display: "flex", alignItems: "center", gap: 1}}>
+                        <AvatarGroup
+                            max={3}
+                            sx={{
+                                "& .MuiAvatar-root": {
+                                    width: 20,
+                                    height: 20,
+                                    fontSize: "0.65rem",
+                                    border: `1px solid ${theme.palette.background.paper}`,
+                                },
+                            }}
+                            slotProps={{
+                                additionalAvatar: {
+                                    component: additionalAvatarsTooltip
+                                }
+                            }}
+                        >
+                            {followedUsersVotes.map((vote) => (
+                                <Tooltip
+                                    key={vote.user_id}
+                                    title={`${vote.username} ${vote.vote === 1 ? 'upvoted' : 'downvoted'}`}
+                                    arrow
+                                >
+                                    <Avatar
+                                        src={vote.avatar}
+                                        sx={{bgcolor: vote.vote === 1 ? 'primary.main' : 'error.light'}}
                                     >
-                                        <Avatar
-                                            src={vote.avatar}
-                                            sx={{bgcolor: vote.vote === 1 ? 'primary.main' : 'error.light'}}
-                                        >
-                                            {vote.username.charAt(0).toUpperCase()}
-                                        </Avatar>
-                                    </Tooltip>
-                                ))}
-                            </AvatarGroup>
-                            <Typography variant="caption" color="text.disabled" sx={{fontSize: "0.7rem", ml: 0.5}}>
-                                voted
-                            </Typography>
-                        </Box>
-                    )}
+                                        {vote.username.charAt(0).toUpperCase()}
+                                    </Avatar>
+                                </Tooltip>
+                            ))}
+                        </AvatarGroup>
+                    </Box>
+                    <Typography variant="caption" color="text.disabled" sx={{fontSize: "0.7rem", ml: 0.5}}>
+                        voted
+                    </Typography>
                 </Box>
+                )}
 
                 {/* Admin Panel Buttons */}
                 {isAdminPanel && (

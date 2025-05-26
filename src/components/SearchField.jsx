@@ -42,7 +42,7 @@ function SearchField({ onSearchChange }) {
                 flex: 1,
                 display: 'flex',
                 alignItems: 'center',
-                borderRadius: "24px",
+                borderRadius: 4,
                 background: "none",
                 border: "1px solid #6beaf733",
                 height: 54,
@@ -61,10 +61,6 @@ function SearchField({ onSearchChange }) {
                     color: "#dff7ff",
                     fontSize: 19,
                     fontWeight: 500,
-                    '::placeholder': {
-                        color: "#7ad6e5cc",
-                        opacity: 1
-                    }
                 }}
                 placeholder={placeholder}
                 value={query}

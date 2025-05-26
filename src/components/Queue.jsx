@@ -64,9 +64,17 @@ export default function Queue() {
                     }
                 }
 
-                queryBuilder = queryBuilder
-                    .order(sortCriteria, { ascending: sortOrder === 'asc' })
-                    .range((page - 1) * pageSize, page * pageSize - 1);
+                // Primary sorting
+                queryBuilder = queryBuilder.order(sortCriteria, { ascending: sortOrder === 'asc' });
+
+                // Secondary sorting logic
+                if (sortCriteria === 'added_at') {
+                    queryBuilder = queryBuilder.order('score', { ascending: sortOrder === 'asc' });
+                } else {
+                    queryBuilder = queryBuilder.order('added_at', { ascending: false });
+                }
+
+                queryBuilder = queryBuilder.range((page - 1) * pageSize, page * pageSize - 1);
 
                 const { data, error, count } = await queryBuilder;
 
@@ -123,7 +131,7 @@ export default function Queue() {
                 justifyContent: 'center',
                 p: "28px 36px",
                 background: "linear-gradient(90deg, #23253a 60%, #22253a 100%)",
-                borderRadius: "32px",
+                borderRadius: 5,
                 boxShadow: "0 1.5px 12px 0 #13162c42",
                 gap: 3,
                 mb: 3,
@@ -133,7 +141,7 @@ export default function Queue() {
                     <IconButton
                         onClick={handleSortClick}
                         sx={{
-                            borderRadius: "50%",
+                            borderRadius: 4,
                             width: 48,
                             height: 48,
                             background: "none",
@@ -148,7 +156,7 @@ export default function Queue() {
                     <IconButton
                         onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
                         sx={{
-                            borderRadius: "50%",
+                            borderRadius: 4,
                             width: 48,
                             height: 48,
                             background: "none",

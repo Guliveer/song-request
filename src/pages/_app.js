@@ -10,10 +10,6 @@ import PropTypes from "prop-types";
 import { useRouter } from "next/router";
 
 export default function App({ Component, pageProps }) {
-    const router = useRouter();
-
-    // FAB tylko na stronie głównej ("/" lub "/index")
-    const showFab = router.pathname === "/" || router.pathname === "/index";
 
     return (
         <ThemeProvider theme={theme}>
@@ -21,7 +17,6 @@ export default function App({ Component, pageProps }) {
                 <CssBaseline />
                 <NavMenu />
                 <Component {...pageProps} />
-                {showFab && <AddSongForm />}
                 <Footer />
             </UserProvider>
         </ThemeProvider>
