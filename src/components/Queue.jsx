@@ -24,6 +24,8 @@ export default function Queue() {
     const [searchQuery, setSearchQuery] = useState('');
     const [searchFilter, setSearchFilter] = useState('title');
 
+    const [currentlyPreviewingSongId, setCurrentlyPreviewingSongId] = useState(null);
+
     const handleSearchChange = useCallback((query, filter) => {
         setSearchQuery(query);
         setSearchFilter(filter);
@@ -193,7 +195,12 @@ export default function Queue() {
                     <Box sx={{ textAlign: 'center', color: '#ccc' }}>Not found...</Box>
                 ) : (
                     songs.map((song) => (
-                        <SongCard key={song.id} id={song.id} />
+                        <SongCard
+                            key={song.id}
+                            id={song.id}
+                            currentlyPreviewingSongId={currentlyPreviewingSongId}
+                            setCurrentlyPreviewingSongId={setCurrentlyPreviewingSongId}
+                        />
                     ))
                 )}
             </Box>
