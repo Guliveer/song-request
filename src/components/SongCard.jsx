@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import React, {useState, useEffect, useCallback} from 'react';
+import React, {useState, useEffect, useCallback, useRef} from 'react';
 import Link from "next/link";
 import {supabase} from '@/utils/supabase';
 import { useRouter } from 'next/router';  // Importujemy useRouter
@@ -77,6 +77,7 @@ function SongCard({id, currentlyPreviewingSongId, setCurrentlyPreviewingSongId})
     const [followedUsersVotes, setFollowedUsersVotes] = useState([]);
     const router = useRouter();  // Zainicjowaliśmy router
     const [isBanned, setIsBanned] = useState(false);
+    const [ytMetadataLoading, setYtMetadataLoading] = useState(false);
 
     const isAdminPanel = router.pathname.startsWith("/admin");
 
@@ -155,6 +156,28 @@ function SongCard({id, currentlyPreviewingSongId, setCurrentlyPreviewingSongId})
             song.rawUserId = song.user_id;
 
             setSongData(song);
+
+            // Jeśli brakuje tytułu lub autora – pobierz z YouTube
+            if ((!song.title || !song.author) && song.url.includes('youtube.com')) {
+                setYtMetadataLoading(true);
+                try {
+                    const videoId = extractYoutubeVideoId(song.url);
+                    if (videoId) {
+                        const metadata = await fetchYouTubeMetadata(videoId);
+                        if (metadata) {
+                            song.title = metadata.title;
+                            song.author = metadata.channelTitle;
+                            setSongData({ ...song }); // uaktualnij stan
+                        }
+                    }
+                } catch (err) {
+                    console.error("Error fetching YouTube metadata", err);
+                } finally {
+                    setYtMetadataLoading(false);
+                }
+            }
+
+
         } catch (error) {
             console.error('Error fetching data:', error);
         } finally {
@@ -214,10 +237,10 @@ function SongCard({id, currentlyPreviewingSongId, setCurrentlyPreviewingSongId})
         }
     };
 
-    {/* DODANE TERAZ */}
     const handleYouTubeReady = (event) => {
         event.target.playVideo();
     };
+
 
 
     // funkcja do resetowania głosów
@@ -510,7 +533,9 @@ function SongCard({id, currentlyPreviewingSongId, setCurrentlyPreviewingSongId})
                     disabled={isBanned}
                 />
             </Box>
-            {/* DODANE TERAZ */}
+
+            {/* Preview Button */}
+
             <Button
                 variant="outlined"
                 color="error"
@@ -532,6 +557,7 @@ function SongCard({id, currentlyPreviewingSongId, setCurrentlyPreviewingSongId})
                 alignItems: 'center',
                 mt: 2, // Added margin-top to separate from the previous section
             }}>
+
                 <Box sx={{display: 'flex', gap: 2}}>
                     {isAdminPanel && (
                         <>
@@ -574,8 +600,8 @@ function SongCard({id, currentlyPreviewingSongId, setCurrentlyPreviewingSongId})
                 <YouTube
                     videoId={youtubeVideoId}
                     opts={{
-                        height: '1',
-                        width: '1',
+                        height: '0',
+                        width: '0',
                         playerVars: {
                             autoplay: 1,
                             controls: 0,

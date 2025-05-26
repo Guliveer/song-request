@@ -15,6 +15,7 @@ import { keyframes } from '@mui/system';
 import { supabase } from '@/utils/supabase';
 import { useUser } from "@/context/UserContext";
 import { FormField } from "@/components/Items";
+import { extractVideoId, fetchYouTubeMetadata } from "@/utils/youtube";
 
 export default function AddSongForm() {
     const theme = useTheme();
@@ -52,12 +53,12 @@ export default function AddSongForm() {
 
     const handleSubmit = async (event) => {
         event.preventDefault();
+
         if (!user) {
             alert("Musisz być zalogowany, aby dodać piosenkę.");
             return;
         }
 
-        // Sprawdzenie statusu bana
         const { data: userData, error: userError } = await supabase
             .from('users')
             .select('ban_status')
@@ -77,9 +78,23 @@ export default function AddSongForm() {
 
         setIsSubmitting(true);
 
+        let { title, author, url } = formData;
+
+        // 🔍 Sprawdzenie i pobranie danych z YouTube jeśli pola puste
+        if ((!title || !author) && url.includes("youtube")) {
+            const videoId = extractVideoId(url);
+            if (videoId) {
+                const metadata = await fetchYouTubeMetadata(videoId);
+                if (metadata) {
+                    title = title || metadata.title;
+                    author = author || metadata.author;
+                }
+            }
+        }
+
         const { data, error } = await supabase
             .from('queue')
-            .insert([{ ...formData, user_id: user.id }]);
+            .insert([{ title, author, url, user_id: user.id }]);
 
         if (error) {
             console.error('Błąd:', error.message);
@@ -95,6 +110,7 @@ export default function AddSongForm() {
         setIsSubmitting(false);
         setSuccess(false);
     };
+    
 
     const fadeInBackground = keyframes`
         from {
@@ -183,7 +199,7 @@ export default function AddSongForm() {
                     >
                         <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
                             <FormField
-                                required
+                                //required
                                 id="title"
                                 label="Title"
                                 fullWidth
@@ -192,7 +208,7 @@ export default function AddSongForm() {
                                 onChange={handleChange}
                             />
                             <FormField
-                                required
+                                //required
                                 id="author"
                                 label="Author"
                                 fullWidth
