@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
     Box, Button, Dialog, DialogTitle, DialogContent,
-    Fab, Tooltip, Stack, useTheme, CircularProgress
+    Fab, Tooltip, Stack, useTheme, CircularProgress, Typography
 } from '@mui/material';
 import {
     AddRounded as AddIcon,
@@ -20,13 +20,49 @@ import { FormField } from "@/components/Items";
 export default function AddSongForm() {
     const theme = useTheme();
     const router = useRouter();
-    const { isLoggedIn } = useUser(); // Globalny kontekst logowania
+    const { isLoggedIn } = useUser();
     const [open, setOpen] = useState(false);
     const [formData, setFormData] = useState({ title: '', author: '', url: '' });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [success, setSuccess] = useState(false);
     const [user, setUser] = useState(null);
     const [existingSong, setExistingSong] = useState(null);
+    const [fabBottom, setFabBottom] = useState(24); // default MUI
+    const fabRef = useRef();
+
+    // FAB "przykleja się" do rogu, a jak footer wchodzi w dolny obszar, zatrzymuje się nad nim
+    useEffect(() => {
+        function updateFab() {
+            const footer = document.getElementById('site-footer');
+            const fab = fabRef.current;
+            if (!footer || !fab) return;
+
+            const idealBottom = 24; // MUI default
+            const fabHeight = fab.offsetHeight || 56; // fallback for default size
+
+            // Footer pozycja względem viewport
+            const footerRect = footer.getBoundingClientRect();
+            const windowHeight = window.innerHeight;
+
+            // Gdy footer "wchodzi" w dolny margines (FAB zachodziłby na footer), to...
+            let newFabBottom = idealBottom;
+            if (footerRect.top < windowHeight - idealBottom) {
+                // Odległość od dołu okna do górnej krawędzi footer
+                const overlap = windowHeight - footerRect.top;
+                // FAB przesuwamy tylko tyle, by był tuż nad footer + margines
+                newFabBottom = overlap + idealBottom;
+            }
+            setFabBottom(newFabBottom);
+        }
+
+        updateFab();
+        window.addEventListener('scroll', updateFab, { passive: true });
+        window.addEventListener('resize', updateFab);
+        return () => {
+            window.removeEventListener('scroll', updateFab);
+            window.removeEventListener('resize', updateFab);
+        };
+    }, []);
 
     useEffect(() => {
         const fetchUser = async () => {
@@ -56,12 +92,11 @@ export default function AddSongForm() {
     const handleSubmit = async (event) => {
         event.preventDefault();
         if (!user) {
-            alert("Musisz być zalogowany, aby dodać piosenkę.");
+            alert("You must be logged in to add a song.");
             return;
         }
-        console.debug('Debug - Sprawdzany URL:', formData.url); // This is a debug log and can be disabled in production
 
-        // Sprawdzenie statusu bana
+        // Check ban status
         const { data: userData, error: userError } = await supabase
             .from('users')
             .select('ban_status')
@@ -69,102 +104,87 @@ export default function AddSongForm() {
             .single();
 
         if (userError) {
-            console.error('Błąd przy pobieraniu danych użytkownika:', userError.message);
-            alert('Błąd podczas sprawdzania statusu konta.');
+            alert('Error checking account status.');
             return;
         }
 
         if (userData.ban_status > 0) {
-            alert('Nie możesz dodać piosenki, ponieważ Twoje konto ma aktywnego bana.');
+            alert('You cannot add songs because your account is banned.');
             return;
         }
 
-        // SPRAWDZAMY CZY URL JEST ZBANOWANY
-        const { data: bannedUrl, error: bannedError } = await supabase
+        // Check if URL is banned
+        const { data: bannedUrl } = await supabase
             .from('banned_url')
             .select('id')
             .eq('url', formData.url)
             .maybeSingle();
 
         if (bannedUrl) {
-            alert("Ten link został zbanowany i nie może zostać dodany do kolejki.");
+            alert("This link is banned and cannot be added to the queue.");
             return;
         }
 
         // Check if the song already exists
         const { data: existing, error: existingError } = await supabase
             .from('queue')
-            .select('id, title, artist')
+            .select('id, title, author')
             .eq('url', formData.url)
             .maybeSingle();
 
         if (existingError) {
-            console.error('Error checking for existing song:', existingError.message);
             alert('Error checking for existing song.');
             return;
         }
 
         if (existing) {
-            setExistingSong(existing); // Set the existing song data
+            setExistingSong(existing);
             return;
         }
 
-        // Proceed with adding the song
         setIsSubmitting(true);
 
-        const { data, error } = await supabase
+        const { error } = await supabase
             .from('queue')
             .insert([{ ...formData, user_id: user.id }]);
 
         if (error) {
-            console.error('Błąd:', error.message);
-            alert('Błąd przy dodawaniu piosenki: ' + error.message);
+            alert('Error while adding the song: ' + error.message);
         } else {
             setSuccess(true);
-            setIsSubmitting(false);
             setFormData({ title: '', author: '', url: '' });
             await playSound('success', 0.8);
             setOpen(false);
         }
 
         setIsSubmitting(false);
-        setSuccess(false);
+        setTimeout(() => setSuccess(false), 1000);
     };
 
     const fadeInBackground = keyframes`
-        from {
-            opacity: 0;
-            background-color: rgba(0, 0, 0, 0);
-        }
-        to {
-            opacity: 1;
-            background-color: rgba(0, 0, 0, 0.2);
-        }
+        from { opacity: 0; background-color: rgba(0, 0, 0, 0);}
+        to { opacity: 1; background-color: rgba(0, 0, 0, 0.2);}
     `;
 
     const fadeOutBackground = keyframes`
-        from {
-            opacity: 1;
-            background-color: rgba(0, 0, 0, 0.2);
-        }
-        to {
-            opacity: 0;
-            background-color: rgba(0, 0, 0, 0);
-        }
+        from { opacity: 1; background-color: rgba(0, 0, 0, 0.2);}
+        to { opacity: 0; background-color: rgba(0, 0, 0, 0);}
     `;
 
     return (
         <>
             <Tooltip title="Add song" placement="left">
                 <Fab
+                    ref={fabRef}
                     color="primary"
                     onClick={() => setOpen(true)}
                     sx={{
                         position: 'fixed',
-                        bottom: 24,
-                        right: 24,
+                        bottom: { xs: fabBottom, sm: fabBottom },
+                        right: { xs: 20, sm: 36 },
                         zIndex: 1300,
-                        boxShadow: 6,
+                        boxShadow: 4,
+                        transition: 'bottom 0.3s cubic-bezier(.4,2,.4,1)', // płynne
                         '&:hover': {
                             backgroundColor: theme.palette.primary.dark,
                         },
@@ -184,7 +204,7 @@ export default function AddSongForm() {
                     animation: `${open ? fadeInBackground : fadeOutBackground} 0.3s ease-in-out`,
                     backgroundColor: 'rgba(0,0,0,0.2)',
                     '& .MuiDialog-paper': {
-                        borderRadius: 4,
+                        borderRadius: 1,
                         p: 2,
                         position: 'relative',
                         boxShadow: theme.shadows[12],

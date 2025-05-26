@@ -53,9 +53,9 @@ export default function UserPanel() {
 
     const getFollowersCount = async () => {
         if (!userId) return;
-        const { count, error } = await supabase
+        const {count, error} = await supabase
             .from("users")
-            .select("id", { count: "exact", head: true })
+            .select("id", {count: "exact", head: true})
             .contains("followed_users", [userId]);
         if (!error) setFollowersCount(count || 0);
         else setFollowersCount(0);
@@ -63,7 +63,7 @@ export default function UserPanel() {
 
     const getFollowingCount = async () => {
         if (!userId) return;
-        const { data, error } = await supabase
+        const {data, error} = await supabase
             .from("users")
             .select("followed_users")
             .eq("id", userId)
@@ -91,10 +91,10 @@ export default function UserPanel() {
                         mx: "auto",
                         mt: 6,
                         mb: 4,
-                        px: { xs: 1, md: 4 },
-                        py: { xs: 2, md: 5 },
+                        px: {xs: 1, md: 4},
+                        py: {xs: 2, md: 5},
                         borderRadius: 4,
-                        bgcolor: "#232323",
+                        bgcolor: "background.paper", // theme kolor tła
                         display: "flex",
                         flexDirection: "column",
                         alignItems: "center",
@@ -184,7 +184,7 @@ export default function UserPanel() {
                 <Box sx={{
                     maxWidth: 900,
                     mx: "auto",
-                    bgcolor: "#232325",
+                    bgcolor: "background.paper", // theme kolor tła
                     borderRadius: 3,
                     boxShadow: 2,
                     overflow: "hidden"
@@ -206,7 +206,7 @@ export default function UserPanel() {
                             "& .Mui-selected": {
                                 color: "#8FE6D5 !important",
                             },
-                            bgcolor: "#18191a",
+                            bgcolor: "#191c2a"                            // theme kolor tła
                         }}
                     >
                         <Tab icon={<PersonIcon/>} label="Account"/>

@@ -308,7 +308,7 @@ export function sortSongs(data, sortCriteria, sortOrder) {
 
         // Secondary sorting (fixed logic)
         if (comparison === 0) {
-            if (sortCriteria === 'score' || sortCriteria === 'title') {
+            if (sortCriteria !== 'added_at') {
                 // Secondary: added_at (ascending)
                 comparison = new Date(a.added_at) - new Date(b.added_at);
             } else {
