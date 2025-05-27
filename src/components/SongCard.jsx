@@ -687,11 +687,6 @@ function SongCard({id, currentlyPreviewingSongId, setCurrentlyPreviewingSongId})
                         </Box>
                     </Box>
 
-                    {/* Preview Button */}
-
-
-
-
                     {/* Voting Section */}
                     <Box
                         sx={{

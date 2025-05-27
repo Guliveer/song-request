@@ -17,13 +17,14 @@ import { supabase } from '@/utils/supabase';
 import { useUser } from "@/context/UserContext";
 import { FormField } from "@/components/Items";
 import { extractVideoId, fetchYouTubeMetadata } from "@/utils/youtube";
+import {extractSpotifyTrackId, fetchSpotifyMetadata} from "@/utils/spotify";
 
 export default function AddSongForm() {
     const theme = useTheme();
     const router = useRouter();
     const { isLoggedIn } = useUser();
     const [open, setOpen] = useState(false);
-    const [formData, setFormData] = useState({ title: '', author: '', url: '' });
+    const [formData, setFormData] = useState({ url: '' });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [success, setSuccess] = useState(false);
     const [user, setUser] = useState(null);
@@ -145,22 +146,33 @@ export default function AddSongForm() {
 
         setIsSubmitting(true);
 
-        // Sprawdzenie i pobranie danych z YouTube jeśli pola są puste
+        let title = '';
+        let author = '';
+        const url = formData.url;
 
-        let { title, author, url } = formData;
-
-        if ((!title || !author) && url.includes("youtube")) {
+        if (url.includes("youtube")) {
             const videoId = extractVideoId(url);
             if (videoId) {
                 const metadata = await fetchYouTubeMetadata(videoId);
                 if (metadata) {
-                    title = title || metadata.title;
-                    author = author || metadata.author;
+                    title = metadata.title;
+                    author = metadata.author;
                 }
             }
         }
 
-        const {data, error } = await supabase
+        if (url.includes("spotify")) {
+            const trackId = extractSpotifyTrackId(url);
+            if (trackId) {
+                const metadata = await fetchSpotifyMetadata(trackId);
+                if (metadata) {
+                    title = metadata.title;
+                    author = metadata.author;
+                }
+            }
+        }
+
+        const { data, error } = await supabase
             .from('queue')
             .insert([{ title, author, url, user_id: user.id }]);
 
@@ -168,7 +180,7 @@ export default function AddSongForm() {
             alert('Error while adding the song: ' + error.message);
         } else {
             setSuccess(true);
-            setFormData({ title: '', author: '', url: '' });
+            setFormData({ url: '' });
             await playSound('success', 0.8);
             setOpen(false);
         }
@@ -252,27 +264,6 @@ export default function AddSongForm() {
                             mt: 1,
                         }}
                     >
-                        <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
-                            <FormField
-                                //required
-                                id="title"
-                                label="Title"
-                                fullWidth
-                                disabled={!isLoggedIn}
-                                value={formData.title}
-                                onChange={handleChange}
-                            />
-                            <FormField
-                                //required
-                                id="author"
-                                label="Author"
-                                fullWidth
-                                disabled={!isLoggedIn}
-                                value={formData.author}
-                                onChange={handleChange}
-                            />
-                        </Box>
-
                         <FormField
                             required
                             id="url"
@@ -289,11 +280,7 @@ export default function AddSongForm() {
                                 arrow
                                 placement="top"
                             >
-                                <Box sx={{
-                                    display: 'flex',
-                                    justifyContent: 'center',
-                                    width: '100%',
-                                }}>
+                                <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
                                     <Button
                                         type="submit"
                                         variant="contained"
