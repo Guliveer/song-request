@@ -267,7 +267,7 @@ export default function AddSongForm() {
                         <FormField
                             required
                             id="url"
-                            label="URL"
+                            label="Spotify or YouTube URL"
                             fullWidth
                             disabled={!isLoggedIn}
                             value={formData.url}
