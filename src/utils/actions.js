@@ -219,19 +219,24 @@ export async function getSongData(id) {
         // Fetch the current song's data
         const { data: song, error: songError } = await supabase
             .from('queue')
-            .select('title, author, url, added_at, user_id, score')
+            .select('title, author, url, added_at, user_id, score, playlist')
             .eq('id', id)
             .single();
         if (songError) throw songError;
 
-        // Fetch the count of songs with a higher score or the same score but added earlier
+        // Count songs in the same playlist with higher score
+        // or same score but added earlier
         const { count, error: countError } = await supabase
             .from('queue')
             .select('id', { count: 'exact' })
-            .or(`score.gt.${song.score},and(score.eq.${song.score},added_at.lt.${song.added_at})`);
+            .or(
+                `and(score.gt.${song.score},playlist.eq.${song.playlist}),` +
+                `and(score.eq.${song.score},added_at.lt.${song.added_at},playlist.eq.${song.playlist})`
+            );
+
         if (countError) throw countError;
 
-        song.rank = count + 1; // Calculate the rank
+        song.rank = count + 1;
         return song;
     } catch (error) {
         console.error('Error fetching song with rank:', error.message);
@@ -244,6 +249,22 @@ getSongData.propTypes = {
 
 export async function removeUserVote(songId, userId) {
     try {
+        // Check if user has joined the playlist that song belongs to
+        const { data: song, error: songError } = await supabase
+            .from('queue')
+            .select('playlist')
+            .eq('id', songId)
+            .single();
+
+        if (songError) throw songError;
+
+        const joinedPlaylists = await getJoinedPlaylists(userId);
+        const hasJoined = joinedPlaylists.includes(song.playlist);
+
+        if (!hasJoined) {
+            throw new Error('User has not joined the playlist for this song');
+        }
+
         const { error } = await supabase
             .from('votes')
             .delete()
@@ -264,6 +285,22 @@ removeUserVote.propTypes = {
 
 export async function updateUserVote(songId, userId, vote) {
     try {
+        // Check if user has joined the playlist that song belongs to
+        const { data: song, error: songError } = await supabase
+            .from('queue')
+            .select('playlist')
+            .eq('id', songId)
+            .single();
+
+        if (songError) throw songError;
+
+        const joinedPlaylists = await getJoinedPlaylists(userId);
+        const hasJoined = joinedPlaylists.includes(song.playlist);
+
+        if (!hasJoined) {
+            throw new Error('User has not joined the playlist for this song');
+        }
+
         const { error } = await supabase
             .from('votes')
             .upsert({
@@ -508,3 +545,257 @@ hardBanUser.propTypes = {
     userId: PropTypes.string.isRequired,
     banDuration: PropTypes.string.isRequired
 };
+
+export async function getPlaylistData(playlistId) {
+    try {
+        // Fetch general playlist data by ID or URL
+        const { data: dataById, error: errorById } = await supabase
+            .from('playlists')
+            .select('*')
+            .eq('id', playlistId)
+            .single();
+
+        const { data: dataByUrl, error: errorByUrl } = await supabase
+            .from('playlists')
+            .select('*')
+            .eq('url', playlistId)
+            .single();
+
+        // Fetch the count of users who joined the playlist
+        const { count, error: countError } = await supabase
+            .from("users")
+            .select("playlists", { count: "exact" })
+            .contains("playlists", [playlistId]);
+
+        if (errorById && errorByUrl) {
+            console.error('Error fetching by ID:', errorById.message);
+        }
+
+        if (errorByUrl && errorById) {
+            console.error('Error fetching by URL:', errorByUrl.message);
+        }
+
+        if (dataById) {
+            return {...dataById, userCount: count || 0};
+        }
+        if (dataByUrl) {
+            return {...dataByUrl, userCount: count || 0};
+        }
+
+        return null;
+    } catch (error) {
+        console.error('Unexpected error:', error);
+        return null;
+    }
+}
+getPlaylistData.propTypes = {
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired
+}
+
+export async function createPlaylist(name, description, url) {
+    const host = (await getCurrentUser()).id;
+
+    // url can only contain alphanumeric characters and dashes
+    if (!/^[a-zA-Z-]+$/.test(url)) {
+        console.error('Invalid URL format. Only letters and dashes are allowed.');
+        throw new Error('Invalid URL format. Only letters and dashes are allowed.');
+    }
+
+    try {
+        const { data, error } = await supabase
+            .from('playlists')
+            .insert({
+                name: name,
+                host: host,
+                description: description,
+                url: url,
+            })
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        // Add the new playlist to the user's joined playlists array
+        const { data: user, error: userError } = await supabase
+            .from('users')
+            .select('playlists')
+            .eq('id', host)
+            .single();
+
+        if (userError) throw userError;
+        const joinedPlaylists = user.playlists || [];
+
+        if (!joinedPlaylists.includes(data.id)) {
+            const updatedPlaylists = [...joinedPlaylists, data.id];
+
+            const { error: updateError } = await supabase
+                .from('users')
+                .update({ playlists: updatedPlaylists })
+                .eq('id', host);
+
+            if (updateError) {
+                console.error('Error updating user playlists:', updateError.message);
+                throw updateError;
+            }
+        }
+
+        return data;
+    } catch (error) {
+        console.error('Error creating playlist:', error.message);
+        throw new Error('Failed to create playlist. Please try again later.');
+    }
+}
+createPlaylist.propTypes = {
+    name: PropTypes.string.isRequired,
+    description: PropTypes.string.isRequired,
+    url: PropTypes.string.isRequired
+}
+
+export async function getJoinedPlaylists(userId) {
+    try {
+        const { data, error } = await supabase
+            .from('users')
+            .select('playlists')
+            .eq('id', userId)
+            .single();
+
+        if (error) throw error;
+
+        return data.playlists || [];
+    } catch (error) {
+        console.error('Error fetching joined playlists:', error.message);
+        throw  new Error('Failed to get joined playlists:');
+    }
+}
+
+getJoinedPlaylists.propTypes = {
+    userId: PropTypes.string.isRequired
+}
+
+export async function leavePlaylist(userId, playlistId) {
+    if (!userId || !playlistId) {
+        console.warn("Invalid user or playlist data.");
+        throw new Error("Invalid user or playlist data.");
+    }
+
+    const joinedPlaylists = await getJoinedPlaylists(userId);
+    if (!joinedPlaylists || !joinedPlaylists.includes(playlistId)) {
+        console.warn("Playlist not joined.");
+        throw new Error("You have not joined this playlist.");
+    }
+
+    try {
+        // Delete all user's songs in this playlist
+        const { error: deleteSongsError } = await supabase
+            .from("queue")
+            .delete()
+            .eq("playlist", playlistId)
+            .eq("user_id", userId);
+
+        if (deleteSongsError) {
+            console.error("Error deleting songs:", deleteSongsError.message);
+            throw new Error("Failed to delete songs: " + deleteSongsError.message);
+        }
+
+        // Delete all user's votes in this playlist
+        const { data: songIds, error: songIdsError } = await supabase
+            .from("queue")
+            .select("id")
+            .eq("playlist", playlistId);
+
+        if (songIdsError) {
+            console.error("Error fetching song IDs:", songIdsError.message);
+            throw new Error("Failed to fetch song IDs: " + songIdsError.message);
+        }
+
+        const { error: deleteVotesError } = await supabase
+            .from("votes")
+            .delete()
+            .eq("user_id", userId)
+            .in("song_id", songIds.map(song => song.id));
+
+        if (deleteVotesError) {
+            console.error("Error deleting votes:", deleteVotesError.message);
+            throw new Error("Failed to delete votes: " + deleteVotesError.message);
+        }
+
+        // Remove the playlist from the user's joined playlists
+        const updatedPlaylists = joinedPlaylists.filter(id => id !== playlistId);
+        const { error } = await supabase
+            .from("users")
+            .update({ playlists: updatedPlaylists })
+            .eq("id", userId);
+
+        if (error) {
+            console.error("Error leaving playlist:", error.message);
+        }
+    } catch (error) {
+        console.error("Unexpected error:", error.message);
+        throw error;
+    }
+}
+leavePlaylist.propTypes = {
+    userId: PropTypes.string.isRequired,
+    playlistId: PropTypes.number.isRequired
+}
+
+export async function userLeavePlaylist(playlistId) {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+        console.warn("No user is currently logged in.");
+        throw new Error("No user is currently logged in.");
+    }
+
+    try {
+        await leavePlaylist(currentUser.id, playlistId);
+    } catch (error) {
+        console.error("Error leaving playlist:", error.message);
+        return false;
+    }
+}
+userLeavePlaylist.propTypes = {
+    playlistId: PropTypes.number.isRequired
+}
+
+export async function deletePlaylist(playlistId) {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+        console.warn("No user is currently logged in.");
+        throw new Error("No user is currently logged in.");
+    }
+
+    try {
+        // Check if the current user is the host of the playlist
+        const { data: playlist, error: playlistError } = await supabase
+            .from('playlists')
+            .select('host')
+            .eq('id', playlistId)
+            .single();
+
+        if (playlistError || !playlist) {
+            console.error("Error fetching playlist:", playlistError.message);
+            throw new Error("Failed to fetch playlist.");
+        }
+
+        if (playlist.host !== currentUser.id) {
+            console.warn("User is not the host of this playlist.");
+            throw new Error("You are not the host of this playlist.");
+        }
+
+        // Delete the playlist (songs & votes should be deleted automatically due to foreign key constraints)
+        const { error: deletePlaylistError } = await supabase
+            .from('playlists')
+            .delete()
+            .eq('id', playlistId);
+
+        if (deletePlaylistError) {
+            console.error("Error deleting playlist:", deletePlaylistError.message);
+            throw new Error("Failed to delete playlist: " + deletePlaylistError.message);
+        }
+
+        return true;
+    } catch (error) {
+        console.error("Unexpected error:", error.message);
+        return false;
+    }
+}
