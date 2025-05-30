@@ -29,7 +29,11 @@ import {
 } from '@mui/icons-material';
 import {useTheme} from "@mui/material/styles";
 import { extractYoutubeVideoId } from "@/utils/youtube";
+import { extractSpotifyTrackId} from "@/utils/spotify";
+import { fetchSpotifyMetadata } from "@/utils/spotify";
 import YouTube from 'react-youtube';
+import SvgIcon from "@mui/material/SvgIcon";
+import StopIcon from "@mui/icons-material/Stop";
 
 const VoteButtons = React.memo(({userVote, handleVote, score, disabled}) => (
     <Box
@@ -173,6 +177,23 @@ function SongCard({id, currentlyPreviewingSongId, setCurrentlyPreviewingSongId})
                     console.error("Error fetching YouTube metadata", err);
                 } finally {
                     setYtMetadataLoading(false);
+                }
+            }
+
+            // Dodatkowe pobieranie metadanych ze Spotify
+            if ((!song.title || !song.author) && song.url.includes("spotify.com")) {
+                try {
+                    const trackId = extractSpotifyTrackId(song.url);
+                    if (trackId) {
+                        const metadata = await fetchSpotifyMetadata(trackId);
+                        if (metadata) {
+                            song.title = metadata.title;
+                            song.author = metadata.author;
+                            setSongData({ ...song }); // update
+                        }
+                    }
+                } catch (err) {
+                    console.error("Error fetching Spotify metadata", err);
                 }
             }
 
@@ -379,6 +400,17 @@ function SongCard({id, currentlyPreviewingSongId, setCurrentlyPreviewingSongId})
 
     const {title, author, url, added_at, score, rank, username, duration} = songData;
     const youtubeVideoId = extractYoutubeVideoId(url);
+    const spotifyTrackId = extractSpotifyTrackId(url);
+    const isSpotify = Boolean(spotifyTrackId);
+    const isYouTube = url.includes("youtube.com") || url.includes("youtu.be");
+
+    function SpotifyIcon(props) {
+        return (
+            <SvgIcon {...props} viewBox="0 0 168 168">
+                <path d="M84 0a84 84 0 1 0 0 168 84 84 0 0 0 0-168zm38.2 121.6c-1.4 2.3-4.4 3-6.7 1.6-18.3-11.2-41.4-13.8-68.6-7.6-2.6.6-5.2-1-5.8-3.6s1-5.2 3.6-5.8c30-6.9 56.6-4 77 8 2.4 1.4 3.1 4.4 1.5 6.7zm9.5-20.7c-1.8 2.8-5.6 3.7-8.4 1.9-20.9-12.8-52.8-16.5-77.5-9.1-3.1.9-6.4-.9-7.3-4-.9-3.1.9-6.4 4-7.3 29-8.4 64.2-4.3 88.6 10.7 2.8 1.8 3.7 5.6 1.9 8.4zm.8-22.5C108.1 63 67.9 61.5 41.9 69c-3.5 1-7.1-1-8.1-4.5s1-7.1 4.5-8.1c30.7-8.7 75.6-6.9 106.1 11 3.1 1.9 4.1 6 .2 9-2.1 1.8-5.4 2-7.9.5z" />
+            </SvgIcon>
+        );
+    }
 
     // Score coloring like v0
     const getScoreColor = () => {
@@ -520,7 +552,7 @@ function SongCard({id, currentlyPreviewingSongId, setCurrentlyPreviewingSongId})
                             >
                                 <IconButton
                                     sx={{
-                                        color: "white",
+                                        color: "black",
                                         backgroundColor: theme.palette.primary.main,
                                         width: 32,
                                         height: 32,
@@ -529,9 +561,28 @@ function SongCard({id, currentlyPreviewingSongId, setCurrentlyPreviewingSongId})
                                             transform: "scale(1.05)",
                                         },
                                     }}
-                                    disabled
+                                    onClick={() => {
+                                        if (url.includes("spotify.com")) {
+                                            const trackId = extractSpotifyTrackId(url);
+                                            if (trackId) {
+                                                window.open(`https://open.spotify.com/track/${trackId}`, "_blank");
+                                            } else {
+                                                alert("Nieprawidłowy link Spotify");
+                                            }
+                                        } else {
+                                            setCurrentlyPreviewingSongId(
+                                                currentlyPreviewingSongId === id ? null : id
+                                            );
+                                        }
+                                    }}
                                 >
-                                    <PlayIcon sx={{fontSize: 18}}/>
+                                    {url.includes("spotify.com") ? (
+                                        <SpotifyIcon sx={{fontSize: 18}} />
+                                    ) : currentlyPreviewingSongId === id ? (
+                                        <StopIcon sx={{fontSize: 18}} />
+                                    ) : (
+                                        <PlayIcon sx={{fontSize: 18}} />
+                                    )}
                                 </IconButton>
                             </Box>
                         </Box>
@@ -635,20 +686,6 @@ function SongCard({id, currentlyPreviewingSongId, setCurrentlyPreviewingSongId})
                             </Box>
                         </Box>
                     </Box>
-
-                    {/* Preview Button */}
-
-                    <Button
-                        variant="outlined"
-                        color="error"
-                        onClick={() =>
-                            currentlyPreviewingSongId === id
-                                ? setCurrentlyPreviewingSongId(null) // Zatrzymaj
-                                : setCurrentlyPreviewingSongId(id)   // Włącz
-                        }
-                    >
-                        {currentlyPreviewingSongId === id ? "Stop Preview" : "Preview"}
-                    </Button>
 
                     {/* Voting Section */}
                     <Box
