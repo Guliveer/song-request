@@ -20,6 +20,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import PaletteIcon from '@mui/icons-material/Palette';
 import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
 import CloseIcon from '@mui/icons-material/Close';
+import {getCurrentUser} from "@/utils/actions";
 
 export default function Account() {
     const theme = useTheme();
@@ -117,7 +118,7 @@ export default function Account() {
     // Globalny zapis do bazy danych
     const handleGlobalSave = async () => {
         const updates = {};
-        const { data: user } = await supabase.auth.getUser();
+        const user = await getCurrentUser();
 
         if (!user) return;
 
@@ -130,25 +131,26 @@ export default function Account() {
         const { error } = await supabase
             .from("users")
             .update(updates)
-            .eq("id", user.user.id);
+            .eq("id", user.id);
 
         if (!error) {
             localStorage.removeItem('pendingUsername');
             localStorage.removeItem('pendingColor');
             localStorage.removeItem('pendingEmoji');
-            setPendingChanges({ username: null, color: null, emoji: null });
             window.location.reload();
+            setPendingChanges({ username: null, color: null, emoji: null });
         } else {
-            alert("Błąd podczas zapisywania zmian.");
+            console.error("Error saving changes:", error);
+            throw new Error("Failed to save changes: " + error.message);
         }
     };
 
     return (
         <>
-            <Typography variant="h5" component="h2" sx={{ color: 'white', mb: 3, fontWeight: 500 }}>
+            <Typography variant="h5" component="h2" sx={{ color: 'white', fontWeight: 500 }}>
                 Account Settings
             </Typography>
-            <Divider sx={{ mb: 3, backgroundColor: '#333' }} />
+            <Divider sx={{ my: 2 }} />
 
             {/* Account settings list */}
             <Box>
@@ -158,7 +160,6 @@ export default function Account() {
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     py: 3,
-                    borderBottom: '1px solid #333'
                 }}>
 
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -167,26 +168,28 @@ export default function Account() {
                             <Typography variant="body1" sx={{ color: 'white', fontWeight: 500 }}>
                                 Username
                             </Typography>
-                            <Typography variant="body2" sx={{ color: pendingChanges.username ? '#8FE6D5' : '#aaa', mt: 0.5 }}>
-                                {pendingChanges.username || profile?.username}
-                            </Typography>
-                            {pendingChanges.username && (
-                                <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
-                                    <Typography variant="caption" sx={{ color: '#8FE6D5' }}>
-                                        (pending)
-                                    </Typography>
-                                    <IconButton
-                                        size="small"
-                                        sx={{ ml: 0.5, color: '#8FE6D5' }}
-                                        onClick={() => {
-                                            localStorage.removeItem('pendingUsername');
-                                            setPendingChanges(prev => ({ ...prev, username: null }));
-                                        }}
-                                    >
-                                        <CloseIcon fontSize="small" />
-                                    </IconButton>
-                                </Box>
-                            )}
+                            <Box sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                            }}>
+                                <Typography variant="body2" sx={{ color: pendingChanges.username ? '#8FE6D5' : '#aaa', mt: 0.5 }}>
+                                    {pendingChanges.username || profile?.username}
+                                </Typography>
+                                {pendingChanges.username && (
+                                    <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
+                                        <IconButton
+                                            size="small"
+                                            sx={{ ml: 0.5, color: '#8FE6D5' }}
+                                            onClick={() => {
+                                                localStorage.removeItem('pendingUsername');
+                                                setPendingChanges(prev => ({ ...prev, username: null }));
+                                            }}
+                                        >
+                                            <CloseIcon fontSize="small" />
+                                        </IconButton>
+                                    </Box>
+                                )}
+                            </Box>
                         </Box>
 
                     </Box>
@@ -202,13 +205,14 @@ export default function Account() {
                     </IconButton>
                 </Box>
 
+                <Divider />
+
                 {/* Avatar color setting */}
                 <Box sx={{
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     py: 3,
-                    borderBottom: '1px solid #333'
                 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <PaletteIcon sx={{ color: '#8FE6D5', mr: 2 }} />
@@ -217,30 +221,32 @@ export default function Account() {
                                 Avatar Color
                             </Typography>
                             <Box sx={{
-                                width: 24,
-                                height: 24,
-                                borderRadius: '50%',
-                                backgroundColor: pendingChanges.color || avatarColor,
-                                border: '1px solid #555',
-                                mt: 0.5
-                            }} />
-                            {pendingChanges.color && (
-                                <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
-                                    <Typography variant="caption" sx={{ color: '#8FE6D5' }}>
-                                        (pending)
-                                    </Typography>
-                                    <IconButton
-                                        size="small"
-                                        sx={{ ml: 0.5, color: '#8FE6D5' }}
-                                        onClick={() => {
-                                            localStorage.removeItem('pendingColor');
-                                            setPendingChanges(prev => ({ ...prev, color: null }));
-                                        }}
-                                    >
-                                        <CloseIcon fontSize="small" />
-                                    </IconButton>
-                                </Box>
-                            )}
+                                display: 'flex',
+                                alignItems: 'center',
+                            }}>
+                                <Box sx={{
+                                    width: 24,
+                                    height: 24,
+                                    borderRadius: '50%',
+                                    backgroundColor: pendingChanges.color || avatarColor,
+                                    border: '1px solid #555',
+                                    mt: 0.5
+                                }} />
+                                {pendingChanges.color && (
+                                    <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
+                                        <IconButton
+                                            size="small"
+                                            sx={{ ml: 0.5, color: '#8FE6D5' }}
+                                            onClick={() => {
+                                                localStorage.removeItem('pendingColor');
+                                                setPendingChanges(prev => ({ ...prev, color: null }));
+                                            }}
+                                        >
+                                            <CloseIcon fontSize="small" />
+                                        </IconButton>
+                                    </Box>
+                                )}
+                            </Box>
                         </Box>
                     </Box>
                     <IconButton
@@ -253,6 +259,8 @@ export default function Account() {
                         <EditIcon />
                     </IconButton>
                 </Box>
+
+                <Divider />
 
                 {/* Avatar emoji setting */}
                 <Box sx={{
@@ -270,18 +278,17 @@ export default function Account() {
                             <Box sx={{
                                 display: 'flex',
                                 alignItems: 'center',
-                                mt: 0.5
                             }}>
-                                <Typography component="span" sx={{ fontSize: '24px', color: pendingChanges.emoji ? '#8FE6D5' : 'white' }}>
+                                <Typography component="span" sx={{
+                                    fontSize: '1rem',
+                                    color: pendingChanges.emoji ? '#8FE6D5' : 'white',
+                                }}>
                                     {(pendingChanges.emoji !== null
                                         ? (pendingChanges.emoji || "None")
                                         : (avatarEmoji || "None"))}
                                 </Typography>
                                 {pendingChanges.emoji && (
                                     <Box sx={{ display: 'flex', alignItems: 'center', ml: 1 }}>
-                                        <Typography variant="caption" sx={{ color: '#8FE6D5' }}>
-                                            (pending)
-                                        </Typography>
                                         <IconButton
                                             size="small"
                                             sx={{ ml: 0.5, color: '#8FE6D5' }}
@@ -315,11 +322,6 @@ export default function Account() {
                     variant="contained"
                     onClick={handleGlobalSave}
                     disabled={!Object.values(pendingChanges).some(val => val !== null && val !== undefined)}
-                    sx={{
-                        backgroundColor: '#8FE6D5',
-                        color: '#2a2a2a',
-                        '&:hover': { backgroundColor: '#7fd4c1' }
-                    }}
                 >
                     Save All Changes
                 </Button>
@@ -331,9 +333,7 @@ export default function Account() {
                 onClose={() => setColorDialogOpen(false)}
                 PaperProps={{
                     sx: {
-                        borderRadius: "16px",
-                        backgroundColor: '#2a2a2a',
-                        color: 'white'
+                        borderRadius: 4
                     },
                 }}
             >
@@ -367,7 +367,6 @@ export default function Account() {
                 <DialogActions>
                     <Button
                         onClick={() => setColorDialogOpen(false)}
-                        sx={{ color: '#aaa' }}
                     >
                         Cancel
                     </Button>
@@ -394,8 +393,6 @@ export default function Account() {
                 PaperProps={{
                     sx: {
                         borderRadius: 4,
-                        backgroundColor: '#2a2a2a',
-                        color: 'white'
                     },
                 }}
             >
@@ -439,7 +436,6 @@ export default function Account() {
                 <DialogActions>
                     <Button
                         onClick={() => setOpenDialog(false)}
-                        sx={{ color: '#aaa' }}
                     >
                         Cancel
                     </Button>
@@ -467,8 +463,6 @@ export default function Account() {
                 PaperProps={{
                     sx: {
                         borderRadius: 4,
-                        backgroundColor: '#2a2a2a',
-                        color: 'white'
                     },
                 }}
             >
@@ -496,12 +490,10 @@ export default function Account() {
                             border: '1px solid #555',
                             mb: 2
                         }}>
-                            {tempEmoji ? (
+                            {tempEmoji && (
                                 <Typography component="span" sx={{ fontSize: '2.5rem' }}>
                                     {tempEmoji}
                                 </Typography>
-                            ) : (
-                                <Typography sx={{ color: '#aaa' }}>None</Typography>
                             )}
                         </Box>
                     </Box>
@@ -525,7 +517,6 @@ export default function Account() {
                     </Button>
                     <Button
                         onClick={() => setEmojiDialogOpen(false)}
-                        sx={{ color: '#aaa' }}
                     >
                         Cancel
                     </Button>
@@ -533,7 +524,6 @@ export default function Account() {
                         onClick={handleSaveEmojiToCache}
                         disabled={!tempEmoji}
                         sx={{
-                            color: tempEmoji ? '#8FE6D5' : '#aaa',
                             '&:hover': {
                                 backgroundColor: tempEmoji ? 'rgba(143, 230, 213, 0.08)' : 'transparent'
                             }

@@ -5,10 +5,16 @@ import SetTitle from "@/components/SetTitle";
 import Account from "@/components/User_Panel/Account";
 import Followers from "@/components/User_Panel/Followers";
 import Providers from "@/components/User_Panel/Providers";
+import Playlists from "@/components/User_Panel/Playlists";
 import {Box, Tabs, Tab, Container, Typography, Avatar, Divider} from "@mui/material";
-import PersonIcon from '@mui/icons-material/Person';
-import PeopleIcon from '@mui/icons-material/People';
-import LinkIcon from '@mui/icons-material/Link';
+import {
+    PersonRounded as PersonIcon,
+    PeopleRounded as PeopleIcon,
+    LinkRounded as LinkIcon,
+    QueueMusicRounded as PlaylistsIcon,
+} from '@mui/icons-material';
+
+import {genUserAvatar} from "@/utils/actions";
 
 export default function UserPanel() {
     const [isLoading, setIsLoading] = useState(true);
@@ -17,8 +23,10 @@ export default function UserPanel() {
     const [userProfile, setUserProfile] = useState(null);
     const [followersCount, setFollowersCount] = useState(0);
     const [followingCount, setFollowingCount] = useState(0);
+    const [joinedPlaylistsCount, setJoinedPlaylistsCount] = useState(0);
     const router = useRouter();
     const [userId, setUserId] = useState(null);
+    const [avatarUrl, setAvatarUrl] = useState(null);
 
     useEffect(() => {
         const checkUser = async () => {
@@ -38,6 +46,9 @@ export default function UserPanel() {
 
             if (!error) setUserProfile(data);
 
+            const url = await genUserAvatar(user.id);
+
+            setAvatarUrl(url);
             setIsLoggedIn(true);
             setIsLoading(false);
         };
@@ -45,10 +56,23 @@ export default function UserPanel() {
     }, [router]);
 
     useEffect(() => {
-        if (userId) {
-            getFollowersCount();
-            getFollowingCount();
+        const fetchData = async () => {
+            if (userId) {
+                await getFollowersCount();
+                await getFollowingCount();
+                const {data, error} = await supabase
+                    .from("users")
+                    .select("playlists")
+                    .eq("id", userId)
+                    .single();
+
+                // 'playlists' is an array of playlist IDs
+                if (!error && data && Array.isArray(data.playlists)) {
+                    setJoinedPlaylistsCount(data.playlists.length);
+                }
+            }
         }
+        fetchData();
     }, [userId, activeTab]);
 
     const getFollowersCount = async () => {
@@ -103,21 +127,14 @@ export default function UserPanel() {
                 >
                     <Avatar
                         sx={{
-                            bgcolor: userProfile?.color || "#d32f2f",
                             width: 92,
                             height: 92,
                             mb: 2,
-                            fontSize: 54,
-                            fontWeight: "bold",
                             boxShadow: 2,
                         }}
-                    >
-                        {userProfile?.emoji
-                            ? <Typography component="span"
-                                          sx={{fontSize: "2.5rem", lineHeight: 1}}>{userProfile.emoji}</Typography>
-                            : (userProfile?.username?.[0]?.toUpperCase() || "U")
-                        }
-                    </Avatar>
+                        alt="Avatar"
+                        src={avatarUrl}
+                    />
                     <Typography variant="h4" sx={{
                         fontWeight: "bold",
                         color: "#fff",
@@ -171,10 +188,10 @@ export default function UserPanel() {
                         }}/>
                         <Box sx={{flex: 1, textAlign: "center"}}>
                             <Typography variant="h5" sx={{fontWeight: 700, color: "#ffffff"}}>
-                                1
+                                {joinedPlaylistsCount}
                             </Typography>
                             <Typography variant="body2" sx={{color: "#aaa", mt: 0.5, fontWeight: 500}}>
-                                Providers
+                                Playlists Joined
                             </Typography>
                         </Box>
                     </Box>
@@ -206,12 +223,13 @@ export default function UserPanel() {
                             "& .Mui-selected": {
                                 color: "#8FE6D5 !important",
                             },
-                            bgcolor: "#191c2a"                            // theme kolor tła
+                            bgcolor: "#191c2a"
                         }}
                     >
                         <Tab icon={<PersonIcon/>} label="Account"/>
                         <Tab icon={<PeopleIcon/>} label="Friends"/>
                         <Tab icon={<LinkIcon/>} label="Providers"/>
+                        <Tab icon={<PlaylistsIcon/>} label="Playlists"/>
                     </Tabs>
 
                     <Box sx={{p: 3, width: "100%"}}>
@@ -226,6 +244,7 @@ export default function UserPanel() {
                             />
                         )}
                         {activeTab === 2 && <Providers/>}
+                        {activeTab === 3 && <Playlists/>}
                     </Box>
                 </Box>
             </Container>

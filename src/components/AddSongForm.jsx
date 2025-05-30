@@ -11,14 +11,15 @@ import {
     DoneRounded as SuccessIcon,
 } from '@mui/icons-material';
 import { useRouter } from 'next/router';
-import { playSound } from '@/utils/actions';
+import {getJoinedPlaylists, playSound} from '@/utils/actions';
 import { keyframes } from '@mui/system';
 import { supabase } from '@/utils/supabase';
 import { useUser } from "@/context/UserContext";
 import { FormField } from "@/components/Items";
 import { extractVideoId, fetchYouTubeMetadata } from "@/utils/youtube";
+import PropTypes from "prop-types";
 
-export default function AddSongForm() {
+export default function AddSongForm({playlist}) {
     const theme = useTheme();
     const router = useRouter();
     const { isLoggedIn } = useUser();
@@ -93,7 +94,14 @@ export default function AddSongForm() {
     const handleSubmit = async (event) => {
         event.preventDefault();
         if (!user) {
-            alert("You must be logged in to add a song.");
+            console.error("You must be logged in to add a song.");
+            return;
+        }
+
+        // Check if user has joined that playlist
+        const hasJoinedPlaylist = await getJoinedPlaylists(user.id);
+        if (!hasJoinedPlaylist.includes(playlist)) {
+            console.error("You must join the playlist before adding songs.");
             return;
         }
 
@@ -105,24 +113,25 @@ export default function AddSongForm() {
             .single();
 
         if (userError) {
-            alert('Error checking account status.');
+            console.error('Error checking account status.');
             return;
         }
 
         if (userData.ban_status > 0) {
-            alert('You cannot add songs because your account is banned.');
+            console.error('You cannot add songs because your account is banned.');
             return;
         }
 
         // Check if URL is banned
         const { data: bannedUrl } = await supabase
-            .from('banned_url')
-            .select('id')
-            .eq('url', formData.url)
+            .from('playlists')
+            .select('id, banned_songs')
+            .eq(id, playlist)
             .maybeSingle();
 
-        if (bannedUrl) {
-            alert("This link is banned and cannot be added to the queue.");
+        // Check if the provided URL is in the returned array (bannedUrl -> banned_songs[])
+        if (bannedUrl.banned_songs.includes(formData.url)) {
+            alert("This URL is banned and cannot be added to the queue.");
             return;
         }
 
@@ -131,10 +140,11 @@ export default function AddSongForm() {
             .from('queue')
             .select('id, title, author')
             .eq('url', formData.url)
+            .eq('playlist', playlist)
             .maybeSingle();
 
         if (existingError) {
-            alert('Error checking for existing song.');
+            console.error('Error checking for existing song.');
             return;
         }
 
@@ -162,7 +172,7 @@ export default function AddSongForm() {
 
         const {data, error } = await supabase
             .from('queue')
-            .insert([{ title, author, url, user_id: user.id }]);
+            .insert([{ title, author, url, user_id: user.id, playlist }]);
 
         if (error) {
             alert('Error while adding the song: ' + error.message);
@@ -353,4 +363,8 @@ export default function AddSongForm() {
             )}
         </>
     );
+}
+
+AddSongForm.propTypes = {
+    playlist: PropTypes.number.isRequired, // Ensure playlist is a string
 }

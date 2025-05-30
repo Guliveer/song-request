@@ -42,14 +42,14 @@ function SearchField({ onSearchChange }) {
                 flex: 1,
                 display: 'flex',
                 alignItems: 'center',
-                borderRadius: 4,
+                borderRadius: 3,
                 background: "none",
                 border: "1px solid #6beaf733",
                 height: 54,
-                pl: 3,
+                pl: 2,
                 pr: 1,
                 boxShadow: "none",
-                minWidth: 0,
+                minWidth: 100,
                 maxWidth: 'none',
             }}
             onSubmit={e => e.preventDefault()}

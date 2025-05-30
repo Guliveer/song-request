@@ -10,8 +10,9 @@ import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import StarIcon from '@mui/icons-material/Star';
 import AlbumIcon from '@mui/icons-material/Album';
+import PropTypes from "prop-types";
 
-export default function TopSongsOlympicPodium() {
+export default function TopSongsOlympicPodium({playlist}) {
     const [topSongs, setTopSongs] = useState([]);
     const [loading, setLoading] = useState(true);
     const theme = useTheme();
@@ -31,6 +32,7 @@ export default function TopSongsOlympicPodium() {
                 const {data, error} = await supabase
                     .from('queue')
                     .select('id, title, author, added_at, score, user_id')
+                    .eq('playlist', playlist)
                     .order(sortCriteria, {ascending: sortOrder === 'asc'})
                     .limit(3);
 
@@ -68,8 +70,6 @@ export default function TopSongsOlympicPodium() {
     if (loading) return (
         <Box sx={{
             width: '100%',
-            mb: 4,
-            mt: 4,
             px: {xs: 1, md: 2}
         }}>
             <Paper sx={{
@@ -266,8 +266,6 @@ export default function TopSongsOlympicPodium() {
     return (
         <Box sx={{
             width: '100%',
-            mb: 4,
-            mt: 4,
             px: {xs: 1, md: 2}
         }}>
             <Paper sx={{
@@ -798,4 +796,8 @@ export default function TopSongsOlympicPodium() {
             </Paper>
         </Box>
     );
+}
+
+TopSongsOlympicPodium.propTypes = {
+    playlist: PropTypes.number.isRequired,
 }
