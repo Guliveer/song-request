@@ -118,7 +118,7 @@ export default function Login() {
                         fullWidth
                         variant="contained"
                         size="large"
-                        startIcon={<LoginIcon />}
+                        startIcon={!isSubmitting && <LoginIcon />}
                         disabled={isSubmitting || !email || !password || !captchaToken}
                     >
                         {isSubmitting ? <CircularProgress size={26} /> : 'Log in'}

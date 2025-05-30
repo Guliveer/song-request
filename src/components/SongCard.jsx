@@ -1,11 +1,11 @@
 import PropTypes from 'prop-types';
-import React, {useState, useEffect, useCallback} from 'react';
+import React, {useState, useEffect, useCallback, useRef} from 'react';
 import Link from "next/link";
 import {supabase} from '@/utils/supabase';
 import {useRouter} from 'next/router';
 import {
     Box, Card, CardContent, Typography, IconButton, Snackbar, Tooltip,
-    Avatar, AvatarGroup, Chip, Divider
+    Avatar, AvatarGroup, Chip, Divider, Button
 } from "@mui/material";
 import SkeletonSongCard from "@/components/skeletons/SkeletonSongCard";
 import {
@@ -28,6 +28,8 @@ import {
     Block as BlockIcon
 } from '@mui/icons-material';
 import {useTheme} from "@mui/material/styles";
+import { extractYoutubeVideoId } from "@/utils/youtube";
+import YouTube from 'react-youtube';
 
 const VoteButtons = React.memo(({userVote, handleVote, score, disabled}) => (
     <Box
@@ -69,7 +71,7 @@ const VoteButtons = React.memo(({userVote, handleVote, score, disabled}) => (
     </Box>
 ));
 
-function SongCard({id}) {
+function SongCard({id, currentlyPreviewingSongId, setCurrentlyPreviewingSongId}) {
     const theme = useTheme();
     const [songData, setSongData] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -81,6 +83,7 @@ function SongCard({id}) {
     const router = useRouter();
     const [isBanned, setIsBanned] = useState(false);
     const [hovered, setHovered] = useState(false);
+    const [ytMetadataLoading, setYtMetadataLoading] = useState(false);
 
     const isAdminPanel = router.pathname.startsWith("/admin");
 
@@ -152,6 +155,27 @@ function SongCard({id}) {
             song.rawUserId = song.user_id;
 
             setSongData(song);
+
+            // Jeśli brakuje tytułu lub autora – pobierz z YouTube
+            if ((!song.title || !song.author) && song.url.includes('youtube.com')) {
+                setYtMetadataLoading(true);
+                try {
+                    const videoId = extractYoutubeVideoId(song.url);
+                    if (videoId) {
+                        const metadata = await fetchYouTubeMetadata(videoId);
+                        if (metadata) {
+                            song.title = metadata.title;
+                            song.author = metadata.channelTitle;
+                            setSongData({ ...song }); // uaktualnij stan
+                        }
+                    }
+                } catch (err) {
+                    console.error("Error fetching YouTube metadata", err);
+                } finally {
+                    setYtMetadataLoading(false);
+                }
+            }
+
         } catch (error) {
             console.error('Error fetching data:', error);
         } finally {
@@ -247,6 +271,10 @@ function SongCard({id}) {
         } else {
             router.reload();
         }
+    };
+
+    const handleYouTubeReady = (event) => {
+        event.target.playVideo();
     };
 
     const handleResetVotes = async () => {
@@ -350,6 +378,7 @@ function SongCard({id}) {
     }
 
     const {title, author, url, added_at, score, rank, username, duration} = songData;
+    const youtubeVideoId = extractYoutubeVideoId(url);
 
     // Score coloring like v0
     const getScoreColor = () => {
@@ -607,6 +636,20 @@ function SongCard({id}) {
                         </Box>
                     </Box>
 
+                    {/* Preview Button */}
+
+                    <Button
+                        variant="outlined"
+                        color="error"
+                        onClick={() =>
+                            currentlyPreviewingSongId === id
+                                ? setCurrentlyPreviewingSongId(null) // Zatrzymaj
+                                : setCurrentlyPreviewingSongId(id)   // Włącz
+                        }
+                    >
+                        {currentlyPreviewingSongId === id ? "Stop Preview" : "Preview"}
+                    </Button>
+
                     {/* Voting Section */}
                     <Box
                         sx={{
@@ -745,6 +788,22 @@ function SongCard({id}) {
                             </Tooltip>
                         </Box>
                     </Box>
+                )}
+
+                {currentlyPreviewingSongId === id && youtubeVideoId && (
+                    <YouTube
+                        videoId={youtubeVideoId}
+                        opts={{
+                            height: '0',
+                            width: '0',
+                            playerVars: {
+                                autoplay: 1,
+                                controls: 0,
+                                modestbranding: 1,
+                            },
+                        }}
+                        onReady={handleYouTubeReady}
+                    />
                 )}
 
                 {error && (

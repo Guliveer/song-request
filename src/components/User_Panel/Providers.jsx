@@ -48,10 +48,10 @@ export default function Providers() {
 
     return (
         <>
-            <Typography variant="h5" component="h2" sx={{ color: 'white', mb: 3, fontWeight: 500 }}>
+            <Typography variant="h5" component="h2" sx={{ color: 'white', fontWeight: 500 }}>
                 Linked Providers
             </Typography>
-            <Divider sx={{ mb: 3, backgroundColor: '#333' }} />
+            <Divider sx={{ my: 2 }} />
 
             {identities.length === 0 ? (
                 <Typography variant="body1" sx={{ color: '#aaa', textAlign: 'center', py: 4 }}>
@@ -130,7 +130,7 @@ export default function Providers() {
                                     </ListItemSecondaryAction>
                                 </ListItem>
                                 {index < identities.length - 1 && (
-                                    <Divider sx={{ backgroundColor: '#333' }} />
+                                    <Divider />
                                 )}
                             </Box>
                         );

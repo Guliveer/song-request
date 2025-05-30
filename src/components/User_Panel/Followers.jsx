@@ -12,12 +12,7 @@ import {
 } from "@mui/icons-material";
 import {supabase} from "@/utils/supabase";
 
-export default function Followers({
-                                      userId,
-                                      followingCount,
-                                      followersCount,
-                                      onFollowAction
-                                  }) {
+export default function Followers({userId, followingCount, followersCount, onFollowAction}) {
     const [friendUsername, setFriendUsername] = useState("");
     const [friendSearchResults, setFriendSearchResults] = useState([]);
     const [alreadyFollowing, setAlreadyFollowing] = useState(false);
@@ -179,10 +174,10 @@ export default function Followers({
 
     return (
         <>
-            <Typography variant="h5" component="h2" sx={{color: 'white', mb: 3, fontWeight: 500}}>
+            <Typography variant="h5" component="h2" sx={{color: 'white', fontWeight: 500}}>
                 Find Friends
             </Typography>
-            <Divider sx={{mb: 3, backgroundColor: '#333'}}/>
+            <Divider sx={{my: 2}}/>
 
             <Box sx={{mb: 4}}>
                 <Typography variant="body1" sx={{color: 'white', mb: 2}}>
@@ -365,9 +360,7 @@ export default function Followers({
                 fullWidth
                 PaperProps={{
                     sx: {
-                        borderRadius: '16px',
-                        backgroundColor: '#2a2a2a',
-                        color: 'white'
+                        borderRadius: 4,
                     }
                 }}
             >
@@ -440,7 +433,7 @@ export default function Followers({
                                                     />
                                                 </ListItem>
                                                 {index < followedUsersData.filter(u => u.username.toLowerCase().includes(followingSearch.toLowerCase())).slice(0, visibleFollowing).length - 1 && (
-                                                    <Divider sx={{backgroundColor: '#444'}}/>
+                                                    <Divider />
                                                 )}
                                             </React.Fragment>
                                         ))}
@@ -457,7 +450,6 @@ export default function Followers({
                                             }
                                         }}
                                         variant="outlined"
-                                        fullWidth
                                         onClick={() => setVisibleFollowing((prev) => prev + 5)}
                                     >
                                         Show more

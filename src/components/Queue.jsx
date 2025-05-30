@@ -11,7 +11,7 @@ import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import SearchField from '@/components/SearchField';
 
-export default function Queue() {
+export default function Queue({playlist}) {
     const [songs, setSongs] = useState([]);
     const [sortCriteria, setSortCriteria] = useState('score');
     const [sortOrder, setSortOrder] = useState('desc');
@@ -24,6 +24,8 @@ export default function Queue() {
     const [searchQuery, setSearchQuery] = useState('');
     const [searchFilter, setSearchFilter] = useState('title');
 
+    const [currentlyPreviewingSongId, setCurrentlyPreviewingSongId] = useState(null);
+
     const handleSearchChange = useCallback((query, filter) => {
         setSearchQuery(query);
         setSearchFilter(filter);
@@ -35,7 +37,8 @@ export default function Queue() {
             try {
                 let queryBuilder = supabase
                     .from("queue")
-                    .select("id, score, author, title, added_at, user_id", { count: 'exact' });
+                    .select("id, score, author, title, added_at, user_id", { count: 'exact' })
+                    .eq('playlist', playlist);
 
                 if (searchQuery.trim() !== '') {
                     if (searchFilter === 'title') {
@@ -115,10 +118,10 @@ export default function Queue() {
             flexWrap: 'nowrap',
             alignItems: 'flex-start',
             justifyContent: 'center',
-            gap: 5,
+            gap: 3,
             minWidth: '100px',
             width: '100vw',
-            p: '1rem 2rem',
+            p: 3,
         }}>
             {/* One big bar, centered and wide */}
             <Box sx={{
@@ -129,19 +132,19 @@ export default function Queue() {
                 flexDirection: 'row',
                 alignItems: "center",
                 justifyContent: 'center',
-                p: "28px 36px",
+                p: 3,
+                gap: 2,
                 background: "linear-gradient(90deg, #23253a 60%, #22253a 100%)",
                 borderRadius: 5,
                 boxShadow: "0 1.5px 12px 0 #13162c42",
-                gap: 3,
-                mb: 3,
             }}>
                 <SearchField onSearchChange={handleSearchChange} />
                 <Tooltip title="Sort by">
                     <IconButton
                         onClick={handleSortClick}
                         sx={{
-                            borderRadius: 4,
+                            borderRadius: 3,
+                            aspectRatio: 1/1,
                             width: 48,
                             height: 48,
                             background: "none",
@@ -152,11 +155,12 @@ export default function Queue() {
                         <SortIcon />
                     </IconButton>
                 </Tooltip>
-                <Tooltip title={sortOrder === "asc" ? "Ascending" : "Descending"}>
+                <Tooltip title={"Sort order"}>
                     <IconButton
                         onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
                         sx={{
-                            borderRadius: 4,
+                            borderRadius: 3,
+                            aspectRatio: 1/1,
                             width: 48,
                             height: 48,
                             background: "none",
@@ -184,7 +188,7 @@ export default function Queue() {
                 display: 'flex',
                 flexDirection: 'row',
                 flexWrap: 'wrap',
-                gap: 5,
+                gap: 3,
                 justifyContent: 'center',
                 alignItems: 'flex-start',
                 width: '100%',
@@ -193,7 +197,12 @@ export default function Queue() {
                     <Box sx={{ textAlign: 'center', color: '#ccc' }}>Not found...</Box>
                 ) : (
                     songs.map((song) => (
-                        <SongCard key={song.id} id={song.id} />
+                        <SongCard
+                            key={song.id}
+                            id={song.id}
+                            currentlyPreviewingSongId={currentlyPreviewingSongId}
+                            setCurrentlyPreviewingSongId={setCurrentlyPreviewingSongId}
+                        />
                     ))
                 )}
             </Box>
