@@ -126,7 +126,7 @@ export default function AddSongForm({playlist}) {
         const { data: bannedUrl } = await supabase
             .from('playlists')
             .select('id, banned_songs')
-            .eq(id, playlist)
+            .eq('id', playlist)
             .maybeSingle();
 
         // Check if the provided URL is in the returned array (bannedUrl -> banned_songs[])

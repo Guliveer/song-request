@@ -567,11 +567,11 @@ export async function getPlaylistData(playlistId) {
             .select("playlists", { count: "exact" })
             .contains("playlists", [playlistId]);
 
-        if (errorById && errorByUrl !== null) {
+        if (errorById && errorByUrl) {
             console.error('Error fetching by ID:', errorById.message);
         }
 
-        if (errorByUrl && errorById !== null) {
+        if (errorByUrl && errorById) {
             console.error('Error fetching by URL:', errorByUrl.message);
         }
 
