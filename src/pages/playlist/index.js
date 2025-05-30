@@ -115,7 +115,7 @@ export default function PlaylistsPage() {
 
             {playlists.length === 0 && (
                 <Box textAlign="center" py={8}>
-                    <PlaylistPlay sx={{ fontSize: 80, color: "text.secondary", mb: 2 }} />
+                    <PlaylistIcon sx={{ fontSize: 80, color: "text.secondary", mb: 2 }} />
                     <Typography variant="h5" color="text.secondary" gutterBottom>
                         No Public Playlists
                     </Typography>
