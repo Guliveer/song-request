@@ -8,7 +8,7 @@ import Footer from '@/components/Footer';
 import AddSongForm from '@/components/AddSongForm';
 import PropTypes from "prop-types";
 import {useRouter} from "next/router";
-import Box from "@mui/material/Box"; // DODAJ TEN IMPORT
+import Box from "@mui/material/Box";
 
 export default function App({Component, pageProps}) {
     return (
@@ -20,7 +20,7 @@ export default function App({Component, pageProps}) {
                     minHeight: "100vh",
                     display: "flex",
                     flexDirection: "column",
-                    overflowX: "hidden", // zapobiega przewijaniu w poziomie
+                    maxWidth: "100vw", // limit page width to viewport width
                   }}
                 >
                   <NavMenu/>
