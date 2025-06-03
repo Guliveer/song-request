@@ -6,32 +6,38 @@ import {
     List,
     ListItem,
     ListItemSecondaryAction,
-    ListItemText,
     Box,
     Typography,
-    IconButton
+    IconButton,
+    CircularProgress
 } from "@mui/material";
 import EmailIcon from '@mui/icons-material/Email';
 import GoogleIcon from '@mui/icons-material/Google';
 import FacebookIcon from '@mui/icons-material/Facebook';
 import GitHubIcon from '@mui/icons-material/GitHub';
-import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import LinkOffIcon from '@mui/icons-material/LinkOff';
 import VerifiedIcon from '@mui/icons-material/Verified';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import LinkRoundedIcon from '@mui/icons-material/LinkRounded';
+import { Spotify } from '@/components/AuthProvidersList';
+
+
 
 export default function Providers() {
     const [identities, setIdentities] = useState([]);
     const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
     const [identityToUnlink, setIdentityToUnlink] = useState(null);
+    const [loadingProvider, setLoadingProvider] = useState(null);
 
     const providerIcons = {
         email: <EmailIcon fontSize="medium" sx={{ mr: 2, color: '#8FE6D5' }} />,
         google: <GoogleIcon fontSize="medium" sx={{ mr: 2, color: '#8FE6D5' }} />,
         facebook: <FacebookIcon fontSize="medium" sx={{ mr: 2, color: '#8FE6D5' }} />,
         github: <GitHubIcon fontSize="medium" sx={{ mr: 2, color: '#8FE6D5' }} />,
-        spotify: <MusicNoteIcon fontSize="medium" sx={{ mr: 2, color: '#8FE6D5' }} />,
+            spotify: <Box sx={{ mr: 2, color: '#8FE6D5'}}><Spotify /></Box>,
     };
+
+    const allProviders = Object.keys(providerIcons);
 
     useEffect(() => {
         async function fetchIdentities() {
@@ -42,103 +48,115 @@ export default function Providers() {
                 setIdentities(data?.identities || []);
             }
         }
-
         fetchIdentities();
     }, []);
 
+    const handleConnectProvider = async (provider) => {
+        setLoadingProvider(provider);
+        try {
+            const { error } = await supabase.auth.linkIdentity({ provider });
+            if (error) throw error;
+        } catch (error) {
+            console.error("Connection error:", error);
+            alert(`Error connecting ${provider}: ${error.message}`);
+        }
+        setLoadingProvider(null);
+    };
+
     return (
         <>
-            <Typography variant="h5" component="h2" sx={{ color: 'white', fontWeight: 500 }}>
-                Linked Providers
+            <Typography variant="h5" component="h2" sx={{ color: 'white', mb: 3, fontWeight: 500 }}>
+                Providers
             </Typography>
-            <Divider sx={{ my: 2 }} />
+            <Divider sx={{ mb: 3, backgroundColor: '#333' }} />
 
-            {identities.length === 0 ? (
-                <Typography variant="body1" sx={{ color: '#aaa', textAlign: 'center', py: 4 }}>
-                    No external providers linked.
-                </Typography>
-            ) : (
-                <List sx={{ p: 0 }}>
-                    {identities.map((id, index) => {
-                        const isEmailVerified = id.identity_data?.email_verified;
+            <List sx={{ p: 0 }}>
+                {allProviders.map((provider, index) => {
+                    const isConnected = identities.some(id => id.provider === provider);
+                    const isEmail = provider === 'email';
+                    const isEmailVerified = identities.find(id => id.provider === provider)?.identity_data?.email_verified;
 
-                        return (
-                            <Box key={id.id}>
-                                <ListItem
-                                    sx={{
-                                        py: 2,
-                                        borderRadius: 1,
-                                        '&:hover': {
-                                            backgroundColor: 'rgba(255, 255, 255, 0.03)'
-                                        }
-                                    }}
-                                >
-                                    {providerIcons[id.provider] || (
-                                        <Box sx={{ mr: 2, color: '#8FE6D5' }}>?</Box>
-                                    )}
-
-                                    <Box sx={{ flex: 1 }}>
-                                        <Box sx={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: 1
-                                        }}>
-                                            <Typography variant="body1" sx={{ color: 'white', fontWeight: 500, textTransform: 'capitalize' }}>
-                                                {id.provider}
-                                            </Typography>
-                                            {id.provider === "email" && (
-                                                isEmailVerified ? (
-                                                    <VerifiedIcon fontSize="small" sx={{ color: '#4caf50' }} />
-                                                ) : (
-                                                    <ErrorOutlineIcon fontSize="small" sx={{ color: '#ff9800' }} />
-                                                )
-                                            )}
-                                        </Box>
-
-                                        {id.provider === "email" && (
-                                            <Typography variant="body2" sx={{ color: '#aaa', mt: 0.5 }}>
-                                                {isEmailVerified ? "Email verified" : "Email not verified"}
-                                            </Typography>
+                    return (
+                        <Box key={provider}>
+                            <ListItem
+                                sx={{
+                                    py: 2,
+                                    borderRadius: 1,
+                                    '&:hover': {
+                                        backgroundColor: 'rgba(255, 255, 255, 0.03)'
+                                    }
+                                }}
+                            >
+                                {providerIcons[provider]}
+                                <Box sx={{ flex: 1 }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <Typography variant="body1" sx={{ color: 'white', fontWeight: 500, textTransform: 'capitalize' }}>
+                                            {provider}
+                                        </Typography>
+                                        {isConnected && (
+                                            <VerifiedIcon fontSize="small" sx={{ color: '#4caf50' }} />
                                         )}
-
-                                        {id.identity_data?.email && id.provider !== "email" && (
-                                            <Typography variant="body2" sx={{ color: '#aaa', mt: 0.5 }}>
-                                                {id.identity_data.email}
-                                            </Typography>
+                                        {isEmail && isConnected && !isEmailVerified && (
+                                            <ErrorOutlineIcon fontSize="small" sx={{ color: '#ff9800' }} />
                                         )}
                                     </Box>
-
-                                    <ListItemSecondaryAction>
-                                        <IconButton
-                                            onClick={() => {
-                                                if (id.provider !== "email") {
-                                                    setIdentityToUnlink(id);
+                                    {isEmail && isConnected && (
+                                        <Typography variant="body2" sx={{ color: '#aaa', mt: 0.5 }}>
+                                            {isEmailVerified ? "Email verified" : "Email not verified"}
+                                        </Typography>
+                                    )}
+                                </Box>
+                                <ListItemSecondaryAction>
+                                    {isConnected ? (
+                                        provider !== "email" ? (
+                                            <IconButton
+                                                onClick={() => {
+                                                    setIdentityToUnlink(identities.find(id => id.provider === provider)); // UWAGA: popraw na setIdentityToUnlink!
                                                     setConfirmDialogOpen(true);
-                                                }
-                                            }}
-                                            disabled={id.provider === "email"}
-                                            title={id.provider === "email" ? "You can't unlink your email login." : "Unlink this provider"}
+                                                }}
+                                                title="Unlink this provider"
+                                                sx={{
+                                                    color: '#f44336',
+                                                    marginRight: '15px',
+                                                    '&:hover': {
+                                                        backgroundColor: 'rgba(244, 67, 54, 0.08)'
+                                                    }
+                                                }}
+                                            >
+                                                <LinkOffIcon />
+                                            </IconButton>
+                                        ) : null
+                                    ) : (
+                                        <IconButton
+                                            size="small"
+                                            disabled={loadingProvider === provider || isEmail}
+                                            onClick={() => !isEmail && handleConnectProvider(provider)}
                                             sx={{
-                                                color: id.provider === "email" ? '#666' : '#f44336',
+                                                color: '#4caf50',
+                                                marginRight: '18px',
                                                 '&:hover': {
-                                                    backgroundColor: id.provider === "email" ? 'transparent' : 'rgba(244, 67, 54, 0.08)'
-                                                }
+                                                    backgroundColor: 'rgba(76, 175, 80, 0.15)',
+                                                },
                                             }}
+                                            title="Connect this provider"
                                         >
-                                            <LinkOffIcon />
+                                            {loadingProvider === provider ? (
+                                                <CircularProgress size={20} color="inherit" />
+                                            ) : (
+                                                <LinkRoundedIcon />
+                                            )}
                                         </IconButton>
-                                    </ListItemSecondaryAction>
-                                </ListItem>
-                                {index < identities.length - 1 && (
-                                    <Divider />
-                                )}
-                            </Box>
-                        );
-                    })}
-                </List>
-            )}
 
-            {/* Confirmation Dialog */}
+
+                                    )}
+                                </ListItemSecondaryAction>
+                            </ListItem>
+                            {index < allProviders.length - 1 && <Divider sx={{ backgroundColor: '#333' }} />}
+                        </Box>
+                    );
+                })}
+            </List>
+
             <Dialog
                 open={confirmDialogOpen}
                 onClose={() => setConfirmDialogOpen(false)}
