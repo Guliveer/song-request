@@ -58,7 +58,8 @@ export default function Providers() {
             if (error) throw error;
         } catch (error) {
             console.error("Connection error:", error);
-            alert(`Error connecting ${provider}: ${error.message}`);
+            setErrorMessage(`Error connecting ${provider}: ${error.message}`);
+            setSnackbarOpen(true);
         }
         setLoadingProvider(null);
     };
@@ -111,7 +112,7 @@ export default function Providers() {
                                         provider !== "email" ? (
                                             <IconButton
                                                 onClick={() => {
-                                                    setIdentityToUnlink(identities.find(id => id.provider === provider)); // UWAGA: popraw na setIdentityToUnlink!
+                                                    setIdentityToUnlink(identities.find(id => id.provider === provider));
                                                     setConfirmDialogOpen(true);
                                                 }}
                                                 title="Unlink this provider"
