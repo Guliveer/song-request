@@ -142,9 +142,9 @@ export default function AddSongForm({playlist}) {
         // http(s)://(www.) and then one of the whitelisted URLs,
         // after which there are only alphanumeric characters, hyphens, or underscores
         const urlPattern = new RegExp(`^(https?://)?(www\\.)?((${whitelistedUrls.join(')|(')}))[a-zA-Z0-9-_]+\\??$`);
-        if (!urlPattern.test(passedUrl)) {
+        if (!urlPattern.test(passedUrl.href)) {
             alert("Invalid URL. Please enter a valid YouTube or Spotify link.");
-            alert(passedUrl);
+            alert(passedUrl.href);
             return;
         }
 
@@ -156,7 +156,7 @@ export default function AddSongForm({playlist}) {
             .maybeSingle();
 
         // Check if the provided URL is in the returned array (bannedUrl -> banned_songs[])
-        if (bannedUrl.banned_songs?.includes(formData.url)) {
+        if (bannedUrl.banned_songs?.includes(passedUrl.href)) {
             alert("This URL is banned and cannot be added to the queue.");
             return;
         }
@@ -165,7 +165,7 @@ export default function AddSongForm({playlist}) {
         const { data: existing, error: existingError } = await supabase
             .from('queue')
             .select('id, title, author')
-            .eq('url', passedUrl)
+            .eq('url', passedUrl.href)
             .eq('playlist', playlist)
             .maybeSingle();
 
@@ -183,7 +183,7 @@ export default function AddSongForm({playlist}) {
 
         let title = '';
         let author = '';
-        const url = formData.url;
+        const url = passedUrl.href;
 
         if (url.includes("youtube")) {
             const videoId = extractVideoId(url);
@@ -207,9 +207,9 @@ export default function AddSongForm({playlist}) {
             }
         }
 
-        const {  error } = await supabase
+        const { error } = await supabase
             .from('queue')
-            .insert([{ title, author, url: passedUrl, user_id: user.id, playlist }]);
+            .insert([{ title, author, url: passedUrl.href, user_id: user.id, playlist }]);
 
         if (error) {
             alert('Error while adding the song: ' + error.message);
