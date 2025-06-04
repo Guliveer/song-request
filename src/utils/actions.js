@@ -567,19 +567,24 @@ export async function getPlaylistData(playlistId) {
             .select("playlists", { count: "exact" })
             .contains("playlists", [playlistId]);
 
-        if (errorById && errorByUrl) {
+        if (errorById && !errorByUrl) {
             console.error('Error fetching by ID:', errorById.message);
         }
 
-        if (errorByUrl && errorById) {
+        if (errorByUrl && !errorById) {
             console.error('Error fetching by URL:', errorByUrl.message);
         }
 
+        if ((errorByUrl && errorById) || countError) {
+            console.error('Unexpected error while fetching playlist data.');
+            return null;
+        }
+
         if (dataById) {
-            return {...dataById, userCount: count || 0};
+            return {...dataById, userCount: count || 0, method: 'id'};
         }
         if (dataByUrl) {
-            return {...dataByUrl, userCount: count || 0};
+            return {...dataByUrl, userCount: count || 0, method: 'url'};
         }
 
         return null;

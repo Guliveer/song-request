@@ -13,7 +13,7 @@ import {
     DialogActions,
     DialogContent,
     DialogContentText,
-    DialogTitle, ListItemIcon, ListItemText,
+    DialogTitle,
 } from "@mui/material";
 import Queue from "@/components/Queue";
 import AddSongForm from "@/components/AddSongForm";
@@ -56,12 +56,21 @@ export default function Playlist() {
         const fetchPlaylistData = async () => {
             try {
                 const data = await getPlaylistData(playlistId);
-                setPlaylistData(data);
 
-                if (currentUser) {
+                if (currentUser && data) {
                     const joinedPlaylists = await getJoinedPlaylists(currentUser.id);
-                    setHasJoined(joinedPlaylists.includes(data.id));
+                    const joinStatus = joinedPlaylists.includes(data?.id);
+                    setHasJoined(joinStatus);
+
+                    if (data.is_public === false && data.method === 'id' && !joinStatus) {
+                        console.warn("You cannot access this playlist right now.");
+                        setPlaylistData(null);
+                        setLoading(false);
+                        return;
+                    }
                 }
+
+                setPlaylistData(data);
             } catch (error) {
                 console.error('Unexpected error:', error);
                 setPlaylistData(null);
@@ -223,7 +232,7 @@ export default function Playlist() {
                         >
                             {(isHost || hasJoined) && (
                                 <MenuItem>
-                                    <Link href={`/playlists/${playlistId}/info`} passHref> {/* TODO */}
+                                    <Link href={`/playlist/${playlistId}/info`} passHref> {/* TODO */}
                                         <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>
                                             <PlaylistInfoIcon sx={{ marginRight: 1 }} />
                                             Playlist Info
@@ -234,7 +243,7 @@ export default function Playlist() {
 
                             {isHost && (
                                 <MenuItem>
-                                    <Link href={`/playlists/${playlistId}/manage`} passHref> {/* TODO */}
+                                    <Link href={`/playlist/${playlistId}/manage`} passHref> {/* TODO */}
                                         <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>
                                             <ManageIcon sx={{ marginRight: 1 }} />
                                             Manage Playlist
