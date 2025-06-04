@@ -18,6 +18,7 @@ import { useUser } from "@/context/UserContext";
 import { FormField } from "@/components/Items";
 import { extractVideoId, fetchYouTubeMetadata } from "@/utils/youtube";
 import {extractSpotifyTrackId, fetchSpotifyMetadata} from "@/utils/spotify";
+import { whitelistedUrls } from "@/utils/whitelistedUrls";
 import PropTypes from "prop-types";
 
 export default function AddSongForm({playlist}) {
@@ -33,7 +34,6 @@ export default function AddSongForm({playlist}) {
     const [fabBottom, setFabBottom] = useState(24); // default MUI
     const fabRef = useRef();
 
-    // FAB "przykleja się" do rogu, a jak footer wchodzi w dolny obszar, zatrzymuje się nad nim
     useEffect(() => {
         function updateFab() {
             const footer = document.getElementById('site-footer');
@@ -41,13 +41,12 @@ export default function AddSongForm({playlist}) {
             if (!footer || !fab) return;
 
             const idealBottom = 24; // MUI default
-            const fabHeight = fab.offsetHeight || 56; // fallback for default size
 
-            // Footer pozycja względem viewport
+            // Footer relative to viewport
             const footerRect = footer.getBoundingClientRect();
             const windowHeight = window.innerHeight;
 
-            // Gdy footer "wchodzi" w dolny margines (FAB zachodziłby na footer), to...
+            // If footer is not visible, position FAB at ideal bottom
             let newFabBottom = idealBottom;
             if (footerRect.top < windowHeight - idealBottom) {
                 // Odległość od dołu okna do górnej krawędzi footer
@@ -93,6 +92,14 @@ export default function AddSongForm({playlist}) {
     };
 
     const handleSubmit = async (event) => {
+        let passedUrl;
+        try {
+            passedUrl = new URL(formData.url);
+        } catch (error) {
+            console.error("Invalid URL provided:", error.message);
+            return;
+        }
+
         event.preventDefault();
         if (!user) {
             console.error("You must be logged in to add a song.");
@@ -123,6 +130,24 @@ export default function AddSongForm({playlist}) {
             return;
         }
 
+        // Remove excessive GET data (except for YouTube's: ?v=)
+        passedUrl.searchParams.forEach((_, key) => {
+            if (key !== 'v') {
+                passedUrl.searchParams.delete(key);
+            }
+        })
+
+        // Validate URL based on whitelisted URLs,
+        // if formData.url doesn't start with (optional)
+        // http(s)://(www.) and then one of the whitelisted URLs,
+        // after which there are only alphanumeric characters, hyphens, or underscores
+        const urlPattern = new RegExp(`^(https?://)?(www\\.)?((${whitelistedUrls.join(')|(')}))[a-zA-Z0-9-_]+\\??$`);
+        if (!urlPattern.test(passedUrl.href)) {
+            alert("Invalid URL. Please enter a valid YouTube or Spotify link.");
+            alert(passedUrl.href);
+            return;
+        }
+
         // Check if URL is banned
         const { data: bannedUrl } = await supabase
             .from('playlists')
@@ -131,7 +156,7 @@ export default function AddSongForm({playlist}) {
             .maybeSingle();
 
         // Check if the provided URL is in the returned array (bannedUrl -> banned_songs[])
-        if (bannedUrl.banned_songs.includes(formData.url)) {
+        if (bannedUrl.banned_songs?.includes(passedUrl.href)) {
             alert("This URL is banned and cannot be added to the queue.");
             return;
         }
@@ -140,7 +165,7 @@ export default function AddSongForm({playlist}) {
         const { data: existing, error: existingError } = await supabase
             .from('queue')
             .select('id, title, author')
-            .eq('url', formData.url)
+            .eq('url', passedUrl.href)
             .eq('playlist', playlist)
             .maybeSingle();
 
@@ -158,7 +183,7 @@ export default function AddSongForm({playlist}) {
 
         let title = '';
         let author = '';
-        const url = formData.url;
+        const url = passedUrl.href;
 
         if (url.includes("youtube")) {
             const videoId = extractVideoId(url);
@@ -182,9 +207,9 @@ export default function AddSongForm({playlist}) {
             }
         }
 
-        const { data, error } = await supabase
+        const { error } = await supabase
             .from('queue')
-            .insert([{ title, author, url, user_id: user.id, playlist }]);
+            .insert([{ title, author, url: passedUrl.href, user_id: user.id, playlist }]);
 
         if (error) {
             alert('Error while adding the song: ' + error.message);

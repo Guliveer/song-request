@@ -1,7 +1,7 @@
 export function extractSpotifyTrackId(url) {
-    const regex = /spotify\.com\/track\/([a-zA-Z0-9]+)(\?|$)/;
-    const match = url.match(regex);
-    return match ? match[1] : null;
+    // Regex to match Spotify track URLs
+    const regex = new RegExp(`^https?://(open\\.spotify\\.com/track/|spotify\\.link/)([a-zA-Z0-9]+)`);
+    return url.match(regex)?.[2] || null;
 }
 
 export async function fetchSpotifyMetadata(trackId) {
