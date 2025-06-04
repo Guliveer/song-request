@@ -92,7 +92,13 @@ export default function AddSongForm({playlist}) {
     };
 
     const handleSubmit = async (event) => {
-        const passedUrl = new URL(formData.url);
+        let passedUrl;
+        try {
+            passedUrl = new URL(formData.url);
+        } catch (error) {
+            console.error("Invalid URL provided:", error.message);
+            return;
+        }
 
         event.preventDefault();
         if (!user) {
