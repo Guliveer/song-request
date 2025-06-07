@@ -4,64 +4,134 @@ export const themeOptions = {
     palette: {
         mode: 'dark',
         primary: {
-            main: '#87e5dd',       // Cyan
-            contrastText: '#181c2a',
+            main: '#87e5dd',
+            contrastText: '#0a0e1a',
         },
         secondary: {
-            main: '#a171f8',       // Violet
-            contrastText: '#181c2a',
+            main: '#a171f8',
+            contrastText: '#0a0e1a',
         },
         background: {
-            default: '#181c2a',    // Spotify/MUI dark
-            paper: '#20243a',      // Slightly lighter for cards
+            default: '#0a0e1a',
+            paper: '#1a1f2e',
         },
-        divider: '#3ee2ff',
+        divider: 'rgba(135, 229, 221, 0.2)',
         text: {
-            primary: '#e2f2fa',
-            secondary: 'rgba(226,242,250,0.65)',
-            disabled: 'rgba(226,242,250,0.38)',
-            hint: '#a171f8'
+            primary: '#ffffff',
+            secondary: 'rgba(255, 255, 255, 0.7)',
+            disabled: 'rgba(255, 255, 255, 0.38)',
+        },
+        warning: {
+            main: '#ff9800'
+        },
+        error: {
+            main: '#f44336'
         }
     },
-    spacing: 8, // 8pt grid
-    // USUWAMY shape.borderRadius – zostawiamy jak w oryginale (czyli domyślnie 4)
+    spacing: 8,
     typography: {
         fontFamily: [
-            'Noto Sans', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'
+            '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', '"Roboto"',
+            '"Oxygen"', '"Ubuntu"', '"Cantarell"', '"Fira Sans"', '"Droid Sans"',
+            '"Helvetica Neue"', 'sans-serif'
         ].join(','),
-        h6: {
+        h1: {
+            fontWeight: 900,
+            fontSize: '4rem',
+            lineHeight: 1,
+            letterSpacing: '-0.04em',
+        },
+        h2: {
+            fontWeight: 800,
+            fontSize: '3rem',
+        },
+        h3: {
+            fontWeight: 800,
+            fontSize: '2.5rem',
+        },
+        h4: {
             fontWeight: 700,
-            fontSize: '1.2rem',
-            letterSpacing: '0.01em',
+            fontSize: '2rem',
+        },
+        h5: {
+            fontWeight: 600,
+            fontSize: '1.5rem',
+        },
+        h6: {
+            fontWeight: 600,
+            fontSize: '1.25rem',
         },
         body1: {
-            fontWeight: 400,
             fontSize: '1rem',
+            lineHeight: 1.6,
         },
         body2: {
-            fontSize: '0.95rem',
-            color: '#c3d0e0'
+            fontSize: '0.875rem',
+            lineHeight: 1.5,
         },
         button: {
             textTransform: 'none',
-            fontWeight: 600,
+            fontWeight: 700,
         }
     },
     components: {
         MuiCard: {
             styleOverrides: {
                 root: {
-                    background: '#20243a',
-                    // NIE RUSZAMY borderRadius (nie nadpisujemy, zostanie domyślny z MUI)
-                    boxShadow: '0 2px 16px 0 rgba(0,0,0,0.12)',
-                    border: '1px solid #282c40'
+                    backgroundImage: 'none',
+                    background: 'rgba(26, 31, 46, 0.8)',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(135, 229, 221, 0.2)',
+                    borderRadius: 16,
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                        borderColor: 'rgba(135, 229, 221, 0.4)',
+                        transform: 'translateY(-4px)',
+                        boxShadow: '0 20px 40px rgba(135, 229, 221, 0.15)',
+                    }
                 }
             }
         },
-        MuiDivider: {
+        MuiButton: {
             styleOverrides: {
                 root: {
-                    borderColor: '#3ee2ff22'
+                    textTransform: 'none',
+                    borderRadius: 12,
+                    fontWeight: 700,
+                    transition: 'all 0.3s ease',
+                },
+                contained: {
+                    boxShadow: '0 4px 24px rgba(135, 229, 221, 0.3)',
+                    '&:hover': {
+                        transform: 'translateY(-2px)',
+                        boxShadow: '0 8px 32px rgba(135, 229, 221, 0.4)',
+                    }
+                },
+                outlined: {
+                    borderWidth: 2,
+                    '&:hover': {
+                        borderWidth: 2,
+                        transform: 'translateY(-1px)',
+                    }
+                }
+            }
+        },
+        MuiPaper: {
+            styleOverrides: {
+                root: {
+                    backgroundImage: 'none',
+                    background: 'rgba(26, 31, 46, 0.8)',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(135, 229, 221, 0.1)',
+                }
+            }
+        },
+        MuiAppBar: {
+            styleOverrides: {
+                root: {
+                    background: 'rgba(10, 14, 26, 0.95)',
+                    backdropFilter: 'blur(20px)',
+                    borderBottom: '1px solid rgba(135, 229, 221, 0.1)',
                 }
             }
         }
