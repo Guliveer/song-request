@@ -36,6 +36,15 @@ export default function Account() {
     const [tempColor, setTempColor] = useState("");
     const [tempEmoji, setTempEmoji] = useState(null);
 
+    //zmiana hasla
+    const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+    const [newPassword, setNewPassword] = useState("");
+    const [repeatPassword, setRepeatPassword] = useState("");
+    const [passwordError, setPasswordError] = useState("");
+    const [passwordSuccess, setPasswordSuccess] = useState("");
+
+
+
     // Nowe: stan na oczekujące zmiany
     const [pendingChanges, setPendingChanges] = useState({
         username: null,
@@ -144,6 +153,60 @@ export default function Account() {
             throw new Error("Failed to save changes: " + error.message);
         }
     };
+    // Obsługa zmiany hasła
+    const handleChangePassword = async () => {
+        setPasswordError("");
+        setPasswordSuccess("");
+
+        if (!newPassword || !repeatPassword) {
+            setPasswordError("Please fill in both password fields.");
+            return;
+        }
+        if (newPassword !== repeatPassword) {
+            setPasswordError("Passwords do not match.");
+            return;
+        }
+        if (newPassword.length < 8) {
+            setPasswordError("The password must be at least 8 characters long.");
+            return;
+        }
+
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+            setPasswordError("You are not logged in. Please log in again.");
+            return;
+        }
+
+        const { error } = await supabase.auth.updateUser({ password: newPassword });
+        if (error) {
+            if (
+                error.message &&
+                error.message.includes(
+                    "Password should contain at least one character of each"
+                )
+            ) {
+                setPasswordError(
+                    "The password must contain at least one lowercase letter, one uppercase letter, and one digit."
+                );
+            } else {
+                setPasswordError("An error occurred while changing your password. Please try again, or make sure you are not using your current password.");
+            }
+        } else {
+            setPasswordSuccess("Your password has been changed successfully.");
+            setNewPassword("");
+            setRepeatPassword("");
+            setTimeout(handleClosePasswordDialog, 1500);
+        }
+    };
+
+    const handleClosePasswordDialog = () => {
+        setShowPasswordDialog(false);
+        setNewPassword("");
+        setRepeatPassword("");
+        setPasswordError("");
+        setPasswordSuccess("");
+    };
+
 
     return (
         <>
@@ -533,6 +596,48 @@ export default function Account() {
                     </Button>
                 </DialogActions>
             </Dialog>
+            <Button
+                variant="outlined"
+                sx={{ color: '#8FE6D5', mt: 2 }}
+                onClick={() => setShowPasswordDialog(true)}
+            >
+                Change password
+            </Button>
+            <Dialog open={showPasswordDialog} onClose={handleClosePasswordDialog} fullWidth maxWidth="sm">
+                <DialogTitle>Change password</DialogTitle>
+                <DialogContent>
+                    <TextField
+                        label="New password"
+                        type="password"
+                        fullWidth
+                        value={newPassword}
+                        onChange={e => setNewPassword(e.target.value)}
+                        sx={{ mt: 2 }}
+                    />
+                    <TextField
+                        label="Repeat new password"
+                        type="password"
+                        fullWidth
+                        value={repeatPassword}
+                        onChange={e => setRepeatPassword(e.target.value)}
+                        sx={{ mt: 2 }}
+                    />
+                    {passwordError && (
+                        <Typography color="error" sx={{ mt: 1 }}>{passwordError}</Typography>
+                    )}
+                    {passwordSuccess && (
+                        <Typography color="success.main" sx={{ mt: 1 }}>{passwordSuccess}</Typography>
+                    )}
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleClosePasswordDialog}>Cancel</Button>
+                    <Button onClick={handleChangePassword} variant="contained">Change password</Button>
+                </DialogActions>
+            </Dialog>
+
+
+
+
         </>
     );
 }
