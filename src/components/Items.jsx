@@ -90,14 +90,14 @@ WarningAlert.propTypes = {
     children: PropTypes.node
 };
 
-export function AuthProvider({ providerName, displayName, icon, prompt = '' }) {
+export function AuthProviderButton({ providerName, displayName, icon, prompt = '' }) {
     const [isPressed, setIsPressed] = React.useState(false);
     async function handleProviderLogin() {
         setIsPressed(true);
         const { error } = await supabase.auth.signInWithOAuth({
             provider: providerName,
             options: {
-                redirectTo: process.env.NEXT_PUBLIC_REDIRECT_URL,
+                redirectTo: process.env.NEXT_PUBLIC_REDIRECT_URL || window.location.origin,
             },
         });
         if (error) {
@@ -123,7 +123,7 @@ export function AuthProvider({ providerName, displayName, icon, prompt = '' }) {
     );
 }
 
-AuthProvider.propTypes = {
+AuthProviderButton.propTypes = {
     providerName: PropTypes.string.isRequired,
     displayName: PropTypes.string.isRequired,
     icon: PropTypes.element.isRequired,
