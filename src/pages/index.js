@@ -1,17 +1,16 @@
 import React from "react"
 import {Container, Typography, Button, Grid, Box, Avatar, Stack, Card, CardContent} from "@mui/material"
-import HowToVoteIcon from "@mui/icons-material/HowToVote"
-import GroupAddIcon from "@mui/icons-material/GroupAdd"
-import PlaylistAddCheckIcon from "@mui/icons-material/PlaylistAddCheck"
-import EmojiEventsIcon from "@mui/icons-material/EmojiEvents"
-import PeopleAltIcon from "@mui/icons-material/PeopleAlt"
-import Layout from "@/components/Layout"
+import HowToVoteIcon from "@mui/icons-material/HowToVoteRounded"
+import GroupAddIcon from "@mui/icons-material/GroupAddRounded"
+import PlaylistAddCheckIcon from "@mui/icons-material/PlaylistAddCheckRounded"
+import EmojiEventsIcon from "@mui/icons-material/EmojiEventsRounded"
+import PeopleAltIcon from "@mui/icons-material/PeopleRounded"
 import AnimatedBackground from "@/components/AnimatedBackground"
 import FadeInSection from "@/components/FadeInSection"
 
 export default function Home() {
     return (
-        <Layout>
+        <>
             <AnimatedBackground/>
             <Box sx={{minHeight: "100vh", position: "relative", zIndex: 1}}>
                 {/* HERO */}
@@ -216,6 +215,6 @@ export default function Home() {
                     </Container>
                 </FadeInSection>
             </Box>
-        </Layout>
+        </>
     )
 }

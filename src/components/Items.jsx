@@ -97,7 +97,7 @@ export function AuthProvider({ providerName, displayName, icon, prompt = '' }) {
         const { error } = await supabase.auth.signInWithOAuth({
             provider: providerName,
             options: {
-                // redirectTo: process.env.NEXT_PUBLIC_REDIRECT_URL,
+                redirectTo: process.env.NEXT_PUBLIC_REDIRECT_URL,
             },
         });
         if (error) {
