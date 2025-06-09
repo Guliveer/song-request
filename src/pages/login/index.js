@@ -167,7 +167,7 @@ export default function Login() {
                     </Button>
 
                     <Typography variant="body2" align="right" sx={{ mt: 1 }}>
-                        <Link href="#" onClick={() => setShowForgotPassword(true)}>
+                        <Link href="#" onClick={(e) => { e.preventDefault(); setShowForgotPassword(true); }}>
                             Forgot password?
                         </Link>
                     </Typography>
