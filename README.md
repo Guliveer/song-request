@@ -15,7 +15,7 @@
 - Simple interface for submitting and browsing songs
 - Voting system for requests
 - Admin panel for queue management
-- Responsive design (MUI)
+- Responsive design
 
 This project is a semester assignment at university and is an expansion of a personal project.
 The original version was built in PHP, followed by an attempt to migrate it to SvelteKit.
