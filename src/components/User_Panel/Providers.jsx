@@ -11,17 +11,17 @@ import {
     IconButton,
     CircularProgress
 } from "@mui/material";
-import EmailIcon from '@mui/icons-material/Email';
-import GoogleIcon from '@mui/icons-material/Google';
-import FacebookIcon from '@mui/icons-material/Facebook';
-import GitHubIcon from '@mui/icons-material/GitHub';
-import LinkOffIcon from '@mui/icons-material/LinkOff';
-import VerifiedIcon from '@mui/icons-material/Verified';
-import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
-import LinkRoundedIcon from '@mui/icons-material/LinkRounded';
-import { Spotify } from '@/components/AuthProvidersList';
-
-
+import {
+    Email as EmailIcon,
+    Google as GoogleIcon,
+    FacebookRounded as FacebookIcon,
+    GitHub as GitHubIcon,
+    LinkOff as LinkOffIcon,
+    Verified as VerifiedIcon,
+    ErrorOutlineRounded as ErrorOutlineIcon,
+    LinkRounded as LinkRoundedIcon,
+}from '@mui/icons-material';
+import { authProviders, Spotify } from '@/utils/authProviders';
 
 export default function Providers() {
     const [identities, setIdentities] = useState([]);
@@ -30,11 +30,11 @@ export default function Providers() {
     const [loadingProvider, setLoadingProvider] = useState(null);
 
     const providerIcons = {
-        email: <EmailIcon fontSize="medium" sx={{ mr: 2, color: '#8FE6D5' }} />,
-        google: <GoogleIcon fontSize="medium" sx={{ mr: 2, color: '#8FE6D5' }} />,
-        facebook: <FacebookIcon fontSize="medium" sx={{ mr: 2, color: '#8FE6D5' }} />,
-        github: <GitHubIcon fontSize="medium" sx={{ mr: 2, color: '#8FE6D5' }} />,
-            spotify: <Box sx={{ mr: 2, color: '#8FE6D5'}}><Spotify /></Box>,
+        email: <EmailIcon sx={{color: '#8FE6D5' }} />,
+        google: <GoogleIcon sx={{color: '#8FE6D5' }} />,
+        facebook: <FacebookIcon sx={{color: '#8FE6D5' }} />,
+        github: <GitHubIcon sx={{color: '#8FE6D5' }} />,
+        spotify: <Spotify color='#8FE6D5' size={26} />,
     };
 
     const allProviders = Object.keys(providerIcons);
@@ -54,12 +54,16 @@ export default function Providers() {
     const handleConnectProvider = async (provider) => {
         setLoadingProvider(provider);
         try {
-            const { error } = await supabase.auth.linkIdentity({ provider });
+            const { error } = await supabase.auth.linkIdentity({
+                provider: provider,
+                options: {
+                    redirectTo: window.location.origin,
+                }
+            });
             if (error) throw error;
         } catch (error) {
             console.error("Connection error:", error);
-            setErrorMessage(`Error connecting ${provider}: ${error.message}`);
-            setSnackbarOpen(true);
+            throw new Error(`Failed to connect ${provider}: ${error.message}`);
         }
         setLoadingProvider(null);
     };
@@ -89,14 +93,11 @@ export default function Providers() {
                                 }}
                             >
                                 {providerIcons[provider]}
-                                <Box sx={{ flex: 1 }}>
+                                <Box sx={{ flex: 1, ml: 1 }}>
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                         <Typography variant="body1" sx={{ color: 'white', fontWeight: 500, textTransform: 'capitalize' }}>
                                             {provider}
                                         </Typography>
-                                        {isConnected && (
-                                            <VerifiedIcon fontSize="small" sx={{ color: '#4caf50' }} />
-                                        )}
                                         {isEmail && isConnected && !isEmailVerified && (
                                             <ErrorOutlineIcon fontSize="small" sx={{ color: '#ff9800' }} />
                                         )}

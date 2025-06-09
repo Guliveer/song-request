@@ -6,8 +6,8 @@ import '@/styles/globals.css';
 import NavMenu from '@/components/NavMenu';
 import Footer from '@/components/Footer';
 import PropTypes from "prop-types";
-import {useRouter} from "next/router";
 import Box from "@mui/material/Box";
+import React from "react";
 
 export default function App({Component, pageProps}) {
     const router = useRouter();
@@ -21,11 +21,10 @@ export default function App({Component, pageProps}) {
                         minHeight: "100vh",
                         display: "flex",
                         flexDirection: "column",
-                        maxWidth: "100vw",
+                        maxWidth: "100vw", // limit page width to viewport width
                     }}
                 >
-                    {/* Tylko na stronie reset-password nie pokazuj NavMenu */}
-                    {router.pathname !== "/reset-password" && <NavMenu/>}
+                    <NavMenu/>
                     <Component {...pageProps} />
                     <Footer/>
                 </Box>

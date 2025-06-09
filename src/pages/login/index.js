@@ -90,7 +90,7 @@ export default function Login() {
             return;
         }
 
-        window.location.href = '/'; // redirect & reload the webapp
+        window.location.href = '/'; // redirect and reload the webapp
     }
 
     function handleCaptchaChange(token) {
