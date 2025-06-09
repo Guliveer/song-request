@@ -21,7 +21,7 @@ import {extractSpotifyTrackId, fetchSpotifyMetadata} from "@/utils/spotify";
 import { whitelistedUrls } from "@/utils/whitelistedUrls";
 import PropTypes from "prop-types";
 
-export default function AddSongForm({playlist}) {
+export default function AddSongForm({ playlist }) {
     const theme = useTheme();
     const router = useRouter();
     const { isLoggedIn } = useUser();

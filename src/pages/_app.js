@@ -5,10 +5,9 @@ import theme from '@/styles/theme';
 import '@/styles/globals.css';
 import NavMenu from '@/components/NavMenu';
 import Footer from '@/components/Footer';
-import AddSongForm from '@/components/AddSongForm';
 import PropTypes from "prop-types";
-import {useRouter} from "next/router";
 import Box from "@mui/material/Box";
+import React from "react";
 
 export default function App({Component, pageProps}) {
     return (
@@ -16,16 +15,16 @@ export default function App({Component, pageProps}) {
             <UserProvider>
                 <CssBaseline/>
                 <Box
-                  sx={{
-                    minHeight: "100vh",
-                    display: "flex",
-                    flexDirection: "column",
-                    maxWidth: "100vw", // limit page width to viewport width
-                  }}
+                    sx={{
+                        minHeight: "100vh",
+                        display: "flex",
+                        flexDirection: "column",
+                        maxWidth: "100vw", // limit page width to viewport width
+                    }}
                 >
-                  <NavMenu/>
-                  <Component {...pageProps} />
-                  <Footer/>
+                    <NavMenu/>
+                    <Component {...pageProps} />
+                    <Footer/>
                 </Box>
             </UserProvider>
         </ThemeProvider>
