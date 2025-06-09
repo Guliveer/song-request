@@ -507,6 +507,70 @@ removeSong.propTypes = {
     songId: PropTypes.number.isRequired
 }
 
+export async function banSong(playlistId, songUrl) {
+    try {
+        const { data: playlist, error: playlistError } = await supabase
+            .from('playlists')
+            .select('banned_songs')
+            .eq('id', playlistId)
+            .single();
+
+        if (playlistError) throw playlistError;
+
+        const bannedSongs = playlist.banned_songs || [];
+        if (!bannedSongs.includes(songUrl)) {
+            bannedSongs.push(songUrl);
+        }
+
+        const { error: updateError } = await supabase
+            .from('playlists')
+            .update({ banned_songs: bannedSongs })
+            .eq('id', playlistId);
+
+        if (updateError) throw updateError;
+
+        return true;
+    } catch (error) {
+        console.error('Error banning song:', error.message);
+        return false;
+    }
+}
+banSong.propTypes = {
+    playlistId: PropTypes.number.isRequired,
+    songUrl: PropTypes.string.isRequired
+}
+
+export async function unbanSong(playlistId, songUrl) {
+    try {
+        const { data: playlist, error: playlistError } = await supabase
+            .from('playlists')
+            .select('banned_songs')
+            .eq('id', playlistId)
+            .single();
+
+        if (playlistError) throw playlistError;
+
+        const bannedSongs = playlist.banned_songs || [];
+        const updatedBannedSongs = bannedSongs.filter(url => url !== songUrl);
+
+        const { error: updateError } = await supabase
+            .from('playlists')
+            .update({ banned_songs: updatedBannedSongs })
+            .eq('id', playlistId);
+
+        if (updateError) throw updateError;
+
+        return true;
+    } catch (error) {
+        console.error('Error unbanning song:', error.message);
+        return false;
+    }
+}
+unbanSong.propTypes = {
+    playlistId: PropTypes.number.isRequired,
+    songUrl: PropTypes.string.isRequired
+}
+
 export async function removeVotes(userId) {
     try {
         const { error } = await supabase
@@ -524,6 +588,66 @@ export async function removeVotes(userId) {
 }
 removeVotes.propTypes = {
     userId: PropTypes.string.isRequired
+}
+
+export async function banPlaylistUser(playlistId, userId) {
+    try {
+        const { data: playlist, error } = await supabase
+            .from('playlists')
+            .select('banned_users')
+            .eq('id', playlistId)
+            .single();
+
+        if (error) throw error;
+
+        const bannedUsers = playlist.banned_users || [];
+        if (!bannedUsers.includes(userId)) {
+            bannedUsers.push(userId);
+        }
+        const { error: updateError } = await supabase
+            .from('playlists')
+            .update({ banned_users: bannedUsers })
+            .eq('id', playlistId);
+
+    } catch (error) {
+        console.error('Error banning user from playlist:', error.message);
+        return false;
+    }
+}
+banPlaylistUser.propTypes = {
+    userId: PropTypes.string.isRequired,
+    playlistId: PropTypes.number.isRequired
+}
+
+export async function unbanPlaylistUser(playlistId, userId) {
+    try {
+        const { data: playlist, error } = await supabase
+            .from('playlists')
+            .select('banned_users')
+            .eq('id', playlistId)
+            .single();
+
+        if (error) throw error;
+
+        const bannedUsers = playlist.banned_users || [];
+        const updatedBannedUsers = bannedUsers.filter(id => id !== userId);
+
+        const { error: updateError } = await supabase
+            .from('playlists')
+            .update({ banned_users: updatedBannedUsers })
+            .eq('id', playlistId);
+
+        if (updateError) throw updateError;
+
+        return true;
+    } catch (error) {
+        console.error('Error unbanning user from playlist:', error.message);
+        return false;
+    }
+}
+unbanPlaylistUser.propTypes = {
+    userId: PropTypes.string.isRequired,
+    playlistId: PropTypes.number.isRequired
 }
 
 export async function hardBanUser(userId, banDuration = '99999h') {
@@ -561,11 +685,19 @@ export async function getPlaylistData(playlistId) {
             .eq('url', playlistId)
             .single();
 
+        const targetPlaylist = dataById?.id || dataByUrl?.id;
+
         // Fetch the count of users who joined the playlist
-        const { count, error: countError } = await supabase
+        const { count: userCount, error: userCountError } = await supabase
             .from("users")
             .select("playlists", { count: "exact" })
-            .contains("playlists", [playlistId]);
+            .contains("playlists", [targetPlaylist]);
+
+        // Fetch the count of songs in the playlist
+        const { count: songCount, error: songCountError } = await supabase
+            .from("queue")
+            .select("id", { count: "exact" })
+            .eq("playlist", targetPlaylist);
 
         if (errorById && !errorByUrl) {
             console.error('Error fetching by ID:', errorById.message);
@@ -575,16 +707,26 @@ export async function getPlaylistData(playlistId) {
             console.error('Error fetching by URL:', errorByUrl.message);
         }
 
-        if ((errorByUrl && errorById) || countError) {
+        if ((errorByUrl && errorById) || userCountError) {
             console.error('Unexpected error while fetching playlist data.');
             return null;
         }
 
         if (dataById) {
-            return {...dataById, userCount: count || 0, method: 'id'};
+            return {
+                ...dataById,
+                userCount: userCount || 0,
+                songCount: songCount || 0,
+                method: 'id'
+            };
         }
         if (dataByUrl) {
-            return {...dataByUrl, userCount: count || 0, method: 'url'};
+            return {
+                ...dataByUrl,
+                userCount: userCount || 0,
+                songCount: songCount || 0,
+                method: 'url'
+            };
         }
 
         return null;
@@ -595,6 +737,38 @@ export async function getPlaylistData(playlistId) {
 }
 getPlaylistData.propTypes = {
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired
+}
+
+export async function isPlaylistHost(playlistId, userId) {
+    let targetUser = userId;
+
+    if (!userId) {
+        const currentUser = await getCurrentUser();
+        if (!currentUser) {
+            console.warn("No user is currently logged in.");
+            return false;
+        }
+        targetUser = currentUser.id;
+    }
+
+    try {
+        const { data: playlist, error } = await supabase
+            .from('playlists')
+            .select('host')
+            .eq('id', playlistId)
+            .single();
+
+        if (error) throw error;
+
+        return playlist.host === targetUser;
+    } catch (error) {
+        console.error('Error checking if user is playlist host:', error.message);
+        return false;
+    }
+}
+isPlaylistHost.propTypes = {
+    playlistId: PropTypes.number.isRequired,
+    userId: PropTypes.string
 }
 
 export async function createPlaylist(name, description, url) {
@@ -672,15 +846,351 @@ export async function getJoinedPlaylists(userId) {
         throw  new Error('Failed to get joined playlists:');
     }
 }
-
 getJoinedPlaylists.propTypes = {
     userId: PropTypes.string.isRequired
 }
 
-export async function leavePlaylist(userId, playlistId) {
-    if (!userId || !playlistId) {
-        console.warn("Invalid user or playlist data.");
-        throw new Error("Invalid user or playlist data.");
+export async function setPlaylistName(playlistId, newName) {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+        console.warn("No user is currently logged in.");
+        throw new Error("No user is currently logged in.");
+    }
+
+    try {
+        // Check if the current user is the host of the playlist
+        const { data: playlist, error: playlistError } = await supabase
+            .from('playlists')
+            .select('host')
+            .eq('id', playlistId)
+            .single();
+
+        if (playlistError || !playlist) {
+            console.error("Error fetching playlist:", playlistError.message);
+            throw new Error("Failed to fetch playlist.");
+        }
+
+        if (playlist.host !== currentUser.id) {
+            console.warn("User is not the host of this playlist.");
+            throw new Error("You are not the host of this playlist.");
+        }
+
+        // Update the playlist name
+        const { error: updateError } = await supabase
+            .from('playlists')
+            .update({ name: newName })
+            .eq('id', playlistId);
+
+        if (updateError) {
+            console.error("Error updating playlist name:", updateError.message);
+            throw new Error("Failed to update playlist name: " + updateError.message);
+        }
+
+        return true;
+    } catch (error) {
+        console.error("Unexpected error:", error.message);
+        throw error;
+    }
+}
+setPlaylistName.propTypes = {
+    playlistId: PropTypes.number.isRequired,
+    newName: PropTypes.string.isRequired
+}
+
+export async function setPlaylistVisibility(playlistId, isPublic) {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+        console.warn("No user is currently logged in.");
+        throw new Error("No user is currently logged in.");
+    }
+
+    try {
+        // Check if the current user is the host of the playlist
+        const { data: playlist, error: playlistError } = await supabase
+            .from('playlists')
+            .select('host')
+            .eq('id', playlistId)
+            .single();
+
+        if (playlistError || !playlist) {
+            console.error("Error fetching playlist:", playlistError.message);
+            throw new Error("Failed to fetch playlist.");
+        }
+
+        if (playlist.host !== currentUser.id) {
+            console.warn("User is not the host of this playlist.");
+            throw new Error("You are not the host of this playlist.");
+        }
+
+        // Update the playlist visibility
+        const { error: updateError } = await supabase
+            .from('playlists')
+            .update({ is_public: isPublic })
+            .eq('id', playlistId);
+
+        if (updateError) {
+            console.error("Error updating playlist visibility:", updateError.message);
+            throw new Error("Failed to update playlist visibility: " + updateError.message);
+        }
+
+        return true;
+    } catch (error) {
+        console.error("Unexpected error:", error.message);
+        throw error;
+    }
+}
+setPlaylistVisibility.propTypes = {
+    playlistId: PropTypes.number.isRequired,
+    isPublic: PropTypes.bool.isRequired
+}
+
+export async function setPlaylistDescription(playlistId, description) {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+        console.warn("No user is currently logged in.");
+        throw new Error("No user is currently logged in.");
+    }
+
+    try {
+        // Check if the current user is the host of the playlist
+        const { data: playlist, error: playlistError } = await supabase
+            .from('playlists')
+            .select('host')
+            .eq('id', playlistId)
+            .single();
+
+        if (playlistError || !playlist) {
+            console.error("Error fetching playlist:", playlistError.message);
+            throw new Error("Failed to fetch playlist.");
+        }
+
+        if (playlist.host !== currentUser.id) {
+            console.warn("User is not the host of this playlist.");
+            throw new Error("You are not the host of this playlist.");
+        }
+
+        // Update the playlist description
+        const { error: updateError } = await supabase
+            .from('playlists')
+            .update({ description })
+            .eq('id', playlistId);
+
+        if (updateError) {
+            console.error("Error updating playlist description:", updateError.message);
+            throw new Error("Failed to update playlist description: " + updateError.message);
+        }
+
+        return true;
+    } catch (error) {
+        console.error("Unexpected error:", error.message);
+        throw error;
+    }
+}
+setPlaylistDescription.propTypes = {
+    playlistId: PropTypes.number.isRequired,
+    description: PropTypes.string.isRequired
+}
+
+export async function setPlaylistUrl(playlistId, url) {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+        console.warn("No user is currently logged in.");
+        throw new Error("No user is currently logged in.");
+    }
+
+    try {
+        // Check if the current user is the host of the playlist
+        const { data: playlist, error: playlistError } = await supabase
+            .from('playlists')
+            .select('host')
+            .eq('id', playlistId)
+            .single();
+
+        if (playlistError || !playlist) {
+            console.error("Error fetching playlist:", playlistError.message);
+            throw new Error("Failed to fetch playlist.");
+        }
+
+        if (playlist.host !== currentUser.id) {
+            console.warn("User is not the host of this playlist.");
+            throw new Error("You are not the host of this playlist.");
+        }
+
+        // Validate the URL format
+        if (!/^[a-zA-Z0-9-]+$/.test(url)) {
+            console.error('Invalid URL format. Only letters, numbers, and dashes are allowed.');
+            throw new Error('Invalid URL format. Only letters, numbers, and dashes are allowed.');
+        }
+
+        // Update the playlist URL
+        const { error: updateError } = await supabase
+            .from('playlists')
+            .update({ url })
+            .eq('id', playlistId);
+
+        if (updateError) {
+            console.error("Error updating playlist URL:", updateError.message);
+            throw new Error("Failed to update playlist URL: " + updateError.message);
+        }
+
+        return true;
+    } catch (error) {
+        console.error("Unexpected error:", error.message);
+        throw error;
+    }
+}
+setPlaylistUrl.propTypes = {
+    playlistId: PropTypes.number.isRequired,
+    url: PropTypes.string.isRequired
+}
+
+export async function getPlaylistModerators(playlistId) {
+    try {
+        const { data: playlist, error: playlistError } = await supabase
+            .from('playlists')
+            .select('moderators')
+            .eq('id', playlistId)
+            .single();
+
+        if (playlistError) throw playlistError;
+
+        const moderatorIds = playlist.moderators || [];
+        if (moderatorIds.length === 0) return {};
+
+        const { data: users, error: usersError } = await supabase
+            .from('users')
+            .select('id, username')
+            .in('id', moderatorIds);
+
+        if (usersError) throw usersError;
+
+        return users.reduce((acc, user) => {
+            acc[user.id] = user.username;
+            return acc;
+        }, {});
+    } catch (error) {
+        console.error('Error fetching playlist moderators:', error.message);
+        throw new Error('Failed to get playlist moderators: ' + error.message);
+    }
+}
+getPlaylistModerators.propTypes = {
+    playlistId: PropTypes.number.isRequired
+}
+
+export async function addPlaylistModerator(playlistId, userId) {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+        console.warn("No user is currently logged in.");
+        throw new Error("No user is currently logged in.");
+    }
+
+    try {
+        // Check if the current user is the host of the playlist
+        const { data: playlist, error: playlistError } = await supabase
+            .from('playlists')
+            .select('host')
+            .eq('id', playlistId)
+            .single();
+
+        if (playlistError) {
+            console.error("Error fetching playlist:", playlistError.message);
+            throw new Error("Failed to fetch playlist.");
+        }
+
+        if (playlist.host !== currentUser.id) {
+            console.warn("User is not the host of this playlist.");
+            throw new Error("You are not the host of this playlist.");
+        }
+
+        // Add the user to the moderators list
+        const { data: updatedPlaylist, error: updateError } = await supabase
+            .from('playlists')
+            .update({ moderators: [...(playlist.moderators || []), userId] })
+            .eq('id', playlistId)
+            .select()
+            .single();
+
+        if (updateError) {
+            console.error("Error adding moderator:", updateError.message);
+            throw new Error("Failed to add moderator: " + updateError.message);
+        }
+
+        return updatedPlaylist;
+    } catch (error) {
+        console.error("Unexpected error:", error.message);
+        throw error;
+    }
+}
+addPlaylistModerator.propTypes = {
+    playlistId: PropTypes.number.isRequired,
+    userId: PropTypes.string.isRequired
+}
+
+export async function removePlaylistModerator(playlistId, userId) {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+        console.warn("No user is currently logged in.");
+        throw new Error("No user is currently logged in.");
+    }
+
+    try {
+        // Check if the current user is the host of the playlist
+        const { data: playlist, error: playlistError } = await supabase
+            .from('playlists')
+            .select('host, moderators')
+            .eq('id', playlistId)
+            .single();
+
+        if (playlistError || !playlist) {
+            console.error("Error fetching playlist:", playlistError.message);
+            throw new Error("Failed to fetch playlist.");
+        }
+
+        if (playlist.host !== currentUser.id) {
+            console.warn("User is not the host of this playlist.");
+            throw new Error("You are not the host of this playlist.");
+        }
+
+        // Remove the user from the moderators list
+        const updatedModerators = (playlist.moderators || []).filter(id => id !== userId);
+        const { data: updatedPlaylist, error: updateError } = await supabase
+            .from('playlists')
+            .update({ moderators: updatedModerators })
+            .eq('id', playlistId)
+            .select()
+            .single();
+
+        if (updateError) {
+            console.error("Error removing moderator:", updateError.message);
+            throw new Error("Failed to remove moderator: " + updateError.message);
+        }
+
+        return updatedPlaylist;
+    } catch (error) {
+        console.error("Unexpected error:", error.message);
+        throw error;
+    }
+}
+removePlaylistModerator.propTypes = {
+    playlistId: PropTypes.number.isRequired,
+    userId: PropTypes.string.isRequired
+}
+
+export async function leavePlaylist(playlistId, userId) {
+    if (!playlistId) {
+        console.warn("No playlist data.");
+        throw new Error("No playlist data.");
+    }
+
+    let targetUser = userId;
+
+    if (!userId) {
+        const currentUser = await getCurrentUser();
+        if (!currentUser) {
+            console.warn("No user is currently logged in.");
+            throw new Error("No user is currently logged in.");
+        }
+        targetUser = currentUser.id;
     }
 
     const joinedPlaylists = await getJoinedPlaylists(userId);
@@ -690,12 +1200,38 @@ export async function leavePlaylist(userId, playlistId) {
     }
 
     try {
+        // Remove user from the playlist's moderators if they are one
+        const { data: playlist, error: playlistError } = await supabase
+            .from('playlists')
+            .select('moderators')
+            .eq('id', playlistId)
+            .single();
+
+        if (playlistError) {
+            console.error("Error fetching playlist moderators:", playlistError.message);
+            throw new Error("Failed to fetch playlist moderators: " + playlistError.message);
+        }
+
+        const moderators = playlist.moderators || [];
+        if (moderators.includes(targetUser)) {
+            const updatedModerators = moderators.filter(id => id !== targetUser);
+            const { error: updateError } = await supabase
+                .from('playlists')
+                .update({ moderators: updatedModerators })
+                .eq('id', playlistId);
+
+            if (updateError) {
+                console.error("Error updating playlist moderators:", updateError.message);
+                throw new Error("Failed to update playlist moderators: " + updateError.message);
+            }
+        }
+
         // Delete all user's songs in this playlist
         const { error: deleteSongsError } = await supabase
             .from("queue")
             .delete()
             .eq("playlist", playlistId)
-            .eq("user_id", userId);
+            .eq("user_id", targetUser);
 
         if (deleteSongsError) {
             console.error("Error deleting songs:", deleteSongsError.message);
@@ -716,7 +1252,7 @@ export async function leavePlaylist(userId, playlistId) {
         const { error: deleteVotesError } = await supabase
             .from("votes")
             .delete()
-            .eq("user_id", userId)
+            .eq("user_id", targetUser)
             .in("song_id", songIds.map(song => song.id));
 
         if (deleteVotesError) {
@@ -729,7 +1265,7 @@ export async function leavePlaylist(userId, playlistId) {
         const { error } = await supabase
             .from("users")
             .update({ playlists: updatedPlaylists })
-            .eq("id", userId);
+            .eq("id", targetUser);
 
         if (error) {
             console.error("Error leaving playlist:", error.message);
@@ -740,26 +1276,8 @@ export async function leavePlaylist(userId, playlistId) {
     }
 }
 leavePlaylist.propTypes = {
-    userId: PropTypes.string.isRequired,
-    playlistId: PropTypes.number.isRequired
-}
-
-export async function userLeavePlaylist(playlistId) {
-    const currentUser = await getCurrentUser();
-    if (!currentUser) {
-        console.warn("No user is currently logged in.");
-        throw new Error("No user is currently logged in.");
-    }
-
-    try {
-        await leavePlaylist(currentUser.id, playlistId);
-    } catch (error) {
-        console.error("Error leaving playlist:", error.message);
-        return false;
-    }
-}
-userLeavePlaylist.propTypes = {
-    playlistId: PropTypes.number.isRequired
+    playlistId: PropTypes.number.isRequired,
+    userId: PropTypes.string
 }
 
 export async function deletePlaylist(playlistId) {
@@ -803,4 +1321,7 @@ export async function deletePlaylist(playlistId) {
         console.error("Unexpected error:", error.message);
         return false;
     }
+}
+deletePlaylist.propTypes = {
+    playlistId: PropTypes.number.isRequired
 }

@@ -19,14 +19,14 @@ import Queue from "@/components/Queue";
 import AddSongForm from "@/components/AddSongForm";
 import TopSongsOlympicPodium from "@/components/TopSongsOlympicPodium";
 import SetTitle from "@/components/SetTitle";
-import {getPlaylistData, getCurrentUser, getJoinedPlaylists, userLeavePlaylist} from "@/utils/actions";
+import {getPlaylistData, getCurrentUser, getJoinedPlaylists, leavePlaylist, isUserLoggedIn} from "@/utils/actions";
 import {
     LocalLibraryRounded as PlaylistNameIcon,
     GroupAddRounded as JoinPlaylistIcon,
     MoreVertRounded as MenuVertButtonIcon,
     ExitToAppRounded as LeavePlaylistIcon,
     HomeRepairServiceRounded as ManageIcon,
-    InfoOutlined as PlaylistInfoIcon,
+    InfoOutlined as PlaylistInfoIcon, PlaylistPlay as PlaylistIcon,
 } from "@mui/icons-material";
 import Link from "next/link";
 
@@ -37,6 +37,7 @@ export default function Playlist() {
     const [playlistData, setPlaylistData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [currentUser, setCurrentUser] = useState(null);
+    const [loggedIn, setLoggedIn] = useState(false);
     const [anchorEl, setAnchorEl] = useState(null);
     const [hasJoined, setHasJoined] = useState(null);
     const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
@@ -45,6 +46,9 @@ export default function Playlist() {
         const fetchCurrentUser = async () => {
             const user = await getCurrentUser();
             setCurrentUser(user);
+
+            const logInStatus = await isUserLoggedIn()
+            setLoggedIn(logInStatus);
         };
 
         fetchCurrentUser();
@@ -116,7 +120,7 @@ export default function Playlist() {
         if (!currentUser || !playlistData) return;
 
         try {
-            await userLeavePlaylist(playlistData.id);
+            await leavePlaylist(playlistData.id, currentUser.id);
             setHasJoined(false);
             console.info("Successfully left the playlist.");
             window.location.reload();
@@ -198,7 +202,7 @@ export default function Playlist() {
                         }}
                     >{playlistData.name}</Typography>
                 </Typography>
-                {(!isHost && !hasJoined) ? (
+                {(!isHost && !hasJoined && loggedIn) ? (
                     <Button
                         variant="contained"
                         color="primary"
@@ -230,6 +234,15 @@ export default function Playlist() {
                                 horizontal: 'right',
                             }}
                         >
+                            <MenuItem>
+                                <Link href={`/playlist/${playlistId}`} passHref>
+                                    <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>
+                                        <PlaylistIcon sx={{ marginRight: 1 }} />
+                                        View Playlist
+                                    </Box>
+                                </Link>
+                            </MenuItem>
+
                             {(isHost || hasJoined) && (
                                 <MenuItem>
                                     <Link href={`/playlist/${playlistId}/info`} passHref> {/* TODO */}

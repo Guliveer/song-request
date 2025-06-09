@@ -1,14 +1,41 @@
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import SetTitle from "@/components/SetTitle";
+import PlaylistQueue from "@/components/PlaylistManagement/PlaylistQueue";
+import PlaylistMembers from "@/components/PlaylistManagement/PlaylistMembers";
+import PlaylistSettings from "@/components/PlaylistManagement/PlaylistSettings";
 import {
     getCurrentUser,
     getJoinedPlaylists,
-    getPlaylistData
+    getPlaylistData,
+    removeSong,
+    banSong,
+    removeVotes,
+    deletePlaylist, getPlaylistModerators,
 } from "@/utils/actions";
 import {
     Box,
+    Container,
+    Chip,
     CircularProgress,
+    Tab,
+    Tabs,
+    Typography,
+    Divider, IconButton, Menu, MenuItem,
 } from "@mui/material";
+import {
+    QueueMusicRounded as QueueIcon,
+    PeopleRounded as MembersIcon,
+    SettingsRounded as SettingsIcon,
+    PlaylistPlayRounded as PlaylistIcon,
+    LockRounded as PrivateIcon,
+    PublicRounded as PublicIcon,
+    LinkRounded as LinkIcon,
+    MoreVertRounded as MenuVertButtonIcon,
+    InfoOutlined as PlaylistInfoIcon,
+    HomeRepairServiceRounded as ManageIcon, ExitToAppRounded as LeavePlaylistIcon,
+} from '@mui/icons-material';
 
 export default function ManagePlaylist() {
     const router = useRouter();
@@ -18,6 +45,8 @@ export default function ManagePlaylist() {
     const [loading, setLoading] = useState(true);
     const [currentUser, setCurrentUser] = useState(null);
     const [hasJoined, setHasJoined] = useState(null);
+    const [activeTab, setActiveTab] = useState(0);
+    const [anchorEl, setAnchorEl] = useState(null);
 
     useEffect(() => {
         const fetchCurrentUser = async () => {
@@ -36,11 +65,16 @@ export default function ManagePlaylist() {
                 const data = await getPlaylistData(playlistId);
 
                 if (currentUser && data) {
+                    // Check if the current user has joined the playlist
                     const joinedPlaylists = await getJoinedPlaylists(currentUser.id);
                     const joinStatus = joinedPlaylists.includes(data?.id);
                     setHasJoined(joinStatus);
 
-                    if (data.is_public === false && data.method === 'id' && !joinStatus) {
+                    // Check if the current user is a moderator or host
+                    const moderators = await getPlaylistModerators(data?.id);
+                    const allowAccess = Object.keys(moderators).includes(currentUser.id) || data.host === currentUser.id;
+
+                    if ((data.is_public === false && data.method === 'id' && !joinStatus) || !allowAccess) {
                         console.warn("You cannot access this playlist right now.");
                         setPlaylistData(null);
                         setLoading(false);
@@ -59,6 +93,18 @@ export default function ManagePlaylist() {
 
         fetchPlaylistData();
     }, [currentUser, router.isReady, playlist, playlistId]);
+
+    const handleTabChange = (event, newValue) => {
+        setActiveTab(newValue);
+    };
+
+    const handleMenuOpen = (event) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleMenuClose = () => {
+        setAnchorEl(null);
+    };
 
     if (loading) {
         return (
@@ -93,8 +139,248 @@ export default function ManagePlaylist() {
     const isHost = currentUser?.id === playlistData.host; //? Must be here - at the end of all loadings and checks
 
     return (
-        <div>
-            {playlistData.name} - Management Playlist
-        </div>
+        <>
+            <SetTitle text={"Manage Playlist"} />
+            {/* Menu */}
+            <Box sx={{
+                display: "flex",
+                justifyContent: "flex-end",
+                padding: '1rem 2rem',
+            }}>
+                <IconButton onClick={handleMenuOpen}>
+                    <MenuVertButtonIcon />
+                </IconButton>
+                <Menu
+                    anchorEl={anchorEl}
+                    open={Boolean(anchorEl)}
+                    onClose={handleMenuClose}
+                    anchorOrigin={{
+                        vertical: 'bottom',
+                        horizontal: 'right',
+                    }}
+                    transformOrigin={{
+                        vertical: 'top',
+                        horizontal: 'right',
+                    }}
+                >
+                    <MenuItem>
+                        <Link href={`/playlist/${playlistId}`} passHref>
+                            <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>
+                                <PlaylistIcon sx={{ marginRight: 1 }} />
+                                View Playlist
+                            </Box>
+                        </Link>
+                    </MenuItem>
+
+                    {(isHost || hasJoined) && (
+                        <MenuItem>
+                            <Link href={`/playlist/${playlistId}/info`} passHref> {/* TODO */}
+                                <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>
+                                    <PlaylistInfoIcon sx={{ marginRight: 1 }} />
+                                    Playlist Info
+                                </Box>
+                            </Link>
+                        </MenuItem>
+                    )}
+
+                    {isHost && (
+                        <MenuItem>
+                            <Link href={`/playlist/${playlistId}/manage`} passHref> {/* TODO */}
+                                <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>
+                                    <ManageIcon sx={{ marginRight: 1 }} />
+                                    Manage Playlist
+                                </Box>
+                            </Link>
+                        </MenuItem>
+                    )}
+
+                    {(!isHost && hasJoined) && (
+                        <MenuItem onClick={handleConfirmLeave}>
+                            <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>
+                                <LeavePlaylistIcon sx={{ marginRight: 1 }} />
+                                Leave Playlist
+                            </Box>
+                        </MenuItem>
+                    )}
+                </Menu>
+            </Box>
+
+            <Container maxWidth="md" >
+                {/* Playlist Info Section */}
+                <Box
+                    sx={{
+                        maxWidth: 1200,
+                        mx: "auto",
+                        mt: 6,
+                        mb: 4,
+                        px: { xs: 1, md: 4 },
+                        py: { xs: 2, md: 5 },
+                        borderRadius: 4,
+                        bgcolor: "background.paper",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                    }}
+                >
+                    <PlaylistIcon
+                        sx={{
+                            fontSize: 92,
+                            my: 1,
+                            color: "primary.main",
+                        }}
+                    />
+                    <Typography
+                        variant="h4"
+                        sx={{
+                            fontWeight: "bold",
+                            my: 1,
+                            textAlign: "center",
+                        }}
+                    >
+                        {playlistData?.name || ""}
+                    </Typography>
+
+                    {/* Visibility Chip */}
+                    <Box sx={{ my: 2 }}>
+                        <Chip
+                            icon={playlistData?.is_public ? <PublicIcon /> : <PrivateIcon />}
+                            label={playlistData?.is_public ? "Public" : "Private"}
+                            color="primary"
+                            sx={{
+                                fontWeight: "bold",
+                            }}
+                        />
+                    </Box>
+
+                    {/* Access URL */}
+                    <Box sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        my: 1,
+                        gap: 1,
+                    }}>
+                        <LinkIcon sx={{ color: "text.secondary" }} />
+                        <Typography
+                            href={playlistData?.url ? playlistData.url : "#"}
+                            variant="body2"
+                            sx={{
+                                wordBreak: "none",
+                                fontWeight: 500,
+                            }}
+                        >
+                            <Link href={"/playlist/"+playlistData?.url}>/{playlistData?.url}</Link>
+                        </Typography>
+                    </Box>
+
+                    {/* Description */}
+                    <Typography
+                        variant="body1"
+                        sx={{
+                            my: 1,
+                            textAlign: "center",
+                            maxWidth: 600,
+                            color: "text.secondary",
+                        }}
+                    >
+                        {playlistData?.description || <Typography component="span" sx={{ fontStyle: "italic" }}>No description provided.</Typography>}
+                    </Typography>
+
+                    {/* Playlist Stats */}
+                    <Box
+                        sx={{
+                            display: "flex",
+                            justifyContent: "center",
+                            alignItems: "center",
+                            width: "100%",
+                            maxWidth: 380,
+                            my: 2,
+                        }}
+                    >
+                        <Box sx={{ flex: 1, textAlign: "center" }}>
+                            <Typography variant="h5" sx={{ fontWeight: 700 }}>
+                                {playlistData?.userCount || 0}
+                            </Typography>
+                            <Typography
+                                variant="body2"
+                                sx={{ mt: 0.5, fontWeight: 500 }}
+                            >
+                                Members
+                            </Typography>
+                        </Box>
+                        <Divider
+                            orientation="vertical"
+                            flexItem
+                            sx={{
+                                width: 10,
+                            }}
+                        />
+                        <Box sx={{ flex: 1, textAlign: "center" }}>
+                            <Typography variant="h5" sx={{ fontWeight: 700 }}>
+                                {playlistData?.songCount || 0}
+                            </Typography>
+                            <Typography
+                                variant="body2"
+                                sx={{ mt: 0.5, fontWeight: 500 }}
+                            >
+                                Songs
+                            </Typography>
+                        </Box>
+                    </Box>
+                </Box>
+
+                {/* Tabs Section */}
+                <Box
+                    sx={{
+                        maxWidth: 900,
+                        mx: "auto",
+                        bgcolor: "background.paper",
+                        borderRadius: 3,
+                        boxShadow: 2,
+                        overflow: "hidden",
+                    }}
+                >
+                    <Tabs
+                        value={activeTab}
+                        onChange={handleTabChange}
+                        variant="fullWidth"
+                        textColor="inherit"
+                        TabIndicatorProps={{ style: { height: 3 } }}
+                        sx={{
+                            "& .MuiTab-root": {
+                                fontWeight: "bold",
+                                fontSize: 16,
+                                textTransform: "none",
+                                py: 2,
+                            },
+                            "& .Mui-selected": {
+                                color: "primary.main",
+                            },
+                        }}
+                    >
+                        <Tab icon={<QueueIcon />} label="Queue" />
+                        <Tab icon={<MembersIcon />} label="Members" />
+                        {isHost && <Tab icon={<SettingsIcon />} label="Settings" />}
+                    </Tabs>
+
+                    <Box sx={{ p: 3, width: "100%" }}>
+                        {activeTab === 0 && (
+                            <PlaylistQueue
+                                playlistId={playlistData.id}
+                            />
+                        )}
+                        {activeTab === 1 && (
+                            <PlaylistMembers
+                                playlistId={playlistData.id}
+                            />
+                        )}
+                        {activeTab === 2 && isHost && (
+                            <PlaylistSettings
+                                playlistId={playlistData.id}
+                            />
+                        )}
+                    </Box>
+                </Box>
+            </Container>
+        </>
     )
 }
