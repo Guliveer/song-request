@@ -10,6 +10,8 @@ import Box from "@mui/material/Box";
 import React from "react";
 
 export default function App({Component, pageProps}) {
+    const router = useRouter();
+
     return (
         <ThemeProvider theme={theme}>
             <UserProvider>
