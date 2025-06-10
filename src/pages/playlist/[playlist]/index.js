@@ -1,34 +1,27 @@
 import {useRouter} from "next/router";
 import {useEffect, useState} from "react";
 import {supabase} from "@/utils/supabase";
+import SetTitle from "@/components/SetTitle";
+import PlaylistMenu from "@/components/PlaylistManagement/PlaylistMenu";
+import TopSongsOlympicPodium from "@/components/TopSongsOlympicPodium";
+import Queue from "@/components/Queue";
+import AddSongForm from "@/components/AddSongForm";
+import {
+    getPlaylistData,
+    getCurrentUser,
+    getJoinedPlaylists,
+    isUserLoggedIn
+} from "@/utils/actions";
 import {
     Box,
     Button,
     CircularProgress,
-    IconButton,
-    Menu,
-    MenuItem,
     Typography,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogContentText,
-    DialogTitle,
 } from "@mui/material";
-import Queue from "@/components/Queue";
-import AddSongForm from "@/components/AddSongForm";
-import TopSongsOlympicPodium from "@/components/TopSongsOlympicPodium";
-import SetTitle from "@/components/SetTitle";
-import {getPlaylistData, getCurrentUser, getJoinedPlaylists, leavePlaylist, isUserLoggedIn} from "@/utils/actions";
 import {
-    LocalLibraryRounded as PlaylistNameIcon,
     GroupAddRounded as JoinPlaylistIcon,
-    MoreVertRounded as MenuVertButtonIcon,
-    ExitToAppRounded as LeavePlaylistIcon,
-    HomeRepairServiceRounded as ManageIcon,
-    InfoOutlined as PlaylistInfoIcon, PlaylistPlay as PlaylistIcon,
+    LocalLibraryRounded as PlaylistNameIcon,
 } from "@mui/icons-material";
-import Link from "next/link";
 
 export default function Playlist() {
     const router = useRouter();
@@ -38,9 +31,7 @@ export default function Playlist() {
     const [loading, setLoading] = useState(true);
     const [currentUser, setCurrentUser] = useState(null);
     const [loggedIn, setLoggedIn] = useState(false);
-    const [anchorEl, setAnchorEl] = useState(null);
     const [hasJoined, setHasJoined] = useState(null);
-    const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
 
     useEffect(() => {
         const fetchCurrentUser = async () => {
@@ -116,38 +107,6 @@ export default function Playlist() {
         }
     };
 
-    const handleLeavePlaylist = async () => {
-        if (!currentUser || !playlistData) return;
-
-        try {
-            await leavePlaylist(playlistData.id, currentUser.id);
-            setHasJoined(false);
-            console.info("Successfully left the playlist.");
-            window.location.reload();
-        } catch (error) {
-            console.error("Unexpected error:", error.message);
-        } finally {
-            setConfirmDialogOpen(false);
-        }
-    };
-
-    const handleConfirmLeave = () => {
-        handleMenuClose();
-        setConfirmDialogOpen(true);
-    };
-
-    const handleCancelLeave = () => {
-        setConfirmDialogOpen(false);
-    };
-
-    const handleMenuOpen = (event) => {
-        setAnchorEl(event.currentTarget);
-    };
-
-    const handleMenuClose = () => {
-        setAnchorEl(null);
-    };
-
     if (loading) {
         return (
             <Box
@@ -217,65 +176,8 @@ export default function Playlist() {
                         Join
                     </Button>
                 ) : (
-                    <>
-                        <IconButton onClick={handleMenuOpen}>
-                            <MenuVertButtonIcon />
-                        </IconButton>
-                        <Menu
-                            anchorEl={anchorEl}
-                            open={Boolean(anchorEl)}
-                            onClose={handleMenuClose}
-                            anchorOrigin={{
-                                vertical: 'bottom',
-                                horizontal: 'right',
-                            }}
-                            transformOrigin={{
-                                vertical: 'top',
-                                horizontal: 'right',
-                            }}
-                        >
-                            <MenuItem>
-                                <Link href={`/playlist/${playlistId}`} passHref>
-                                    <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>
-                                        <PlaylistIcon sx={{ marginRight: 1 }} />
-                                        View Playlist
-                                    </Box>
-                                </Link>
-                            </MenuItem>
-
-                            {(isHost || hasJoined) && (
-                                <MenuItem>
-                                    <Link href={`/playlist/${playlistId}/info`} passHref> {/* TODO */}
-                                        <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>
-                                            <PlaylistInfoIcon sx={{ marginRight: 1 }} />
-                                            Playlist Info
-                                        </Box>
-                                    </Link>
-                                </MenuItem>
-                            )}
-
-                            {isHost && (
-                                <MenuItem>
-                                    <Link href={`/playlist/${playlistId}/manage`} passHref> {/* TODO */}
-                                        <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>
-                                            <ManageIcon sx={{ marginRight: 1 }} />
-                                            Manage Playlist
-                                        </Box>
-                                    </Link>
-                                </MenuItem>
-                            )}
-
-                            {(!isHost && hasJoined) && (
-                                <MenuItem onClick={handleConfirmLeave}>
-                                    <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>
-                                        <LeavePlaylistIcon sx={{ marginRight: 1 }} />
-                                        Leave Playlist
-                                    </Box>
-                                </MenuItem>
-                            )}
-
-                        </Menu>
-                    </>
+                    <PlaylistMenu playlistId={playlistData.id} />
+                    // <></>
                 )}
             </Box>
             <TopSongsOlympicPodium playlist={playlistData.id} />
@@ -283,27 +185,6 @@ export default function Playlist() {
             {hasJoined && (
                 <AddSongForm playlist={playlistData.id} />
             )}
-
-            {/* Leave Confirmation Dialog */}
-            <Dialog
-                open={confirmDialogOpen}
-                onClose={handleCancelLeave}
-            >
-                <DialogTitle>Confirm: Leave Playlist</DialogTitle>
-                <DialogContent>
-                    <DialogContentText>
-                        Leaving this playlist will remove all your placed votes and added songs. Are you sure you want to proceed?
-                    </DialogContentText>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleCancelLeave} color="primary">
-                        Cancel
-                    </Button>
-                    <Button onClick={handleLeavePlaylist} color="error">
-                        Leave
-                    </Button>
-                </DialogActions>
-            </Dialog>
         </>
     );
 }

@@ -2,6 +2,8 @@
 import PropTypes from "prop-types";
 import {supabase} from '@/utils/supabase';
 import {createCanvas} from 'canvas';
+import {extractSpotifyTrackId, fetchSpotifyMetadata} from '@/utils/spotify';
+import {extractYoutubeVideoId, fetchYouTubeMetadata} from '@/utils/youtube';
 
 export async function playSound(type, volume = 1.0) {
     const basePath = '/audio'; // Base path for all sounds
@@ -508,36 +510,96 @@ removeSong.propTypes = {
 }
 
 export async function banSong(playlistId, songUrl) {
+    if (!songUrl) {
+        console.error("Invalid song URL");
+        return false;
+    }
+
     try {
         const { data: playlist, error: playlistError } = await supabase
-            .from('playlists')
-            .select('banned_songs')
-            .eq('id', playlistId)
+            .from("playlists")
+            .select("banned_songs")
+            .eq("id", playlistId)
             .single();
 
         if (playlistError) throw playlistError;
 
         const bannedSongs = playlist.banned_songs || [];
-        if (!bannedSongs.includes(songUrl)) {
-            bannedSongs.push(songUrl);
+        if (bannedSongs.includes(songUrl)) {
+            console.warn("Song is already banned:", songUrl);
+            return false;
         }
 
+        const updatedSongs = [...bannedSongs, songUrl];
+
         const { error: updateError } = await supabase
-            .from('playlists')
-            .update({ banned_songs: bannedSongs })
-            .eq('id', playlistId);
+            .from("playlists")
+            .update({ banned_songs: updatedSongs })
+            .eq("id", playlistId);
 
         if (updateError) throw updateError;
 
+        // Remove song from queue
+        const { error: queueError } = await supabase
+            .from('queue')
+            .delete()
+            .eq('playlist', playlistId)
+            .eq('url', songUrl);
+
+        if (queueError) throw queueError;
+
         return true;
     } catch (error) {
-        console.error('Error banning song:', error.message);
+        console.error("Error banning song:", error.message);
         return false;
     }
 }
 banSong.propTypes = {
     playlistId: PropTypes.number.isRequired,
     songUrl: PropTypes.string.isRequired
+}
+
+export async function getBannedSongs(playlistId) {
+    try {
+        const { data: playlist, error } = await supabase
+            .from('playlists')
+            .select('banned_songs')
+            .eq('id', playlistId)
+            .single();
+
+        if (error) throw error;
+
+        const bannedSongs = playlist.banned_songs || [];
+        return await Promise.all(
+            bannedSongs.map(async (url) => {
+                let metadata = null;
+
+                // Check if the URL is a Spotify track
+                const spotifyId = extractSpotifyTrackId(url);
+                if (spotifyId) {
+                    metadata = await fetchSpotifyMetadata(spotifyId);
+                }
+
+                // Check if the URL is a YouTube video
+                const youtubeId = extractYoutubeVideoId(url);
+                if (youtubeId) {
+                    metadata = await fetchYouTubeMetadata(youtubeId);
+                }
+
+                return {
+                    url,
+                    title: metadata?.title || 'Unknown Title',
+                    author: metadata?.author || 'Unknown Author',
+                };
+            })
+        );
+    } catch (error) {
+        console.error('Error fetching banned songs with metadata:', error.message);
+        return [];
+    }
+}
+getBannedSongs.propTypes = {
+    playlistId: PropTypes.number.isRequired
 }
 
 export async function unbanSong(playlistId, songUrl) {

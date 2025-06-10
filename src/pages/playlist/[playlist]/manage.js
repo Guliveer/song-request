@@ -9,10 +9,7 @@ import {
     getCurrentUser,
     getJoinedPlaylists,
     getPlaylistData,
-    removeSong,
-    banSong,
-    removeVotes,
-    deletePlaylist, getPlaylistModerators,
+    getPlaylistModerators,
 } from "@/utils/actions";
 import {
     Box,
@@ -36,6 +33,7 @@ import {
     InfoOutlined as PlaylistInfoIcon,
     HomeRepairServiceRounded as ManageIcon, ExitToAppRounded as LeavePlaylistIcon,
 } from '@mui/icons-material';
+import PlaylistMenu from "@/components/PlaylistManagement/PlaylistMenu";
 
 export default function ManagePlaylist() {
     const router = useRouter();
@@ -46,7 +44,6 @@ export default function ManagePlaylist() {
     const [currentUser, setCurrentUser] = useState(null);
     const [hasJoined, setHasJoined] = useState(null);
     const [activeTab, setActiveTab] = useState(0);
-    const [anchorEl, setAnchorEl] = useState(null);
 
     useEffect(() => {
         const fetchCurrentUser = async () => {
@@ -98,14 +95,6 @@ export default function ManagePlaylist() {
         setActiveTab(newValue);
     };
 
-    const handleMenuOpen = (event) => {
-        setAnchorEl(event.currentTarget);
-    };
-
-    const handleMenuClose = () => {
-        setAnchorEl(null);
-    };
-
     if (loading) {
         return (
             <Box
@@ -140,69 +129,16 @@ export default function ManagePlaylist() {
 
     return (
         <>
-            <SetTitle text={"Manage Playlist"} />
+            <SetTitle text={`Manage Playlist - ${playlistData.name}`} />
+
             {/* Menu */}
             <Box sx={{
-                display: "flex",
-                justifyContent: "flex-end",
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'flex-end',
                 padding: '1rem 2rem',
             }}>
-                <IconButton onClick={handleMenuOpen}>
-                    <MenuVertButtonIcon />
-                </IconButton>
-                <Menu
-                    anchorEl={anchorEl}
-                    open={Boolean(anchorEl)}
-                    onClose={handleMenuClose}
-                    anchorOrigin={{
-                        vertical: 'bottom',
-                        horizontal: 'right',
-                    }}
-                    transformOrigin={{
-                        vertical: 'top',
-                        horizontal: 'right',
-                    }}
-                >
-                    <MenuItem>
-                        <Link href={`/playlist/${playlistId}`} passHref>
-                            <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>
-                                <PlaylistIcon sx={{ marginRight: 1 }} />
-                                View Playlist
-                            </Box>
-                        </Link>
-                    </MenuItem>
-
-                    {(isHost || hasJoined) && (
-                        <MenuItem>
-                            <Link href={`/playlist/${playlistId}/info`} passHref> {/* TODO */}
-                                <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>
-                                    <PlaylistInfoIcon sx={{ marginRight: 1 }} />
-                                    Playlist Info
-                                </Box>
-                            </Link>
-                        </MenuItem>
-                    )}
-
-                    {isHost && (
-                        <MenuItem>
-                            <Link href={`/playlist/${playlistId}/manage`} passHref> {/* TODO */}
-                                <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>
-                                    <ManageIcon sx={{ marginRight: 1 }} />
-                                    Manage Playlist
-                                </Box>
-                            </Link>
-                        </MenuItem>
-                    )}
-
-                    {(!isHost && hasJoined) && (
-                        <MenuItem onClick={handleConfirmLeave}>
-                            <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>
-                                <LeavePlaylistIcon sx={{ marginRight: 1 }} />
-                                Leave Playlist
-                            </Box>
-                        </MenuItem>
-                    )}
-                </Menu>
+                <PlaylistMenu playlistId={playlistData.id} />
             </Box>
 
             <Container maxWidth="md" >
@@ -211,7 +147,6 @@ export default function ManagePlaylist() {
                     sx={{
                         maxWidth: 1200,
                         mx: "auto",
-                        mt: 6,
                         mb: 4,
                         px: { xs: 1, md: 4 },
                         py: { xs: 2, md: 5 },
@@ -248,6 +183,12 @@ export default function ManagePlaylist() {
                             color="primary"
                             sx={{
                                 fontWeight: "bold",
+                                // Make icon smaller for better alignment
+                                "& .MuiChip-icon": {
+                                    fontSize: 20,
+                                },
+                                display: "flex",
+                                alignItems: "center",
                             }}
                         />
                     </Box>
