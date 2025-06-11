@@ -10,7 +10,8 @@ import {
     getPlaylistData,
     getCurrentUser,
     getJoinedPlaylists,
-    isUserLoggedIn
+    isUserLoggedIn,
+    joinPlaylist,
 } from "@/utils/actions";
 import {
     Box,
@@ -80,31 +81,7 @@ export default function Playlist() {
     const handleJoinPlaylist = async () => {
         if (!currentUser || !playlistData) return;
 
-        try {
-            const joinedPlaylists = await getJoinedPlaylists(currentUser.id);
-
-            const playlists = joinedPlaylists || [];
-            if (playlists.includes(playlistData.id)) {
-                console.warn("Playlist already joined.");
-                return;
-            }
-
-            const updatedPlaylists = [...(joinedPlaylists || []), playlistData.id];
-
-            const { error: updateError } = await supabase
-                .from("users")
-                .update({ playlists: updatedPlaylists })
-                .eq("id", currentUser.id);
-
-            if (updateError) {
-                console.error("Error updating playlists:", updateError.message);
-            } else {
-                setHasJoined(true);
-                console.log("Successfully joined the playlist.");
-            }
-        } catch (error) {
-            console.error("Unexpected error:", error.message);
-        }
+        await joinPlaylist(playlistData.id);
     };
 
     if (loading) {

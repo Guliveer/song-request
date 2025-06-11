@@ -167,7 +167,6 @@ export default function PlaylistSettings({ playlistId }) {
                     display: "flex",
                     justifyContent: "center",
                     alignItems: "center",
-                    height: "90vh",
                 }}
             >
                 <CircularProgress />
@@ -177,7 +176,7 @@ export default function PlaylistSettings({ playlistId }) {
 
     return (
         <Box sx={{ p: 3 }}>
-            <Typography variant="h6">
+            <Typography variant="h5" component="h2" sx={{color: 'white', fontWeight: 500}}>
                 Playlist Management
             </Typography>
 
@@ -264,8 +263,24 @@ export default function PlaylistSettings({ playlistId }) {
                     </Box>
                 </Box>
 
+            </Box>
+
+            <Divider sx={{
+                my: 3,
+            }}/>
+
+            <Typography variant="h5" component="h2" sx={{color: 'white', fontWeight: 500}}>
+                Playlist Moderators
+            </Typography>
+
+            <Box sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 3,
+                mt: 3,
+            }}>
                 {/* Add Moderator */}
-                <Box sx={{ mb: 3 }}>
+                <Box>
                     <TextField
                         label="Add Moderator by Username"
                         fullWidth
@@ -280,9 +295,6 @@ export default function PlaylistSettings({ playlistId }) {
                 {/* Moderator List */}
                 {moderatorList.length > 0 && (
                     <>
-                        <Typography variant="h6" sx={{ mb: 2 }}>
-                            Playlist Moderators
-                        </Typography>
                         <Box
                             sx={{
                                 maxHeight: 200, // Fixed height for the box

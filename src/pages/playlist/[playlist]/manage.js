@@ -19,7 +19,7 @@ import {
     Tab,
     Tabs,
     Typography,
-    Divider, IconButton, Menu, MenuItem,
+    Divider,
 } from "@mui/material";
 import {
     QueueMusicRounded as QueueIcon,
@@ -29,9 +29,6 @@ import {
     LockRounded as PrivateIcon,
     PublicRounded as PublicIcon,
     LinkRounded as LinkIcon,
-    MoreVertRounded as MenuVertButtonIcon,
-    InfoOutlined as PlaylistInfoIcon,
-    HomeRepairServiceRounded as ManageIcon, ExitToAppRounded as LeavePlaylistIcon,
 } from '@mui/icons-material';
 import PlaylistMenu from "@/components/PlaylistManagement/PlaylistMenu";
 
@@ -42,7 +39,6 @@ export default function ManagePlaylist() {
     const [playlistData, setPlaylistData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [currentUser, setCurrentUser] = useState(null);
-    const [hasJoined, setHasJoined] = useState(null);
     const [activeTab, setActiveTab] = useState(0);
 
     useEffect(() => {
@@ -65,7 +61,6 @@ export default function ManagePlaylist() {
                     // Check if the current user has joined the playlist
                     const joinedPlaylists = await getJoinedPlaylists(currentUser.id);
                     const joinStatus = joinedPlaylists.includes(data?.id);
-                    setHasJoined(joinStatus);
 
                     // Check if the current user is a moderator or host
                     const moderators = await getPlaylistModerators(data?.id);
@@ -141,7 +136,7 @@ export default function ManagePlaylist() {
                 <PlaylistMenu playlistId={playlistData.id} />
             </Box>
 
-            <Container maxWidth="md" >
+            <Container maxWidth="md" sx={{ mb: 3 }}>
                 {/* Playlist Info Section */}
                 <Box
                     sx={{

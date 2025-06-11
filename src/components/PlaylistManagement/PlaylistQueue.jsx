@@ -172,7 +172,6 @@ export default function PlaylistSettings({ playlistId }) {
                     display: "flex",
                     justifyContent: "center",
                     alignItems: "center",
-                    height: "90vh",
                 }}
             >
                 <CircularProgress />
@@ -188,7 +187,7 @@ export default function PlaylistSettings({ playlistId }) {
                 alignItems: "center",
                 justifyContent: "space-between",
             }}>
-                <Typography variant="h6">
+                <Typography variant="h5" component="h2" sx={{color: 'white', fontWeight: 500}}>
                     Queue Management
                 </Typography>
 
@@ -204,7 +203,7 @@ export default function PlaylistSettings({ playlistId }) {
                 my: 3,
             }}/>
 
-            <Box sx={{ display: "flex", gap: 2, alignItems: "center", width: '100%', justifyContent: 'space-between', mb: 3 }}>
+            <Box sx={{ display: "flex", gap: 2, alignItems: "center", width: '100%', justifyContent: 'space-between' }}>
                 <Box sx={{
                     display: "flex",
                     alignItems: "center",

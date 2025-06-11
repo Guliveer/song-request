@@ -28,7 +28,7 @@ import {
 import Link from "next/link";
 import {useRouter} from "next/router";
 import {supabase} from "@/utils/supabase";
-import {getCurrentUser, getPlaylistData, userLeavePlaylist} from "@/utils/actions";
+import {getCurrentUser, getPlaylistData, leavePlaylist} from "@/utils/actions";
 
 export default function Playlists() {
     const router = useRouter();
@@ -97,7 +97,7 @@ export default function Playlists() {
         if (!currentUser || !selectedPlaylist) return;
 
         try {
-            await userLeavePlaylist(selectedPlaylist.id);
+            await leavePlaylist(selectedPlaylist.id);
             const updatedPlaylists = playlists.filter((playlist) => playlist.id !== selectedPlaylist.id);
             setPlaylists(updatedPlaylists);
         } catch (error) {
