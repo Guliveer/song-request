@@ -176,9 +176,26 @@ export default function AdminPanel() {
         }
     };
 
-    const handleBanUrl = async (url) => {
-        // Tu zaimplementuj logikę banowania URL
-        alert(`URL ${url} został zbanowany`);
+    const handleBanAndDelete = async (targetUrl) => {
+        const { error: insertError } = await supabase
+            .from('banned_url')
+            .insert([{ url: targetUrl }]);
+
+        if (insertError) {
+            console.log("Ban and delete error");
+            return;
+        }
+
+        const { error: deleteError } = await supabase
+            .from('queue')
+            .delete()
+            .eq('url', targetUrl);
+
+        if (deleteError) {
+            console.log("Ban and delete error");
+        } else {
+            router.reload();
+        }
     };
 
     // --- Filters ---
@@ -707,7 +724,7 @@ export default function AdminPanel() {
                                                             <Tooltip title="Ban URL">
                                                                 <IconButton
                                                                     size="small"
-                                                                    onClick={() => handleBanUrl(song.url)}
+                                                                    onClick={() => handleBanAndDelete(song.url)}
                                                                     sx={{
                                                                         bgcolor: "#23273a", // panelowy
                                                                         color: "#ff4646",
