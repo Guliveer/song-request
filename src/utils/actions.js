@@ -570,29 +570,52 @@ export async function getBannedSongs(playlistId) {
         if (error) throw error;
 
         const bannedSongs = playlist.banned_songs || [];
-        return await Promise.all(
+        const results = await Promise.all(
             bannedSongs.map(async (url) => {
-                let metadata = null;
+                try {
+                    // Check if the URL is a Spotify track
+                    const spotifyId = extractSpotifyTrackId(url);
+                    if (spotifyId) {
+                        const metadata = await fetchSpotifyMetadata(spotifyId);
+                        if (metadata) {
+                            return {
+                                url,
+                                title: metadata.title || 'Unknown Title',
+                                author: metadata.author || 'Unknown Author',
+                            };
+                        }
+                    }
 
-                // Check if the URL is a Spotify track
-                const spotifyId = extractSpotifyTrackId(url);
-                if (spotifyId) {
-                    metadata = await fetchSpotifyMetadata(spotifyId);
+                    // Check if the URL is a YouTube video
+                    const youtubeId = extractYoutubeVideoId(url);
+                    console.info(`Processing URL: ${url}, YouTube ID: ${youtubeId}`);
+                    if (youtubeId) {
+                        const metadata = await fetchYouTubeMetadata(youtubeId);
+                        console.info(`Fetched YouTube metadata for ${youtubeId}:`, metadata);
+                        if (metadata) {
+                            return {
+                                url,
+                                title: metadata.title || 'Unknown Title',
+                                author: metadata.author || 'Unknown Author',
+                            };
+                        }
+                    }
+
+                    // Fallback for unknown URLs
+                    return {
+                        url,
+                        title: 'Unknown Title',
+                        author: 'Unknown Author',
+                    };
+                } catch (err) {
+                    console.error(`Error processing URL ${url}:`, err.message);
+                    return null;
                 }
-
-                // Check if the URL is a YouTube video
-                const youtubeId = extractYoutubeVideoId(url);
-                if (youtubeId) {
-                    metadata = await fetchYouTubeMetadata(youtubeId);
-                }
-
-                return {
-                    url,
-                    title: metadata?.title || 'Unknown Title',
-                    author: metadata?.author || 'Unknown Author',
-                };
             })
         );
+
+        // Filter out null results
+        return results.filter((song) => song !== null);
     } catch (error) {
         console.error('Error fetching banned songs with metadata:', error.message);
         return [];

@@ -17,6 +17,7 @@ import {
     CircularProgress,
     Typography,
     Switch,
+    Divider,
     List,
     ListItem,
     ListItemText,
@@ -33,6 +34,7 @@ import {
     DeleteRounded as DeleteIcon,
 } from "@mui/icons-material";
 import {supabase} from "@/utils/supabase";
+import PropTypes from "prop-types";
 
 export default function PlaylistSettings({ playlistId }) {
     const [playlistData, setPlaylistData] = useState(null);
@@ -175,147 +177,152 @@ export default function PlaylistSettings({ playlistId }) {
 
     return (
         <Box sx={{ p: 3 }}>
-            <Typography variant="h6" sx={{ mb: 2 }}>
+            <Typography variant="h6">
                 Playlist Management
             </Typography>
 
-            {/* Change Visibility */}
-            <Box sx={{ mb: 3, display: "flex", alignItems: "center" }}>
-                <Typography sx={{ mr: 2 }}>Change Visibility:</Typography>
-                <Switch
-                    checked={tempIsPublic}
-                    onChange={(e) => setTempIsPublic(e.target.checked)}
-                />
-                <Typography sx={{ ml: 1 }}>
-                    {tempIsPublic ? "Public" : "Private"}
-                </Typography>
-            </Box>
+            <Divider sx={{
+                my: 3,
+            }}/>
 
-            {/* Change Name */}
-            <Box sx={{ mb: 3 }}>
-                <TextField
-                    label="Change Name"
-                    fullWidth
-                    value={tempName}
-                    onChange={(e) => setTempName(e.target.value)}
-                />
-            </Box>
+            <Box sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 3,
+            }}>
+                {/* Change Visibility */}
+                <Box sx={{ display: "flex", alignItems: "center" }}>
+                    <Typography sx={{ mr: 2 }}>Change Visibility:</Typography>
+                    <Switch
+                        checked={tempIsPublic}
+                        onChange={(e) => setTempIsPublic(e.target.checked)}
+                    />
+                    <Typography sx={{ ml: 1 }}>
+                        {tempIsPublic ? "Public" : "Private"}
+                    </Typography>
+                </Box>
 
-            {/* Change URL */}
-            <Box sx={{ mb: 3 }}>
-                <TextField
-                    label="Change Access URL"
-                    fullWidth
-                    value={tempUrl}
-                    onChange={(e) => setTempUrl(e.target.value)}
-                />
-            </Box>
+                {/* Change Name */}
+                <Box>
+                    <TextField
+                        label="Change Name"
+                        fullWidth
+                        value={tempName}
+                        onChange={(e) => setTempName(e.target.value)}
+                    />
+                </Box>
 
-            {/* Change Description */}
-            <Box sx={{ mb: 3 }}>
-                <TextField
-                    label="Change Description"
-                    fullWidth
-                    multiline
-                    rows={4}
-                    value={tempDescription}
-                    onChange={(e) => setTempDescription(e.target.value)}
-                />
-            </Box>
+                {/* Change URL */}
+                <Box>
+                    <TextField
+                        label="Change Access URL"
+                        fullWidth
+                        value={tempUrl}
+                        onChange={(e) => setTempUrl(e.target.value)}
+                    />
+                </Box>
 
-            {/* Save and Cancel Buttons */}
-            <Box sx={{ display: "flex", justifyContent: "space-between", gap: 2 }}>
-                <Button
-                    variant="contained"
-                    color="error"
-                    onClick={() => setDeleteDialogOpen(true)}
-                >
-                    Delete Playlist
-                </Button>
+                {/* Change Description */}
+                <Box>
+                    <TextField
+                        label="Change Description"
+                        fullWidth
+                        multiline
+                        rows={4}
+                        value={tempDescription}
+                        onChange={(e) => setTempDescription(e.target.value)}
+                    />
+                </Box>
 
-                <Box sx={{ display: "flex", gap: 2 }}>
+                {/* Save and Cancel Buttons */}
+                <Box sx={{ display: "flex", justifyContent: "space-between", gap: 2 }}>
                     <Button
                         variant="contained"
                         color="error"
-                        onClick={handleCancel}
-                        disabled={!hasChanges}
+                        onClick={() => setDeleteDialogOpen(true)}
                     >
-                        Cancel
+                        Delete Playlist
                     </Button>
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={handleSave}
-                        disabled={!hasChanges}
-                    >
-                        Save
+
+                    <Box sx={{ display: "flex", gap: 2 }}>
+                        <Button
+                            variant="contained"
+                            color="error"
+                            onClick={handleCancel}
+                            disabled={!hasChanges}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={handleSave}
+                            disabled={!hasChanges}
+                        >
+                            Save
+                        </Button>
+                    </Box>
+                </Box>
+
+                {/* Add Moderator */}
+                <Box sx={{ mb: 3 }}>
+                    <TextField
+                        label="Add Moderator by Username"
+                        fullWidth
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                    />
+                    <Button variant="contained" sx={{ mt: 1 }} onClick={handleAddModerator}>
+                        Add
                     </Button>
                 </Box>
+
+                {/* Moderator List */}
+                {moderatorList.length > 0 && (
+                    <>
+                        <Typography variant="h6" sx={{ mb: 2 }}>
+                            Playlist Moderators
+                        </Typography>
+                        <Box
+                            sx={{
+                                maxHeight: 200, // Fixed height for the box
+                                overflowY: "auto", // Enable vertical scrolling
+                                border: "1px solid #ccc", // Optional: Add a border for better visibility
+                                borderRadius: 2, // Optional: Rounded corners
+                                bgcolor: "background.paper", // Background color
+                                p: 1, // Padding inside the box
+                            }}
+                        >
+                            <List>
+                                {moderatorList.map((mod) => (
+                                    <ListItem key={mod.id}>
+                                        <ListItemText
+                                            primary={mod.username || mod.id}
+                                            secondary={`ID: ${mod.id}`}
+                                        />
+                                        <ListItemSecondaryAction>
+                                            <IconButton
+                                                edge="end"
+                                                color="primary"
+                                                href={`/user/${mod.username || mod.id}`}
+                                            >
+                                                <ProfileIcon />
+                                            </IconButton>
+                                            <IconButton
+                                                edge="end"
+                                                color="error"
+                                                onClick={() => handleRemoveModerator(mod.id)}
+                                            >
+                                                <DeleteIcon />
+                                            </IconButton>
+                                        </ListItemSecondaryAction>
+                                    </ListItem>
+                                ))}
+                            </List>
+                        </Box>
+                    </>
+                )}
             </Box>
-
-            {/* Delete Playlist */}
-            <Box sx={{ mt: 3 }}>
-
-            </Box>
-
-            {/* Add Moderator */}
-            <Box sx={{ mb: 3 }}>
-                <TextField
-                    label="Add Moderator by Username"
-                    fullWidth
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                />
-                <Button variant="contained" sx={{ mt: 1 }} onClick={handleAddModerator}>
-                    Add
-                </Button>
-            </Box>
-
-            {/* Moderator List */}
-            {moderatorList.length > 0 && (
-                <>
-                    <Typography variant="h6" sx={{ mb: 2 }}>
-                        Playlist Moderators
-                    </Typography>
-                    <Box
-                        sx={{
-                            maxHeight: 200, // Fixed height for the box
-                            overflowY: "auto", // Enable vertical scrolling
-                            border: "1px solid #ccc", // Optional: Add a border for better visibility
-                            borderRadius: 2, // Optional: Rounded corners
-                            bgcolor: "background.paper", // Background color
-                            p: 1, // Padding inside the box
-                        }}
-                    >
-                        <List>
-                            {moderatorList.map((mod) => (
-                                <ListItem key={mod.id}>
-                                    <ListItemText
-                                        primary={mod.username || mod.id}
-                                        secondary={`ID: ${mod.id}`}
-                                    />
-                                    <ListItemSecondaryAction>
-                                        <IconButton
-                                            edge="end"
-                                            color="primary"
-                                            href={`/user/${mod.username || mod.id}`}
-                                        >
-                                            <ProfileIcon />
-                                        </IconButton>
-                                        <IconButton
-                                            edge="end"
-                                            color="error"
-                                            onClick={() => handleRemoveModerator(mod.id)}
-                                        >
-                                            <DeleteIcon />
-                                        </IconButton>
-                                    </ListItemSecondaryAction>
-                                </ListItem>
-                            ))}
-                        </List>
-                    </Box>
-                </>
-            )}
 
             {/* Confirmation Dialog */}
             <Dialog
@@ -339,4 +346,8 @@ export default function PlaylistSettings({ playlistId }) {
             </Dialog>
         </Box>
     );
+}
+
+PlaylistSettings.propTypes = {
+    playlistId: PropTypes.number.isRequired,
 }
