@@ -193,7 +193,7 @@ isUsernameAvailable.propTypes = {
 
 // Sign up
 export async function signUp(email, password, username, captchaToken) {
-    const { error: signUpError, user } = await supabase.auth.signUp({
+    const { data: {user} , error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
