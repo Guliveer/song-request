@@ -41,6 +41,7 @@ export default function ManagePlaylist() {
     const [loading, setLoading] = useState(true);
     const [currentUser, setCurrentUser] = useState(null);
     const [activeTab, setActiveTab] = useState(0);
+    const [isAllowed, setIsAllowed] = useState(false);
 
     useEffect(() => {
         const fetchCurrentUser = async () => {
@@ -66,8 +67,9 @@ export default function ManagePlaylist() {
                     // Check if the current user is a moderator or host
                     const moderators = await getPlaylistModerators(data?.id);
                     const allowAccess = Object.keys(moderators).includes(currentUser.id) || data.host === currentUser.id;
+                    setIsAllowed(allowAccess || joinStatus);
 
-                    if ((data.is_public === false && data.method === 'id' && !joinStatus) || !allowAccess) {
+                    if ((data.is_public === false && data.method === 'id' && !joinStatus) || !allowAccess || !joinStatus) {
                         console.warn("You cannot access this playlist right now.");
                         setPlaylistData(null);
                         setLoading(false);
@@ -91,7 +93,7 @@ export default function ManagePlaylist() {
         setActiveTab(newValue);
     };
 
-    if (loading) {
+    if (!isAllowed || loading) {
         return (
             <Box
                 sx={{

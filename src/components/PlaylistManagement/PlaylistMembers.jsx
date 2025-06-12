@@ -7,7 +7,7 @@ import {
     getPlaylistBannedUsers,
     banPlaylistUser,
     unbanPlaylistUser,
-    leavePlaylist,
+    leavePlaylist, getCurrentUser,
 } from "@/utils/actions";
 import {
     Divider,
@@ -43,6 +43,7 @@ export default function PlaylistMembers({ playlistId }) {
         moderators: [],
         members: [],
         bannedUsers: [],
+        currentUser: null,
     });
     const [uiState, setUiState] = useState({
         loading: true,
@@ -59,13 +60,14 @@ export default function PlaylistMembers({ playlistId }) {
     const fetchAllData = async () => {
         try {
             setUiState((prev) => ({ ...prev, loading: true }));
-            const [playlist, moderators, members, bannedUsers] = await Promise.all([
+            const [playlist, moderators, members, bannedUsers, currentUser] = await Promise.all([
                 getPlaylistData(playlistId),
                 getPlaylistModerators(playlistId),
                 getPlaylistMembers(playlistId),
                 getPlaylistBannedUsers(playlistId),
+                getCurrentUser(),
             ]);
-            setData({ playlist, moderators, members, bannedUsers });
+            setData({ playlist, moderators, members, bannedUsers, currentUser });
         } catch (error) {
             console.error("Error fetching data:", error.message);
         } finally {
@@ -116,6 +118,11 @@ export default function PlaylistMembers({ playlistId }) {
 
     const handleBulkAction = async (group, action) => {
         try {
+            if (data.playlist?.host !== data.currentUser?.id) {
+                console.error("Only the host can perform bulk actions.");
+                throw new Error("Only the host can perform bulk actions.");
+            }
+
             const users = group === "everyone"
                 ? data.members.map((user) => user.id)
                 : group === "moderators"
@@ -159,6 +166,8 @@ export default function PlaylistMembers({ playlistId }) {
         );
     }
 
+    const isHost = data.playlist?.host === data.currentUser?.id;
+
     return (
         <Box sx={{ p: 3 }}>
             <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -191,13 +200,15 @@ export default function PlaylistMembers({ playlistId }) {
                     onChange={handleSearchChange}
                 />
 
-                <Button
-                    color="error"
-                    variant="contained"
-                    onClick={(e) => setUiState((prev) => ({ ...prev, anchorEl: e.currentTarget }))}
-                >
-                    Bulk Actions
-                </Button>
+                {isHost && (
+                    <Button
+                        color="error"
+                        variant="contained"
+                        onClick={(e) => setUiState((prev) => ({ ...prev, anchorEl: e.currentTarget }))}
+                    >
+                        Bulk Actions
+                    </Button>
+                )}
             </Box>
             <List
                 component="div"
@@ -267,12 +278,15 @@ export default function PlaylistMembers({ playlistId }) {
                 <MenuItem onClick={() => handleOpenDialogBulk("ban everyone")}>Ban Everyone</MenuItem>
             </Menu>
 
-            <ConfirmationBulkDialog
-                open={uiState.dialogOpenBulk}
-                group={uiState.selectedGroup}
-                onClose={handleCloseDialogBulk}
-                onConfirm={(action) => handleBulkAction(uiState.selectedGroup, action)}
-            />
+            {isHost && (
+                <ConfirmationBulkDialog
+                    open={uiState.dialogOpenBulk}
+                    group={uiState.selectedGroup}
+                    onClose={handleCloseDialogBulk}
+                    onConfirm={(action) => handleBulkAction(uiState.selectedGroup, action)}
+                />
+            )}
+
 
             <ConfirmationDialog
                 open={uiState.dialogOpen}

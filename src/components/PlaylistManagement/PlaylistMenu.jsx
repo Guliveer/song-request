@@ -132,14 +132,6 @@ export default function PlaylistMenu({ playlistId }) {
                     horizontal: 'right',
                 }}
             >
-                <MenuItem onClick={handleMenuClose}>
-                    <Link href={`/playlist/${playlistId}`} passHref>
-                        <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>
-                            <PlaylistIcon sx={{ mr: 1 }} />
-                            View Playlist
-                        </Box>
-                    </Link>
-                </MenuItem>
 
                 {(isHost || hasJoined) && (
                     <MenuItem onClick={handleMenuClose}>

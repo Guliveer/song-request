@@ -18,6 +18,7 @@ export default function ManagePlaylist() {
     const [loading, setLoading] = useState(true);
     const [currentUser, setCurrentUser] = useState(null);
     const [hasJoined, setHasJoined] = useState(null);
+    const [isAllowed, setIsAllowed] = useState(false);
 
     useEffect(() => {
         const fetchCurrentUser = async () => {
@@ -38,7 +39,6 @@ export default function ManagePlaylist() {
                 if (currentUser && data) {
                     const joinedPlaylists = await getJoinedPlaylists(currentUser.id);
                     const joinStatus = joinedPlaylists.includes(data?.id);
-                    setHasJoined(joinStatus);
 
                     if (data.is_public === false && data.method === 'id' && !joinStatus) {
                         console.warn("You cannot access this playlist right now.");
@@ -46,6 +46,8 @@ export default function ManagePlaylist() {
                         setLoading(false);
                         return;
                     }
+
+                    setIsAllowed(joinStatus || data.is_public);
                 }
 
                 setPlaylistData(data);
@@ -60,7 +62,7 @@ export default function ManagePlaylist() {
         fetchPlaylistData();
     }, [currentUser, router.isReady, playlist, playlistId]);
 
-    if (loading) {
+    if (!isAllowed || loading) {
         return (
             <Box
                 sx={{
