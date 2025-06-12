@@ -36,6 +36,7 @@ import {
     BlockRounded as BanIcon,
     UndoRounded as UndoIcon,
 } from "@mui/icons-material";
+import PropTypes from "prop-types";
 
 export default function PlaylistSettings({ playlistId }) {
     const [playlistData, setPlaylistData] = useState(null);

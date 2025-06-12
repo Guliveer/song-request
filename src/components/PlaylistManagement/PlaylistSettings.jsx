@@ -410,7 +410,6 @@ export default function PlaylistSettings({ playlistId }) {
         </Box>
     );
 }
-
 PlaylistSettings.propTypes = {
     playlistId: PropTypes.number.isRequired,
 }
