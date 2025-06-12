@@ -787,7 +787,7 @@ export async function getPlaylistBannedUsers(playlistId) {
         // Fetch user details for each banned user
         const { data: users, error: usersError } = await supabase
             .from('users')
-            .select('id')
+            .select('id, username')
             .in('id', bannedUsers);
 
         if (usersError) throw usersError;

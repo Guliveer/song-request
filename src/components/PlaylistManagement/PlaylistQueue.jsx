@@ -312,7 +312,15 @@ export default function PlaylistSettings({ playlistId }) {
             <Dialog open={bannedDialogOpen} onClose={handleBannedDialogClose}>
                 <DialogTitle>Banned Songs</DialogTitle>
                 <DialogContent>
-                    <List>
+                    <List
+                        component="div"
+                        sx={{
+                            maxHeight: 400, // Set the maximum height for the scrollable area
+                            overflowY: "auto",
+                            borderRadius: 2,
+                            padding: 1,
+                        }}
+                    >
                         {bannedSongs.map((song, index) => (
                             <ListItem key={index} sx={{ display: "flex", justifyContent: "space-between" }}>
                                 <Box>
@@ -344,4 +352,7 @@ export default function PlaylistSettings({ playlistId }) {
             </Dialog>
         </Box>
     );
+}
+PlaylistSettings.propTypes = {
+    playlistId: PropTypes.number.isRequired,
 }

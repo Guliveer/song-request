@@ -29,6 +29,7 @@ import {
     LockRounded as PrivateIcon,
     PublicRounded as PublicIcon,
     LinkRounded as LinkIcon,
+    ArrowBackRounded as BackIcon,
 } from '@mui/icons-material';
 import PlaylistMenu from "@/components/PlaylistManagement/PlaylistMenu";
 
@@ -129,10 +130,21 @@ export default function ManagePlaylist() {
             {/* Menu */}
             <Box sx={{
                 display: 'flex',
+                width: "100%",
                 alignItems: 'center',
-                justifyContent: 'flex-end',
+                justifyContent: 'space-between',
                 padding: '1rem 2rem',
             }}>
+                <Link href={`/playlist/${playlistData.url}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                    <Box sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                        cursor: 'pointer',
+                    }}>
+                        <BackIcon />
+                    </Box>
+                </Link>
                 <PlaylistMenu playlistId={playlistData.id} />
             </Box>
 

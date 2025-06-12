@@ -20,7 +20,6 @@ import {
     Typography,
     List,
     ListItem,
-    ListItemText,
     IconButton,
     Dialog,
     DialogTitle,
@@ -28,7 +27,15 @@ import {
     DialogContent,
     DialogContentText,
 } from "@mui/material";
-import { BlockRounded as BanIcon, UndoRounded as UnbanIcon } from "@mui/icons-material";
+import {
+    StarRounded as HostIcon,
+    ShieldRounded as ModIcon,
+    BlockRounded as BanIcon,
+    ClearRounded as KickIcon,
+    UndoRounded as UnbanIcon,
+} from "@mui/icons-material";
+import {FormField} from "@/components/Items";
+import PropTypes from "prop-types";
 
 export default function PlaylistMembers({ playlistId }) {
     const [data, setData] = useState({
@@ -40,9 +47,14 @@ export default function PlaylistMembers({ playlistId }) {
     const [uiState, setUiState] = useState({
         loading: true,
         dialogOpen: false,
+        dialogOpenBulk: false,
+        bannedDialogOpen: false,
         selectedGroup: "",
+        selectedAction: "",
+        selectedUser: null,
         anchorEl: null,
     });
+    const [searchQuery, setSearchQuery] = useState("");
 
     const fetchAllData = async () => {
         try {
@@ -65,12 +77,41 @@ export default function PlaylistMembers({ playlistId }) {
         fetchAllData();
     }, [playlistId]);
 
-    const handleOpenDialog = (group) => {
-        setUiState((prev) => ({ ...prev, dialogOpen: true, selectedGroup: group, anchorEl: null }));
+    const handleSearchChange = (event) => {
+        setSearchQuery(event.target.value);
     };
 
+    const filteredMembers = data.members.filter((member) =>
+        member.username.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    const handleOpenDialogBulk = (group) => {
+        setUiState((prev) => ({ ...prev, dialogOpenBulk: true, selectedGroup: group, anchorEl: null }));
+    };
+
+    const handleCloseDialogBulk = () => {
+        setUiState((prev) => ({ ...prev, dialogOpenBulk: false, selectedGroup: "" }));
+    };
+
+    const handleOpenDialog = (user, action) => {
+        setUiState((prev) => ({
+            ...prev,
+            dialogOpen: true,
+            selectedUser: user,
+            selectedGroup: action,
+        }));
+    }
+
     const handleCloseDialog = () => {
-        setUiState((prev) => ({ ...prev, dialogOpen: false, selectedGroup: "" }));
+        setUiState((prev) => ({ ...prev, dialogOpen: false, selectedUser: null }));
+    }
+
+    const handleBannedDialogOpen = () => {
+        setUiState((prev) => ({ ...prev, bannedDialogOpen: true }));
+    };
+
+    const handleBannedDialogClose = () => {
+        setUiState((prev) => ({ ...prev, bannedDialogOpen: false }));
     };
 
     const handleBulkAction = async (group, action) => {
@@ -89,9 +130,26 @@ export default function PlaylistMembers({ playlistId }) {
         } catch (error) {
             console.error(`Error performing bulk ${action}:`, error.message);
         } finally {
-            handleCloseDialog();
+            handleCloseDialogBulk();
         }
     };
+
+    const handleAction = async (action, userId) => {
+        try {
+            if (action === "ban") {
+                await banPlaylistUser(playlistId, userId);
+            } else if (action === "unban") {
+                await unbanPlaylistUser(playlistId, userId);
+            } else if (action === "leave") {
+                await leavePlaylist(playlistId, userId);
+            }
+            await fetchAllData();
+        } catch (error) {
+            console.error(`Error performing ${action} action:`, error.message);
+        } finally {
+            handleCloseDialog();
+        }
+    }
 
     if (uiState.loading) {
         return (
@@ -107,6 +165,32 @@ export default function PlaylistMembers({ playlistId }) {
                 <Typography variant="h5" component="h2" sx={{color: 'white', fontWeight: 500}}>
                     Members Management
                 </Typography>
+
+                <Button
+                    variant="contained"
+                    onClick={handleBannedDialogOpen}
+                >
+                    View Banned Users
+                </Button>
+            </Box>
+
+            <Divider sx={{ my: 3 }} />
+
+            <Box sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                mb: 2,
+                gap: 2,
+            }}>
+                <FormField
+                    label="Search Users"
+                    variant="outlined"
+                    size="small"
+                    value={searchQuery}
+                    onChange={handleSearchChange}
+                />
+
                 <Button
                     color="error"
                     variant="contained"
@@ -115,19 +199,46 @@ export default function PlaylistMembers({ playlistId }) {
                     Bulk Actions
                 </Button>
             </Box>
-
-            <Divider sx={{ my: 3 }} />
-
-            <List>
-                {data.members.map((member) => (
+            <List
+                component="div"
+                sx={{
+                    maxHeight: 400, // Set the maximum height for the scrollable area
+                    overflowY: "auto",
+                    borderRadius: 2,
+                    padding: 1,
+                }}
+            >
+                {filteredMembers.map((member) => (
                     <ListItem key={member.id}>
-                        <Avatar src={member.avatar} alt={member.username}  sx={{ mr: 1.5 }} />
-                        <Typography component="div" sx={{ textDecoration: "none", color: "inherit", width: "100%" }}>
-                            <Link href={`/user/${member.username}`} style={{ textDecoration: "none", color: "inherit" }}>
+                        <Link href={`/user/${member.username}`} style={{
+                            display: "flex",
+                            alignItems: "center",
+                            textDecoration: "none",
+                            color: "inherit",
+                            width: "100%",
+                        }}>
+                            <Avatar src={member.avatar} alt={member.username}  sx={{ mr: 1.5 }} />
+                            <Typography component="div" sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                textDecoration: "none",
+                                color: "inherit",
+                            }}>
+                                {data.playlist.host === member.id && (
+                                    <HostIcon sx={{ mr: 0.5 }} fontSize="small" />
+                                )}
+
+                                {Object.keys(data.moderators).includes(member.id) && (
+                                    <ModIcon sx={{ mr: 0.5 }} fontSize="small" />
+                                )}
+
                                 {member.username}
-                            </Link>
-                        </Typography>
-                        <IconButton onClick={() => banPlaylistUser(playlistId, member.id)}>
+                            </Typography>
+                        </Link>
+                        <IconButton onClick={() => handleOpenDialog(member, "leave")}>
+                            <KickIcon color="warning" />
+                        </IconButton>
+                        <IconButton onClick={() => handleOpenDialog(member, "ban")}>
                             <BanIcon color="error" />
                         </IconButton>
                     </ListItem>
@@ -147,32 +258,53 @@ export default function PlaylistMembers({ playlistId }) {
                     horizontal: "right",
                 }}
             >
-                <MenuItem onClick={() => handleOpenDialog("kick regular users")}>Kick Regular Users</MenuItem>
-                <MenuItem onClick={() => handleOpenDialog("kick moderators")}>Kick Moderators</MenuItem>
-                <MenuItem onClick={() => handleOpenDialog("kick everyone")}>Kick Everyone</MenuItem>
+                <MenuItem onClick={() => handleOpenDialogBulk("kick regular users")}>Kick Regular Users</MenuItem>
+                <MenuItem onClick={() => handleOpenDialogBulk("kick moderators")}>Kick Moderators</MenuItem>
+                <MenuItem onClick={() => handleOpenDialogBulk("kick everyone")}>Kick Everyone</MenuItem>
                 <Divider />
-                <MenuItem onClick={() => handleOpenDialog("ban regular users")}>Ban Regular Users</MenuItem>
-                <MenuItem onClick={() => handleOpenDialog("ban moderators")}>Ban Moderators</MenuItem>
-                <MenuItem onClick={() => handleOpenDialog("ban everyone")}>Ban Everyone</MenuItem>
+                <MenuItem onClick={() => handleOpenDialogBulk("ban regular users")}>Ban Regular Users</MenuItem>
+                <MenuItem onClick={() => handleOpenDialogBulk("ban moderators")}>Ban Moderators</MenuItem>
+                <MenuItem onClick={() => handleOpenDialogBulk("ban everyone")}>Ban Everyone</MenuItem>
             </Menu>
+
+            <ConfirmationBulkDialog
+                open={uiState.dialogOpenBulk}
+                group={uiState.selectedGroup}
+                onClose={handleCloseDialogBulk}
+                onConfirm={(action) => handleBulkAction(uiState.selectedGroup, action)}
+            />
 
             <ConfirmationDialog
                 open={uiState.dialogOpen}
-                group={uiState.selectedGroup}
+                user={uiState.selectedUser}
+                action={uiState.selectedGroup.includes("ban") ? "ban" : "kick"}
                 onClose={handleCloseDialog}
-                onConfirm={(action) => handleBulkAction(uiState.selectedGroup, action)}
+                onConfirm={() => handleAction(uiState.selectedGroup.includes("ban") ? "ban" : "leave", uiState.selectedUser.id)}
+            />
+
+            <BannedUsersDialog
+                open={uiState.bannedDialogOpen}
+                bannedUsers={data.bannedUsers}
+                onClose={handleBannedDialogClose}
+                onConfirm={(action, userId) => handleAction(action, userId)}
             />
         </Box>
     );
 }
+PlaylistMembers.propTypes = {
+    playlistId: PropTypes.number.isRequired,
+}
 
-function ConfirmationDialog({ open, group, onClose, onConfirm }) {
+function ConfirmationBulkDialog({ open, group, onClose, onConfirm }) {
     return (
         <Dialog open={open} onClose={onClose}>
             <DialogTitle>Confirm Action</DialogTitle>
             <DialogContent>
                 <DialogContentText>
-                    Are you sure you want to {group.includes("kick") ? "kick" : "ban"} {group} from this playlist?
+                    Are you sure you want to {group.includes("kick") ? "kick" : "ban"}
+                    {group.includes("regular users") ? " all regular users "
+                        : group.includes("moderators") ? " all moderators " : " everyone "}
+                    from this playlist?
                 </DialogContentText>
             </DialogContent>
             <DialogActions>
@@ -188,4 +320,90 @@ function ConfirmationDialog({ open, group, onClose, onConfirm }) {
             </DialogActions>
         </Dialog>
     );
+}
+ConfirmationBulkDialog.propTypes = {
+    open: PropTypes.bool.isRequired,
+    group: PropTypes.string.isRequired,
+    onClose: PropTypes.func.isRequired,
+    onConfirm: PropTypes.func.isRequired,
+}
+
+function ConfirmationDialog({ open, user, action, onClose, onConfirm }) {
+    return (
+        <Dialog open={open} onClose={onClose}>
+            <DialogTitle>Confirm Action</DialogTitle>
+            <DialogContent>
+                <DialogContentText>
+                    Are you sure you want to {action} {user?.username}?
+                </DialogContentText>
+            </DialogContent>
+            <DialogActions>
+                <Button onClick={onClose} color="primary">
+                    Cancel
+                </Button>
+                <Button onClick={onConfirm} color="error">
+                    Confirm
+                </Button>
+            </DialogActions>
+        </Dialog>
+    );
+}
+ConfirmationDialog.propTypes = {
+    open: PropTypes.bool.isRequired,
+    user: PropTypes.object,
+    action: PropTypes.string.isRequired,
+    onClose: PropTypes.func.isRequired,
+    onConfirm: PropTypes.func.isRequired,
+}
+
+function BannedUsersDialog({ open, bannedUsers, onClose, onConfirm }) {
+    return (
+        <Dialog open={open} onClose={onClose}>
+            <DialogTitle>Banned Users</DialogTitle>
+            <DialogContent>
+                <List
+                    component="div"
+                    sx={{
+                        maxHeight: 400, // Set the maximum height for the scrollable area
+                        overflowY: "auto",
+                        borderRadius: 2,
+                        padding: 1,
+                    }}
+                >
+                    {bannedUsers.map((user) => (
+                        <ListItem key={user.id} sx={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            gap: 3,
+                        }}>
+                            <Box sx={{
+                                display: "flex",
+                                alignItems: "center",
+                            }}>
+                                <Avatar src={user.avatar} alt={user.username} sx={{ mr: 1.5 }} />
+                                <Typography component="div" sx={{ flexGrow: 1 }}>
+                                    {user.username}
+                                </Typography>
+                            </Box>
+                            <IconButton onClick={() => onConfirm("unban", user.id)}>
+                                <UnbanIcon color="primary" />
+                            </IconButton>
+                        </ListItem>
+                    ))}
+                </List>
+            </DialogContent>
+            <DialogActions>
+                <Button onClick={onClose} color="primary">
+                    Close
+                </Button>
+            </DialogActions>
+        </Dialog>
+    );
+}
+BannedUsersDialog.propTypes = {
+    open: PropTypes.bool.isRequired,
+    bannedUsers: PropTypes.arrayOf(PropTypes.object).isRequired,
+    onClose: PropTypes.func.isRequired,
+    onConfirm: PropTypes.func.isRequired,
 }

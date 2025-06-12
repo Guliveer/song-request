@@ -4,9 +4,11 @@ import {
     setPlaylistVisibility,
     setPlaylistUrl,
     setPlaylistDescription,
+    setPlaylistHost,
     addPlaylistModerator,
     removePlaylistModerator,
     deletePlaylist,
+    getPlaylistMembers,
     getPlaylistModerators,
     getPlaylistData,
 } from "@/utils/actions";
@@ -46,8 +48,11 @@ export default function PlaylistSettings({ playlistId }) {
     const [tempUrl, setTempUrl] = useState("");
     const [description, setDescription] = useState("");
     const [tempDescription, setTempDescription] = useState("");
+    const [selectedHost, setSelectedHost] = useState("");
+    const [tempSelectedHost, setTempSelectedHost] = useState("");
     const [username, setUsername] = useState("");
     const [moderatorList, setModeratorList] = useState([]);
+    const [members, setMembers] = useState([]);
     const [hasChanges, setHasChanges] = useState(false);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
@@ -90,16 +95,31 @@ export default function PlaylistSettings({ playlistId }) {
             console.error("Error fetching moderators:", error.message);
         }
     }
+
+    const fetchPlaylistMembers = async () => {
+        try {
+            const membersData = await getPlaylistMembers(playlistId);
+            setMembers(membersData);
+        } catch (error) {
+            console.error("Error fetching playlist members:", error.message);
+        }
+    };
+
     useEffect(() => {
         fetchPlaylistData();
         fetchPlaylistModerators();
+        fetchPlaylistMembers();
     }, [playlistId]);
 
     useEffect(() => {
         setHasChanges(
-            tempName !== name || tempIsPublic !== isPublic || tempUrl !== url || tempDescription !== description
+            tempName !== name ||
+            tempIsPublic !== isPublic ||
+            tempUrl !== url ||
+            tempDescription !== description ||
+            tempSelectedHost !== selectedHost
         );
-    }, [tempName, tempIsPublic, tempUrl, tempDescription, name, isPublic, url, description]);
+    }, [tempName, tempIsPublic, tempUrl, tempDescription, tempSelectedHost, name, isPublic, url, description, selectedHost]);
 
     const handleSave = async () => {
         try {
@@ -107,9 +127,18 @@ export default function PlaylistSettings({ playlistId }) {
             if (tempIsPublic !== isPublic) await setPlaylistVisibility(playlistId, tempIsPublic);
             if (tempUrl !== url) await setPlaylistUrl(playlistId, tempUrl);
             if (tempDescription !== description) await setPlaylistDescription(playlistId, tempDescription);
+            if (tempSelectedHost !== selectedHost) await setPlaylistHost(playlistId, tempSelectedHost);
             alert("Settings updated successfully.");
         } catch (error) {
             console.error("Error saving settings:", error.message);
+        } finally {
+            setHasChanges(false);
+            await fetchPlaylistData();
+            setTempName(name);
+            setTempIsPublic(isPublic);
+            setTempUrl(url);
+            setTempDescription(description);
+            setTempSelectedHost(selectedHost);
         }
     };
 
@@ -231,6 +260,28 @@ export default function PlaylistSettings({ playlistId }) {
                         value={tempDescription}
                         onChange={(e) => setTempDescription(e.target.value)}
                     />
+                </Box>
+
+                {/* Change Host */}
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                    <Typography variant="h6" component="h3" sx={{ color: "white", fontWeight: 500 }}>
+                        Change Playlist Host
+                    </Typography>
+                    <Select
+                        value={tempSelectedHost}
+                        onChange={(e) => setTempSelectedHost(e.target.value)}
+                        displayEmpty
+                        sx={{ minWidth: 200 }}
+                    >
+                        <MenuItem value="" disabled>
+                            Select a new host
+                        </MenuItem>
+                        {members.map((member) => (
+                            <MenuItem key={member.id} value={member.id}>
+                                {member.username}
+                            </MenuItem>
+                        ))}
+                    </Select>
                 </Box>
 
                 {/* Save and Cancel Buttons */}
