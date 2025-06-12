@@ -773,7 +773,8 @@ export default function Account() {
                                 Scan this QR code with your Authenticator app (Google Authenticator, Authy, etc.), then enter the 6-digit code below.
                             </Typography>
                             <Box sx={{ display: 'flex', justifyContent: 'center'}}>
-                                <img src={qrCode} alt="QR code"/>
+                                <img src={qrCode} alt="QR code" width={220} height={220} style={{ background: '#fff', padding: 8 }} />
+
                             </Box>
                             {/* ... */}
                         </>
