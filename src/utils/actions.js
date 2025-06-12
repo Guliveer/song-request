@@ -205,7 +205,27 @@ export async function signUp(email, password, username, captchaToken) {
         },
     });
 
-    if (signUpError) throw new Error(signUpError.message);
+    if (signUpError) {
+        console.error('Error signing up:', signUpError.message);
+        throw new Error(`Failed to sign up: ${signUpError.message}`);
+    }
+
+    // random hex color for user (#rrggbb)
+    const randColor = `#${Math.floor(Math.random()*256*256*256).toString(16).padStart(6, '0')}`;
+
+    // Add user to the public.users table
+    const { error: userError } = await supabase
+        .from('users')
+        .insert({
+            id: user.id,
+            username: username,
+            color: randColor,
+        });
+
+    if (userError) {
+        console.error('Failed to create user profile:', userError.message);
+        throw new Error(`Failed to create user profile: ${userError.message}`);
+    }
 
     return user;
 }
