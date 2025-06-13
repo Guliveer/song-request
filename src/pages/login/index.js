@@ -8,7 +8,6 @@ import { ErrorAlert, FormField } from "@/components/Items";
 import { Button, Typography, Link, CircularProgress, Box, Divider, Dialog, DialogTitle, DialogContent, DialogActions, TextField } from "@mui/material";
 import AuthProvidersList from "@/components/AuthProvidersList";
 import SetTitle from "@/components/SetTitle";
-import { Dialog, DialogTitle, DialogContent, DialogActions, TextField } from "@mui/material";
 
 export default function Login() {
     const [email, setEmail] = useState('');
