@@ -21,7 +21,7 @@ import {extractSpotifyTrackId, fetchSpotifyMetadata} from "@/utils/spotify";
 import { whitelistedUrls } from "@/utils/whitelistedUrls";
 import PropTypes from "prop-types";
 
-export default function AddSongForm({playlist}) {
+export default function AddSongForm({ playlist }) {
     const theme = useTheme();
     const router = useRouter();
     const { isLoggedIn } = useUser();
@@ -137,11 +137,18 @@ export default function AddSongForm({playlist}) {
             }
         })
 
+        // Banowanie dla głównej tabeli banned_url
+        const { data: bannedGlobalUrl } = await supabase
+            .from('banned_url')
+            .select('id, banned_url')
+            .eq('url', passedUrl)
+            .maybeSingle();
+
         // Validate URL based on whitelisted URLs,
         // if formData.url doesn't start with (optional)
         // http(s)://(www.) and then one of the whitelisted URLs,
         // after which there are only alphanumeric characters, hyphens, or underscores
-        const urlPattern = new RegExp(`^(https?://)?(www\\.)?((${whitelistedUrls.join(')|(')}))[a-zA-Z0-9-_\$]+\\??$`);
+        const urlPattern = new RegExp(`^(https?://)?(www\\.)?(${whitelistedUrls.join('|')})[a-zA-Z0-9-_$]+\\??$`);
         if (!urlPattern.test(passedUrl.href)) {
             alert("Invalid URL. Please enter a valid YouTube or Spotify link.");
             alert(passedUrl.href);

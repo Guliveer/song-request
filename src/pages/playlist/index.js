@@ -172,7 +172,7 @@ export default function PlaylistsPage() {
                                     <Box display="flex" alignItems="center" mb={1}>
                                         <HostIcon sx={{ fontSize: 16, mr: 0.5, color: "text.secondary" }} />
                                         <Typography variant="caption" color="text.secondary" sx={{fontWeight: "bold"}}>
-                                            <Link href={`/user/${playlist.users.id}`}>
+                                            <Link href={`/user/${playlist.users.username}`}>
                                                 @{playlist.users.username}
                                             </Link>
                                         </Typography>
@@ -181,16 +181,14 @@ export default function PlaylistsPage() {
                                     <Box display="flex" alignItems="center" mb={1}>
                                         <MembersIcon sx={{ fontSize: 16, mr: 0.5, color: "text.secondary" }} />
                                         <Typography variant="caption" color="text.secondary">
-                                            <Link href={`/user/${playlist.users.id}`}>
-                                                {playlist.userCount} members
-                                            </Link>
+                                            {playlist.userCount} members
                                         </Typography>
                                     </Box>
                                 </CardContent>
 
                                 <CardActions sx={{ p: 2, pt: 0 }}>
                                     <Button size="small" variant="outlined" fullWidth>
-                                        <Link href={`/playlist/${playlist.url}`}>
+                                        <Link href={`/playlist/${playlist.url}`} passHref>
                                             View Playlist
                                         </Link>
                                     </Button>

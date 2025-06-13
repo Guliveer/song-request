@@ -35,6 +35,15 @@ export default function PlaylistInfo() {
     const [friends, setFriends] = useState([]);
     const [hostAvatarUrl, setHostAvatarUrl] = useState(null);
     const [friendAvatars, setFriendAvatars] = useState({});
+    const [currentUser, setCurrentUser] = useState(null);
+    const [hasJoined, setHasJoined] = useState(null);
+    const [isAllowed, setIsAllowed] = useState(false);
+
+    useEffect(() => {
+        const fetchCurrentUser = async () => {
+            const user = await getCurrentUser();
+            setCurrentUser(user);
+        };
 
     // Funkcje nawigacji
     const navigateToPlaylist = () => {
@@ -68,6 +77,8 @@ export default function PlaylistInfo() {
                         const avatarUrl = await genUserAvatar(data.host);
                         setHostAvatarUrl(avatarUrl);
                     }
+
+                    setIsAllowed(joinStatus || data.is_public);
                 }
 
                 // Pobierz znajomych, którzy mają tę playlistę
@@ -97,20 +108,22 @@ export default function PlaylistInfo() {
         };
         fetchAll();
     }, [router.isReady, playlist]);
-
-    if (loading)
+      
+    if (!isAllowed || loading) {
         return (
             <Box sx={{ display: "flex", justifyContent: "center", mt: 8 }}>
                 <CircularProgress />
             </Box>
         );
+    }
 
-    if (!playlistData)
+    if (!playlistData) {
         return (
             <Typography color="error" sx={{ mt: 6, textAlign: "center" }}>
                 Playlist not found.
             </Typography>
         );
+    }
 
     const createdAt = playlistData.created_at
         ? format(new Date(playlistData.created_at), "MMMM d, yyyy, HH:mm", { locale: enUS })

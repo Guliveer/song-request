@@ -28,7 +28,7 @@ import {
     Block as BlockIcon
 } from '@mui/icons-material';
 import {useTheme} from "@mui/material/styles";
-import { extractYoutubeVideoId } from "@/utils/youtube";
+import {extractYoutubeVideoId, fetchYouTubeMetadata} from "@/utils/youtube";
 import { extractSpotifyTrackId} from "@/utils/spotify";
 import { fetchSpotifyMetadata } from "@/utils/spotify";
 import YouTube from 'react-youtube';
