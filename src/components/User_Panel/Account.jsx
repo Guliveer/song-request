@@ -44,7 +44,6 @@ export default function Account() {
     const [passwordSuccess, setPasswordSuccess] = useState("");
 
 
-
     // Nowe: stan na oczekujące zmiany
     const [pendingChanges, setPendingChanges] = useState({
         username: null,
@@ -208,6 +207,143 @@ export default function Account() {
     };
 
 
+    const [mfaDialogOpen, setMfaDialogOpen] = useState(false);
+    const [qrCode, setQrCode] = useState('');
+    const [factorId, setFactorId] = useState('');
+    const [verifyCode, setVerifyCode] = useState('');
+    const [mfaError, setMfaError] = useState('');
+    const [mfaSuccess, setMfaSuccess] = useState('');
+
+    const removeUnverifiedFactors = async () => {
+        const { data } = await supabase.auth.mfa.listFactors();
+        if (data?.all?.length) {
+            await Promise.all(
+                data.all
+                    .filter(factor => factor.status === "unverified")
+                    .map(factor => supabase.auth.mfa.unenroll({ factorId: factor.id }))
+            );
+        }
+    };
+
+
+    // Funkcja do rozpoczęcia enrollowania MFA
+    const handleEnableMfa = async () => {
+        setMfaError('');
+        setMfaSuccess('');
+        setVerifyCode('');
+        setQrCode('');
+        setFactorId('');
+        setTotpSecret('');
+        setMfaDialogOpen(true);
+
+        await removeUnverifiedFactors();
+
+        const { data, error } = await supabase.auth.mfa.enroll({ factorType: 'totp' });
+
+        if (error) {
+            setMfaError(error.message);
+            return;
+        }
+        if (!data.totp?.qr_code) {
+            setMfaError("QR code not received from Supabase. Try again in a few seconds.");
+            return;
+        }
+        setQrCode(data.totp.qr_code);
+        setFactorId(data.id);
+        setTotpSecret(data.totp.secret); // <-- dodaj to!
+    };
+    // Funkcja do weryfikacji kodu z aplikacji Authenticator
+    const handleVerifyMfa = async () => {
+        setMfaError('');
+        const challenge = await supabase.auth.mfa.challenge({ factorId });
+        if (challenge.error) {
+            setMfaError(challenge.error.message);
+            return;
+        }
+        const challengeId = challenge.data.id;
+        const verify = await supabase.auth.mfa.verify({
+            factorId,
+            challengeId,
+            code: verifyCode.trim(),
+        });
+        if (verify.error) {
+            setMfaError(verify.error.message);
+        } else {
+            setMfaSuccess('Two-Factor Authentication enabled successfully!');
+            setTimeout(() => setMfaDialogOpen(false), 1500);
+        }
+    };
+
+    const [has2faEnabled, setHas2faEnabled] = useState(false);
+    const [totpFactorId, setTotpFactorId] = useState('');
+
+    // Sprawdź status 2FA po załadowaniu komponentu
+    useEffect(() => {
+        const check2fa = async () => {
+            const { data, error } = await supabase.auth.mfa.listFactors();
+            if (error) return;
+            const totp = data?.all?.find(f => (f.factor_type === 'totp' || f.factorType === 'totp') && f.status === 'verified');
+            if (totp) {
+                setHas2faEnabled(true);
+                setTotpFactorId(totp.id);
+            } else {
+                setHas2faEnabled(false);
+                setTotpFactorId('');
+            }
+        };
+        check2fa();
+    }, [mfaDialogOpen, mfaSuccess]);
+
+    const handleDisable2fa = async () => {
+        if (!totpFactorId) return;
+        const { error } = await supabase.auth.mfa.unenroll({ factorId: totpFactorId });
+        if (error) {
+            setMfaError(error.message);
+        } else {
+            setHas2faEnabled(false);
+            setTotpFactorId('');
+            setMfaSuccess('Two-Factor Authentication disabled!');
+            setTimeout(() => setMfaSuccess(''), 1500);
+        }
+    };
+
+    const [disable2faDialogOpen, setDisable2faDialogOpen] = useState(false);
+    const [disable2faCode, setDisable2faCode] = useState('');
+    const [disable2faError, setDisable2faError] = useState('');
+
+    const handleDisable2faWithCode = async () => {
+        setDisable2faError('');
+        // 1. Challenge MFA
+        const challenge = await supabase.auth.mfa.challenge({ factorId: totpFactorId });
+        if (challenge.error) {
+            setDisable2faError(challenge.error.message);
+            return;
+        }
+        // 2. Verify MFA
+        const verify = await supabase.auth.mfa.verify({
+            factorId: totpFactorId,
+            challengeId: challenge.data.id,
+            code: disable2faCode.trim(),
+        });
+        if (verify.error) {
+            setDisable2faError(verify.error.message);
+            return;
+        }
+        // 3. Unenroll MFA
+        const { error } = await supabase.auth.mfa.unenroll({ factorId: totpFactorId });
+        if (error) {
+            setDisable2faError(error.message);
+        } else {
+            setHas2faEnabled(false);
+            setTotpFactorId('');
+            setMfaSuccess('Two-Factor Authentication disabled!');
+            setDisable2faDialogOpen(false);
+            setTimeout(() => setMfaSuccess(''), 1500);
+        }
+    };
+
+
+    const [totpSecret, setTotpSecret] = useState('');
     return (
         <>
             <Typography variant="h5" component="h2" sx={{ color: 'white', fontWeight: 500 }}>
@@ -578,6 +714,7 @@ export default function Account() {
                     >
                         Remove
                     </Button>
+
                     <Button
                         onClick={() => setEmojiDialogOpen(false)}
                     >
@@ -596,6 +733,7 @@ export default function Account() {
                     </Button>
                 </DialogActions>
             </Dialog>
+
             <Button
                 variant="outlined"
                 sx={{ color: '#8FE6D5', mt: 2 }}
@@ -603,6 +741,231 @@ export default function Account() {
             >
                 Change password
             </Button>
+
+            <Box sx={{ mt: 4 }}>
+                {has2faEnabled ? (
+                    <Button
+                        variant="outlined"
+                        color="error"
+                        onClick={() => setDisable2faDialogOpen(true)}
+                    >
+                        Disable Two-Factor Authentication (2FA)
+                    </Button>
+
+                ) : (
+                    <Button
+                        variant="outlined"
+                        color="secondary"
+                        onClick={handleEnableMfa}
+                    >
+                        Enable Two-Factor Authentication (2FA)
+                    </Button>
+                )}
+                {mfaError && (
+                    <Typography color="error" sx={{ mt: 2 }}>
+                        {mfaError}
+                    </Typography>
+                )}
+                {mfaSuccess && (
+                    <Typography color="success.main" sx={{ mt: 2 }}>
+                        {mfaSuccess}
+                    </Typography>
+                )}
+            </Box>
+            <Dialog
+                open={disable2faDialogOpen}
+                onClose={() => setDisable2faDialogOpen(false)}
+                fullWidth
+                maxWidth="xs"
+            >
+                <DialogTitle>Disable Two-Factor Authentication</DialogTitle>
+                <DialogContent>
+                    <Typography sx={{ mb: 2 }}>
+                        To disable 2FA, enter the current code from your Authenticator app.
+                    </Typography>
+                    <TextField
+                        label="6-digit code"
+                        value={disable2faCode}
+                        onChange={e => setDisable2faCode(e.target.value)}
+                        fullWidth
+                        inputProps={{ maxLength: 6, pattern: '[0-9]*', inputMode: 'numeric' }}
+                    />
+                    {disable2faError && (
+                        <Typography color="error" sx={{ mt: 2 }}>
+                            {disable2faError}
+                        </Typography>
+                    )}
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setDisable2faDialogOpen(false)}>
+                        Cancel
+                    </Button>
+                    <Button
+                        onClick={handleDisable2faWithCode}
+                        disabled={!disable2faCode}
+                        variant="contained"
+                        color="error"
+                    >
+                        Disable 2FA
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            <Dialog
+                open={mfaDialogOpen}
+                onClose={() => setMfaDialogOpen(false)}
+                fullWidth
+                maxWidth="xs"
+                PaperProps={{
+                    sx: {
+                        borderRadius: 4,
+                        background: theme.palette.background.paper,
+                        boxShadow: 24,
+                    },
+                }}
+            >
+                <DialogTitle sx={{ color: 'white', fontWeight: 600, pb: 0 }}>
+                    Enable Two-Factor Authentication
+                </DialogTitle>
+                <DialogContent sx={{ pt: 1 }}>
+                    {/* Krok 1: Instrukcja */}
+                    <Typography variant="body1" sx={{ color: '#8FE6D5', mb: 2 }}>
+                        Step 1: Scan the QR code below with your Authenticator app
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: '#bbb', mb: 2 }}>
+                        Use apps like <strong>Google Authenticator</strong>, <strong>Authy</strong> or <strong>Microsoft Authenticator</strong>.
+                        If you can’t scan, you can manually enter the code shown below.
+                    </Typography>
+                    {/* QR code */}
+                    {qrCode && (
+                        <>
+                            <Typography variant="body2" sx={{ mb: 2 }}>
+                                Scan this QR code with your Authenticator app (Google Authenticator, Authy, etc.), then enter the 6-digit code below.
+                            </Typography>
+                            <Box sx={{ display: 'flex', justifyContent: 'center'}}>
+                                <img src={qrCode} alt="QR code" width={220} height={220} style={{ background: '#fff', padding: 8 }} />
+
+                            </Box>
+                            {/* ... */}
+                        </>
+                    )}
+                    {totpSecret && (
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                justifyContent: 'center',
+                                width: '100%',
+                            }}
+                        >
+                            <Box
+                                sx={{
+                                    mt: 2,
+                                    mb: 1,
+                                    px: 3,
+                                    py: 2,
+                                    background: '#23272a',
+                                    borderRadius: 3,
+                                    border: '1px solid #333',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    boxShadow: '0 2px 16px #0004',
+                                    maxWidth: 340,
+                                    mx: 'auto', // automatyczne marginesy boczne
+                                    textAlign: 'center', // wyśrodkowanie tekstu w środku boxa
+                                }}
+                            >
+                                <Typography
+                                    variant="subtitle2"
+                                    sx={{
+                                        color: '#8FE6D5',
+                                        fontWeight: 700,
+                                        letterSpacing: 1,
+                                        mb: 1,
+                                    }}
+                                >
+                                    Manual setup code
+                                </Typography>
+                                <Typography
+                                    variant="body1"
+                                    sx={{
+                                        color: '#fff',
+                                        fontFamily: 'monospace',
+                                        fontSize: '1.25rem',
+                                        letterSpacing: 2,
+                                        wordBreak: 'break-all',
+                                        mb: 1,
+                                        textAlign: 'center',
+                                        background: '#181a1b',
+                                        px: 2,
+                                        py: 1,
+                                        borderRadius: 2,
+                                        boxShadow: '0 1px 4px #0002'
+                                    }}
+                                    title={totpSecret}
+                                >
+                                    {totpSecret}
+                                </Typography>
+                                <Typography
+                                    variant="caption"
+                                    sx={{ color: '#bbb', textAlign: 'center' }}
+                                >
+                                    If you can't scan the QR code, copy and enter this code manually in your authenticator app.
+                                </Typography>
+                            </Box>
+                        </Box>
+                    )}
+                    {/* Krok 2: Kod z aplikacji */}
+                    <Divider sx={{ my: 3, borderColor: '#222' }}>Step 2</Divider>
+                    <Typography variant="body1" sx={{ color: '#8FE6D5', mb: 1 }}>
+                        Enter the 6-digit code from your app
+                    </Typography>
+                    <TextField
+                        label="6-digit code"
+                        value={verifyCode}
+                        onChange={e => setVerifyCode(e.target.value)}
+                        fullWidth
+                        sx={{
+                            input: { color: 'white', letterSpacing: 2, fontWeight: 600, fontSize: '1.2rem' },
+                            mb: 2,
+                            mt: 1
+                        }}
+                        autoFocus
+                        inputProps={{ maxLength: 6, pattern: '[0-9]*', inputMode: 'numeric' }}
+                    />
+
+                    {/* Komunikaty */}
+                    {mfaError && (
+                        <Typography color="error" sx={{ mt: 2 }}>
+                            {mfaError}
+                        </Typography>
+                    )}
+                    {mfaSuccess && (
+                        <Typography color="success.main" sx={{ mt: 2 }}>
+                            {mfaSuccess}
+                        </Typography>
+                    )}
+                </DialogContent>
+                <DialogActions sx={{ pr: 3, pb: 2 }}>
+                    <Button onClick={() => setMfaDialogOpen(false)} sx={{ color: '#aaa' }}>
+                        Cancel
+                    </Button>
+                    <Button
+                        onClick={handleVerifyMfa}
+                        disabled={!verifyCode || !factorId}
+                        variant="contained"
+                        sx={{
+                            bgcolor: '#8FE6D5',
+                            color: '#222',
+                            fontWeight: 700,
+                            '&:hover': { bgcolor: '#6fd1b5' }
+                        }}
+                    >
+                        Enable 2FA
+                    </Button>
+                </DialogActions>
+            </Dialog>
+          
             <Dialog open={showPasswordDialog} onClose={handleClosePasswordDialog} fullWidth maxWidth="sm">
                 <DialogTitle>Change password</DialogTitle>
                 <DialogContent>
@@ -634,10 +997,6 @@ export default function Account() {
                     <Button onClick={handleChangePassword} variant="contained">Change password</Button>
                 </DialogActions>
             </Dialog>
-
-
-
-
         </>
     );
 }
