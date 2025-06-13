@@ -136,9 +136,18 @@ export default function UserProfile({ userData }) {
             }
         }
 
-        fetchData();
-        fetchCommonPlaylists();
-        setLoading(false)
+        Promise.all([fetchData(), fetchCommonPlaylists()])
+            .then(() => {
+                setLoading(false);
+            })
+            .catch((error) => {
+                console.error("Error during data fetching:", error);
+                setSnackbar({
+                    open: true,
+                    message: "Error loading user data or playlists",
+                    severity: "error",
+                });
+            });
     }, [userData.id])
 
     const handleTabChange = (event, newValue) => {
