@@ -25,6 +25,7 @@ import { getPlaylistData, getUserInfo, getCurrentUser, getFriendsOnPlaylist, gen
 import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
 import SetTitle from "@/components/SetTitle";
+import PlaylistMenu from "@/components/PlaylistManagement/PlaylistMenu";
 
 export default function PlaylistInfo() {
     const router = useRouter();
@@ -36,7 +37,7 @@ export default function PlaylistInfo() {
     const [hostAvatarUrl, setHostAvatarUrl] = useState(null);
     const [friendAvatars, setFriendAvatars] = useState({});
     const [currentUser, setCurrentUser] = useState(null);
-    const [hasJoined, setHasJoined] = useState(null);
+    const [joinStatus, setJoinStatus] = useState(null);
     const [isAllowed, setIsAllowed] = useState(false);
 
     useEffect(() => {
@@ -44,6 +45,9 @@ export default function PlaylistInfo() {
             const user = await getCurrentUser();
             setCurrentUser(user);
         };
+
+        fetchCurrentUser();
+    }, []);
 
     // Funkcje nawigacji
     const navigateToPlaylist = () => {
@@ -53,7 +57,9 @@ export default function PlaylistInfo() {
     };
 
     const goBack = () => {
-        router.back();
+        if (playlistData?.id) {
+            router.push(`/playlist/${playlistData.id}`);
+        }
     };
 
     useEffect(() => {
@@ -108,7 +114,7 @@ export default function PlaylistInfo() {
         };
         fetchAll();
     }, [router.isReady, playlist]);
-      
+
     if (!isAllowed || loading) {
         return (
             <Box sx={{ display: "flex", justifyContent: "center", mt: 8 }}>
@@ -132,6 +138,18 @@ export default function PlaylistInfo() {
     return (
         <>
             <SetTitle>{playlistData.name}</SetTitle>
+
+            {/* Menu */}
+            <Box sx={{
+                display: 'flex',
+                width: "100%",
+                alignItems: 'center',
+                justifyContent: 'flex-end',
+                padding: '1rem 2rem',
+            }}>
+                <PlaylistMenu playlistId={playlistData.id} />
+            </Box>
+
             <Box sx={{ py: 6, display: "flex", justifyContent: "center" }}>
                 <Card sx={{
                     width: "100%",
