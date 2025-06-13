@@ -21,7 +21,7 @@ import {extractSpotifyTrackId, fetchSpotifyMetadata} from "@/utils/spotify";
 import { whitelistedUrls } from "@/utils/whitelistedUrls";
 import PropTypes from "prop-types";
 
-export default function AddSongForm({playlist}) {
+export default function AddSongForm({ playlist }) {
     const theme = useTheme();
     const router = useRouter();
     const { isLoggedIn } = useUser();
@@ -136,6 +136,13 @@ export default function AddSongForm({playlist}) {
                 passedUrl.searchParams.delete(key);
             }
         })
+
+        // Banowanie dla głównej tabeli banned_url
+        const { data: bannedGlobalUrl } = await supabase
+            .from('banned_url')
+            .select('id, banned_url')
+            .eq('url', passedUrl)
+            .maybeSingle();
 
         // Validate URL based on whitelisted URLs,
         // if formData.url doesn't start with (optional)
