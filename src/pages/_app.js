@@ -9,6 +9,8 @@ import PropTypes from "prop-types";
 import Box from "@mui/material/Box";
 import React from "react";
 import {useRouter} from "next/router";
+import { Analytics } from '@vercel/analytics/next';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 export default function App({Component, pageProps}) {
     const router = useRouter();
@@ -29,6 +31,8 @@ export default function App({Component, pageProps}) {
                     <Component {...pageProps} />
                     <Footer/>
                 </Box>
+                <Analytics />
+                <SpeedInsights />
             </UserProvider>
         </ThemeProvider>
     );
