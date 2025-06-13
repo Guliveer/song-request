@@ -73,8 +73,8 @@ export default function NavMenu() {
 
     const userMenu = {
         loggedIn: [
-            { name: "Create Playlist", action: "createPlaylist", icon: <NewPlaylistIcon /> },
             { name: "User Panel", href: "/user", icon: <UserPanelIcon /> },
+            { name: "Create Playlist", action: "createPlaylist", icon: <NewPlaylistIcon /> },
             { name: "Log out", action: "logout", icon: <LogoutIcon /> }
         ],
         loggedOut: [
