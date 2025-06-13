@@ -141,7 +141,7 @@ export default function AddSongForm({playlist}) {
         // if formData.url doesn't start with (optional)
         // http(s)://(www.) and then one of the whitelisted URLs,
         // after which there are only alphanumeric characters, hyphens, or underscores
-        const urlPattern = new RegExp(`^(https?://)?(www\\.)?((${whitelistedUrls.join(')|(')}))[a-zA-Z0-9-_\$]+\\??$`);
+        const urlPattern = new RegExp(`^(https?://)?(www\\.)?(${whitelistedUrls.join('|')})[a-zA-Z0-9-_\\$]+\\??$`);
         if (!urlPattern.test(passedUrl.href)) {
             alert("Invalid URL. Please enter a valid YouTube or Spotify link.");
             alert(passedUrl.href);
