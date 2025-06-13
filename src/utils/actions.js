@@ -894,6 +894,43 @@ hardBanUser.propTypes = {
     banDuration: PropTypes.string
 };
 
+export async function getFriendsOnPlaylist(userId, playlistId) {
+    if (!userId || !playlistId) return [];
+
+    try {
+        // Pobierz listę obserwowanych użytkowników
+        const { data: curUserData, error: userError } = await supabase
+            .from("users")
+            .select("followed_users")
+            .eq("id", userId)
+            .single();
+
+        if (userError || !curUserData) return [];
+
+        const followed = Array.isArray(curUserData.followed_users) ? curUserData.followed_users : [];
+        if (followed.length === 0) return [];
+
+        // Pobierz dane znajomych, którzy mają tę playlistę
+        const { data: friendsData, error: friendsError } = await supabase
+            .from("users")
+            .select("id, username, color, emoji, playlists")
+            .in("id", followed)
+            .overlaps("playlists", [Number(playlistId)]);
+
+        if (friendsError) return [];
+
+        return friendsData || [];
+    } catch (error) {
+        console.error("Error in getFriendsOnPlaylist:", error);
+        return [];
+    }
+}
+getFriendsOnPlaylist.propTypes = {
+    userId: PropTypes.string.isRequired,
+    playlistId: PropTypes.number.isRequired
+}
+
+
 // Fetch playlist data by ID or URL
 export async function getPlaylistData(playlistId) {
     try {
