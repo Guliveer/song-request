@@ -19,6 +19,8 @@ export default function ManagePlaylist() {
     const [playlistData, setPlaylistData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [currentUser, setCurrentUser] = useState(null);
+    const [hasJoined, setHasJoined] = useState(null);
+    const [isAllowed, setIsAllowed] = useState(false);
 
     useEffect(() => {
         const fetchCurrentUser = async () => {
@@ -52,6 +54,8 @@ export default function ManagePlaylist() {
                         setLoading(false);
                         return;
                     }
+
+                    setIsAllowed(joinStatus || data.is_public);
                 }
 
                 setPlaylistData(data);
@@ -66,7 +70,7 @@ export default function ManagePlaylist() {
         fetchPlaylistData();
     }, [currentUser, router.isReady, playlist, playlistId]);
 
-    if (loading) {
+    if (!isAllowed || loading) {
         return (
             <Box
                 sx={{

@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import SetTitle from "@/components/SetTitle"
+import Link from "next/link"
 import {
     Avatar,
     Container,
@@ -42,6 +44,8 @@ import {
     isFollowingUser,
     genUserAvatar,
     isUserLoggedIn,
+    getJoinedPlaylists,
+    getPlaylistData,
 } from "@/utils/actions"
 
 function TabPanel(props) {
@@ -77,6 +81,7 @@ export default function UserProfile({ userData }) {
     const [isSameUser, setIsSameUser] = useState(false)
     const [isLoggedIn, setIsLoggedIn] = useState(false)
     const [avatarUrl, setAvatarUrl] = useState("")
+    const [commonPlaylists, setCommonPlaylists] = useState([]);
 
     useEffect(() => {
         async function fetchData() {
@@ -97,14 +102,53 @@ export default function UserProfile({ userData }) {
                     message: "Error loading user data",
                     severity: "error",
                 })
-            } finally {
-                setLoading(false)
             }
         }
 
-        fetchData()
-    }, [userData.id])
+        async function fetchCommonPlaylists() {
+            try {
+                const currentUser = await getCurrentUser();
+                const currentUserPlaylists = await getJoinedPlaylists(currentUser.id);
+                const displayedUserPlaylists = await getJoinedPlaylists(userData.id);
 
+                // Find shared playlists
+                const common = currentUserPlaylists.filter(playlist =>
+                    displayedUserPlaylists.some(p => p.id === playlist.id)
+                );
+
+                // Return only data from getPlaylistData for each common playlist
+                const enrichedCommon = await Promise.all(
+                    common.map(async (playlist) => {
+                        const playlistData = await getPlaylistData(playlist);
+                        return {
+                            id: playlistData.id,
+                            name: playlistData.name,
+                            description: playlistData.description,
+                            host: playlistData.host,
+                            url: playlistData.url,
+                        }
+                    })
+                );
+
+                setCommonPlaylists(enrichedCommon);
+            } catch (error) {
+                console.error("Error fetching shared playlists:", error);
+            }
+        }
+
+        Promise.all([fetchData(), fetchCommonPlaylists()])
+            .then(() => {
+                setLoading(false);
+            })
+            .catch((error) => {
+                console.error("Error during data fetching:", error);
+                setSnackbar({
+                    open: true,
+                    message: "Error loading user data or playlists",
+                    severity: "error",
+                });
+            });
+    }, [userData.id])
 
     const handleTabChange = (event, newValue) => {
         setTabValue(newValue)
@@ -217,8 +261,10 @@ export default function UserProfile({ userData }) {
     }
 
     return (
+        <>
+        <SetTitle text={`${userData?.username} - User Panel`} />
         <Container maxWidth="lg" sx={{ mt: 4 }}>
-            <Paper sx={{ p: 3, mb: 3 }}>
+            <Paper sx={{ p: 3, mb: 3, borderRadius: 3 }}>
                 <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
                     <Typography variant="h4" component="h1" sx={{
                         display: "flex",
@@ -253,6 +299,7 @@ export default function UserProfile({ userData }) {
                         <Tab label="Details" id="user-tab-0" aria-controls="user-tabpanel-0" />
                         <Tab label="Songs" id="user-tab-1" aria-controls="user-tabpanel-1" />
                         <Tab label="Votes" id="user-tab-2" aria-controls="user-tabpanel-2" />
+                        <Tab label="Common Playlists" id="user-tab-3" aria-controls="user-tabpanel-3" />
                     </Tabs>
                 </Box>
 
@@ -394,6 +441,42 @@ export default function UserProfile({ userData }) {
                         </TableContainer>
                     )}
                 </TabPanel>
+
+                {/* Shared Playlists Tab */}
+                <TabPanel value={tabValue} index={3}>
+                    {commonPlaylists.length === 0 ? (
+                        <Typography>No common playlists found.</Typography>
+                    ) : (
+                        <TableContainer component={Paper} variant="outlined">
+                            <Table>
+                                <TableHead>
+                                    <TableRow>
+                                        <TableCell>Playlist Name</TableCell>
+                                        <TableCell>Description</TableCell>
+                                        <TableCell>Host</TableCell>
+                                        <TableCell>Actions</TableCell>
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {commonPlaylists.map((playlist) => (
+                                        <TableRow key={playlist.id}>
+                                            <TableCell>{playlist.name}</TableCell>
+                                            <TableCell>{playlist.description}</TableCell>
+                                            <TableCell>{playlist.host}</TableCell>
+                                            <TableCell>
+                                                <Link href={`/playlist/${playlist?.url}`} >
+                                                    <Button variant="outlined" color="primary">
+                                                        View
+                                                    </Button>
+                                                </Link>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+                    )}
+                </TabPanel>
             </Paper>
 
             {/* Delete Confirmation Dialog */}
@@ -440,5 +523,6 @@ export default function UserProfile({ userData }) {
                 </Alert>
             </Snackbar>
         </Container>
+        </>
     )
 }
