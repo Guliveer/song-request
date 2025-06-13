@@ -106,7 +106,7 @@ export default function UserPanel() {
 
     return (
         <>
-            <SetTitle text={"User Panel"}/>
+            <SetTitle text={`User Panel`} />
             <Container maxWidth="md" sx={{mt: 3, mb: 5}}>
                 {/* Sekcja profilowa */}
                 <Box
@@ -117,12 +117,11 @@ export default function UserPanel() {
                         mb: 4,
                         px: {xs: 1, md: 4},
                         py: {xs: 2, md: 5},
-                        borderRadius: 4,
+                        borderRadius: 3,
                         bgcolor: "background.paper", // theme kolor tła
                         display: "flex",
                         flexDirection: "column",
                         alignItems: "center",
-                        boxShadow: 4,
                     }}
                 >
                     <Avatar
@@ -137,7 +136,6 @@ export default function UserPanel() {
                     />
                     <Typography variant="h4" sx={{
                         fontWeight: "bold",
-                        color: "#fff",
                         mb: 2,
                         textAlign: "center"
                     }}>
@@ -155,42 +153,38 @@ export default function UserPanel() {
                         mb: 2,
                     }}>
                         <Box sx={{flex: 1, textAlign: "center"}}>
-                            <Typography variant="h5" sx={{fontWeight: 700, color: "#ffffff"}}>
+                            <Typography variant="h5" sx={{fontWeight: 700}}>
                                 {followingCount}
                             </Typography>
-                            <Typography variant="body2" sx={{color: "#aaa", mt: 0.5, fontWeight: 500}}>
+                            <Typography variant="body2" sx={{mt: 0.5, fontWeight: 500}}>
                                 Following
                             </Typography>
                         </Box>
                         <Divider orientation="vertical" flexItem sx={{
                             mx: 0,
-                            bgcolor: "#fff",
-                            opacity: 0.11,
                             width: "2px",
                             height: 40,
                             borderRadius: 2,
                         }}/>
                         <Box sx={{flex: 1, textAlign: "center"}}>
-                            <Typography variant="h5" sx={{fontWeight: 700, color: "#ffffff"}}>
+                            <Typography variant="h5" sx={{fontWeight: 700}}>
                                 {followersCount}
                             </Typography>
-                            <Typography variant="body2" sx={{color: "#aaa", mt: 0.5, fontWeight: 500}}>
+                            <Typography variant="body2" sx={{mt: 0.5, fontWeight: 500}}>
                                 Followers
                             </Typography>
                         </Box>
                         <Divider orientation="vertical" flexItem sx={{
                             mx: 0,
-                            bgcolor: "#fff",
-                            opacity: 0.11,
                             width: "2px",
                             height: 40,
                             borderRadius: 2,
                         }}/>
                         <Box sx={{flex: 1, textAlign: "center"}}>
-                            <Typography variant="h5" sx={{fontWeight: 700, color: "#ffffff"}}>
+                            <Typography variant="h5" sx={{fontWeight: 700}}>
                                 {joinedPlaylistsCount}
                             </Typography>
-                            <Typography variant="body2" sx={{color: "#aaa", mt: 0.5, fontWeight: 500}}>
+                            <Typography variant="body2" sx={{mt: 0.5, fontWeight: 500}}>
                                 Playlists Joined
                             </Typography>
                         </Box>
@@ -203,7 +197,6 @@ export default function UserPanel() {
                     mx: "auto",
                     bgcolor: "background.paper", // theme kolor tła
                     borderRadius: 3,
-                    boxShadow: 2,
                     overflow: "hidden"
                 }}>
                     <Tabs
@@ -211,19 +204,17 @@ export default function UserPanel() {
                         onChange={handleTabChange}
                         variant="fullWidth"
                         textColor="inherit"
-                        TabIndicatorProps={{style: {background: "#8FE6D5", height: 3}}}
+                        TabIndicatorProps={{ style: { height: 3 } }}
                         sx={{
                             "& .MuiTab-root": {
                                 fontWeight: "bold",
                                 fontSize: 16,
-                                color: "#fff",
                                 textTransform: "none",
                                 py: 2,
                             },
                             "& .Mui-selected": {
-                                color: "#8FE6D5 !important",
+                                color: "primary.main",
                             },
-                            bgcolor: "#191c2a"
                         }}
                     >
                         <Tab icon={<PersonIcon/>} label="Account"/>
