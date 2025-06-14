@@ -1,3 +1,5 @@
+import { supabase } from "@/utils/supabase";
+
 export function extractSpotifyTrackId(url) {
     // Regex to match Spotify track URLs
     const regex = new RegExp(`^https?://(open\\.spotify\\.com/track/|spotify\\.link/)([a-zA-Z0-9]+)`);
@@ -10,3 +12,8 @@ export async function fetchSpotifyMetadata(trackId) {
     return res.json(); // { title, author }
 }
 
+export async function getSpotifyUserAccessToken() {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error) throw error;
+    return session?.provider_token || null;
+}
