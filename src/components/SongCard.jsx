@@ -31,6 +31,7 @@ import {useTheme} from "@mui/material/styles";
 import {extractYoutubeVideoId, fetchYouTubeMetadata} from "@/utils/youtube";
 import { extractSpotifyTrackId} from "@/utils/spotify";
 import { fetchSpotifyMetadata } from "@/utils/spotify";
+import SpotifyPlayer from "@/components/SpotifyPlayer";
 import YouTube from 'react-youtube';
 import SvgIcon from "@mui/material/SvgIcon";
 import StopIcon from "@mui/icons-material/Stop";
@@ -88,6 +89,8 @@ function SongCard({id, currentlyPreviewingSongId, setCurrentlyPreviewingSongId})
     const [isBanned, setIsBanned] = useState(false);
     const [hovered, setHovered] = useState(false);
     const [ytMetadataLoading, setYtMetadataLoading] = useState(false);
+    const [spotifyConnected, setSpotifyConnected] = useState(false);
+    const [showPlayer, setShowPlayer] = useState(false);
 
     const isAdminPanel = router.pathname.startsWith("/admin");
 
@@ -203,6 +206,21 @@ function SongCard({id, currentlyPreviewingSongId, setCurrentlyPreviewingSongId})
             setLoading(false);
         }
     }, [id]);
+
+    useEffect(() => {
+        if (!songData) return;
+
+        const spotifyTrackId = extractSpotifyTrackId(songData.url);
+        const isSpotify = Boolean(spotifyTrackId);
+
+        async function checkSpotify() {
+            const { data } = await supabase.auth.getUserIdentities();
+            const spotify = data?.identities?.find(id => id.provider === "spotify");
+            setSpotifyConnected(!!spotify);
+        }
+
+        if (isSpotify) checkSpotify();
+    }, [songData]);
 
     useEffect(() => {
         fetchData();
@@ -399,6 +417,7 @@ function SongCard({id, currentlyPreviewingSongId, setCurrentlyPreviewingSongId})
     }
 
     const {title, author, url, added_at, score, rank, username, duration} = songData;
+    const trackId = extractSpotifyTrackId(url);
     const youtubeVideoId = extractYoutubeVideoId(url);
     const spotifyTrackId = extractSpotifyTrackId(url);
     const isSpotify = Boolean(spotifyTrackId);
@@ -562,28 +581,39 @@ function SongCard({id, currentlyPreviewingSongId, setCurrentlyPreviewingSongId})
                                         },
                                     }}
                                     onClick={() => {
-                                        if (url.includes("spotify.com")) {
-                                            const trackId = extractSpotifyTrackId(url);
-                                            if (trackId) {
-                                                window.open(`https://open.spotify.com/track/${trackId}`, "_blank");
-                                            } else {
-                                                alert("Nieprawidłowy link Spotify");
-                                            }
-                                        } else {
+                                        if (!isSpotify) {
                                             setCurrentlyPreviewingSongId(
                                                 currentlyPreviewingSongId === id ? null : id
                                             );
+                                            return;
+                                        }
+
+                                        if (spotifyConnected && trackId) {
+                                            setShowPlayer(true);
+
+                                            if (window.toggleSpotifyPlayback) {
+                                                window.toggleSpotifyPlayback(); // steruje play/pause
+                                            }
+                                        } else {
+                                            window.open(`https://open.spotify.com/track/${trackId}`, "_blank");
                                         }
                                     }}
                                 >
-                                    {url.includes("spotify.com") ? (
-                                        <SpotifyIcon sx={{fontSize: 18}} />
+                                    {isSpotify ? (
+                                        spotifyConnected && showPlayer ? (
+                                            <StopIcon sx={{ fontSize: 18 }} />
+                                        ) : (
+                                            <SpotifyIcon sx={{ fontSize: 18 }} />
+                                        )
                                     ) : currentlyPreviewingSongId === id ? (
-                                        <StopIcon sx={{fontSize: 18}} />
+                                        <StopIcon sx={{ fontSize: 18 }} />
                                     ) : (
-                                        <PlayIcon sx={{fontSize: 18}} />
+                                        <PlayIcon sx={{ fontSize: 18 }} />
                                     )}
                                 </IconButton>
+                                {spotifyConnected && showPlayer && trackId && (
+                                    <SpotifyPlayer trackId={trackId} />
+                                )}
                             </Box>
                         </Box>
                     </Box>

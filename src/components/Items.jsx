@@ -98,6 +98,9 @@ export function AuthProviderButton({ providerName, displayName, icon, prompt = '
             provider: providerName,
             options: {
                 redirectTo: process.env.NEXT_PUBLIC_REDIRECT_URL || window.location.origin,
+                scopes: providerName === 'spotify'
+                    ? 'streaming user-read-email user-read-private user-modify-playback-state app-remote-control'
+                    : ''
             },
         });
         if (error) {
