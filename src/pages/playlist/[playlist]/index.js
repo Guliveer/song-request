@@ -138,7 +138,7 @@ export default function Playlist() {
                         }}
                     >{playlistData.name}</Typography>
                 </Typography>
-                {(!isHost && !hasJoined && loggedIn) ? (
+                {(!isHost && !hasJoined && loggedIn && playlistData) ? (
                     <Button
                         variant="contained"
                         color="primary"

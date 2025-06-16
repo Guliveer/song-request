@@ -24,7 +24,6 @@ import {
     ExitToAppRounded as LeavePlaylistIcon,
     HomeRepairServiceRounded as ManageIcon,
     InfoOutlined as PlaylistInfoIcon,
-    PlaylistPlay as PlaylistIcon,
 } from "@mui/icons-material";
 
 export default function PlaylistMenu({ playlistId }) {
@@ -33,6 +32,7 @@ export default function PlaylistMenu({ playlistId }) {
     const [currentUser, setCurrentUser] = useState(null);
     const [hasJoined, setHasJoined] = useState(false);
     const [isHost, setIsHost] = useState(false);
+    const [isModerator, setIsModerator] = useState(false);
     const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
     const [loading, setLoading] = useState(true);
 
@@ -50,6 +50,7 @@ export default function PlaylistMenu({ playlistId }) {
                 setHasJoined(has);
 
                 setIsHost(user.id === playlist.host);
+                setIsModerator(playlist.moderators?.includes(user.id));
             }
 
             setLoading(false);
@@ -134,25 +135,25 @@ export default function PlaylistMenu({ playlistId }) {
             >
 
                 {(isHost || hasJoined) && (
-                    <MenuItem onClick={handleMenuClose}>
-                        <Link href={`/playlist/${playlistId}/info`} passHref>
+                    <Link href={`/playlist/${playlistId}/info`} passHref>
+                        <MenuItem onClick={handleMenuClose}>
                             <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>
                                 <PlaylistInfoIcon sx={{ mr: 1 }} />
                                 Playlist Info
                             </Box>
-                        </Link>
-                    </MenuItem>
+                        </MenuItem>
+                    </Link>
                 )}
 
-                {isHost && (
-                    <MenuItem onClick={handleMenuClose}>
-                        <Link href={`/playlist/${playlistId}/manage`} passHref>
+                {(isHost || isModerator) && (
+                    <Link href={`/playlist/${playlistId}/manage`} passHref>
+                        <MenuItem onClick={handleMenuClose}>
                             <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>
                                 <ManageIcon sx={{ mr: 1 }} />
                                 Manage Playlist
                             </Box>
-                        </Link>
-                    </MenuItem>
+                        </MenuItem>
+                    </Link>
                 )}
 
                 {!isHost && hasJoined && (

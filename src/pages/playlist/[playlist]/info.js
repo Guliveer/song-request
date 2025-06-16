@@ -21,7 +21,14 @@ import {
     Person as PersonIcon,
     ArrowBack as BackIcon,
 } from "@mui/icons-material";
-import { getPlaylistData, getUserInfo, getCurrentUser, getFriendsOnPlaylist, genUserAvatar } from "@/utils/actions";
+import {
+    getPlaylistData,
+    getUserInfo,
+    getCurrentUser,
+    getFriendsOnPlaylist,
+    genUserAvatar,
+    getJoinedPlaylists
+} from "@/utils/actions";
 import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
 import SetTitle from "@/components/SetTitle";
@@ -52,13 +59,13 @@ export default function PlaylistInfo() {
     // Funkcje nawigacji
     const navigateToPlaylist = () => {
         if (playlistData?.id) {
-            router.push(`/playlist/${playlistData.id}`);
+            router.push(`/playlist/${playlist}`);
         }
     };
 
     const goBack = () => {
         if (playlistData?.id) {
-            router.push(`/playlist/${playlistData.id}`);
+            router.push(`/playlist/${playlist}`);
         }
     };
 
@@ -72,6 +79,15 @@ export default function PlaylistInfo() {
                 const data = await getPlaylistData(playlist);
                 setPlaylistData(data);
 
+                // Sprawdź czy użytkownik dołączył
+                if (data?.id && currentUser) {
+                    const joinedPlaylists = await getJoinedPlaylists(currentUser.id);
+                    const joinStatus = joinedPlaylists.includes(data.id);
+                    setJoinStatus(joinStatus);
+                } else {
+                    setJoinStatus(false);
+                }
+
                 // Pobierz dane hosta i avatar
                 if (data?.host) {
                     const hostInfo = await getUserInfo(data.host);
@@ -83,15 +99,16 @@ export default function PlaylistInfo() {
                         const avatarUrl = await genUserAvatar(data.host);
                         setHostAvatarUrl(avatarUrl);
                     }
-
-                    setIsAllowed(joinStatus || data.is_public);
                 }
+
+                setIsAllowed(data?.host || joinStatus || data.is_public);
 
                 // Pobierz znajomych, którzy mają tę playlistę
                 const user = await getCurrentUser();
                 if (user && data?.id) {
                     const friendsOnPlaylist = await getFriendsOnPlaylist(user.id, data.id);
-                    setFriends(friendsOnPlaylist);
+                    const friendsOnPlaylistFiltered = friendsOnPlaylist.filter(friend => friend.id !== user.id);
+                    setFriends(friendsOnPlaylistFiltered);
 
                     // Generuj awatary dla znajomych
                     const avatars = {};
@@ -115,7 +132,7 @@ export default function PlaylistInfo() {
         fetchAll();
     }, [router.isReady, playlist]);
 
-    if (!isAllowed || loading) {
+    if (loading) {
         return (
             <Box sx={{ display: "flex", justifyContent: "center", mt: 8 }}>
                 <CircularProgress />
@@ -123,7 +140,7 @@ export default function PlaylistInfo() {
         );
     }
 
-    if (!playlistData) {
+    if (!isAllowed || !playlistData) {
         return (
             <Typography color="error" sx={{ mt: 6, textAlign: "center" }}>
                 Playlist not found.
@@ -187,7 +204,7 @@ export default function PlaylistInfo() {
                                     {playlistData.name}
                                 </Typography>
                                 {playlistData.description && (
-                                    <Typography variant="body2" color="text.secondary" noWrap>
+                                    <Typography variant="body2" color="text.secondary">
                                         {playlistData.description}
                                     </Typography>
                                 )}

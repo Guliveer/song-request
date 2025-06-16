@@ -186,12 +186,16 @@ export default function PlaylistsPage() {
                                     </Box>
                                 </CardContent>
 
-                                <CardActions sx={{ p: 2, pt: 0 }}>
-                                    <Button size="small" variant="outlined" fullWidth>
-                                        <Link href={`/playlist/${playlist.url}`} passHref>
+                                <CardActions sx={{ p: 2, pt: 0, width: "100%" }}>
+                                    <Link href={`/playlist/${playlist.url}`} passHref sx={{
+                                        width: "100%",
+                                    }}>
+                                        <Button size="small" variant="outlined" fullWidth sx={{
+                                            width: "100%",
+                                        }}>
                                             View Playlist
-                                        </Link>
-                                    </Button>
+                                        </Button>
+                                    </Link>
                                 </CardActions>
                             </Card>
                         </Box>

@@ -194,7 +194,7 @@ export default function Queue({playlist}) {
                 width: '100%',
             }}>
                 {songs.length === 0 ? (
-                    <Box sx={{ textAlign: 'center', color: '#ccc' }}>Not found...</Box>
+                    <Box sx={{ textAlign: 'center', color: '#ccc' }}>No songs found</Box>
                 ) : (
                     songs.map((song) => (
                         <SongCard
@@ -207,13 +207,15 @@ export default function Queue({playlist}) {
                 )}
             </Box>
 
-            <Pagination
-                count={totalPages}
-                page={page}
-                onChange={handlePageChange}
-                color="primary"
-                sx={{ alignSelf: "center" }}
-            />
+            {(totalPages > 1) && (
+                <Pagination
+                    count={totalPages}
+                    page={page}
+                    onChange={handlePageChange}
+                    color="primary"
+                    sx={{ alignSelf: "center" }}
+                />
+            )}
         </Box>
     );
 }

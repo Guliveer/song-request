@@ -1485,7 +1485,7 @@ export async function addPlaylistModerator(playlistId, userId) {
         // Check if the current user is the host of the playlist
         const { data: playlist, error: playlistError } = await supabase
             .from('playlists')
-            .select('host')
+            .select('host, moderators')
             .eq('id', playlistId)
             .single();
 
@@ -1499,10 +1499,15 @@ export async function addPlaylistModerator(playlistId, userId) {
             throw new Error("You are not the host of this playlist.");
         }
 
+        const currentModerators = playlist.moderators || [];
+        if (!currentModerators.includes(userId)) {
+            currentModerators.push(userId);
+        }
+
         // Add the user to the moderators list
         const { data: updatedPlaylist, error: updateError } = await supabase
             .from('playlists')
-            .update({ moderators: [...(playlist.moderators || []), userId] })
+            .update({ moderators: currentModerators })
             .eq('id', playlistId)
             .select()
             .single();

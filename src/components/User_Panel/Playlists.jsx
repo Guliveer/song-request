@@ -24,6 +24,8 @@ import {
     MoreVertRounded as MenuVertButtonIcon,
     VisibilityRounded as ViewPlaylistIcon,
     StarRounded as PlaylistHostIcon,
+    HomeRepairServiceRounded as PlaylistManageIcon,
+    InfoOutlined as PlaylistInfoIcon,
 } from "@mui/icons-material";
 import Link from "next/link";
 import {useRouter} from "next/router";
@@ -220,17 +222,37 @@ export default function Playlists() {
                 anchorOrigin={{vertical: "bottom", horizontal: "right"}}
                 transformOrigin={{vertical: "top", horizontal: "right"}}
             >
-                <MenuItem>
-                    <Link href={`/playlist/${selectedPlaylist?.url}`} passHref legacyBehavior>
+                <Link href={`/playlist/${selectedPlaylist?.url}`} passHref legacyBehavior>
+                    <MenuItem>
                         <Box sx={{display: "flex", alignItems: "center"}} component="a">
                             <ViewPlaylistIcon sx={{marginRight: 1}}/>
                             Open Playlist
                         </Box>
-                    </Link>
-                </MenuItem>
+                    </MenuItem>
+                </Link>
+                <Link href={`/playlist/${selectedPlaylist?.url}/info`} passHref legacyBehavior>
+                    <MenuItem>
+                        <Box sx={{display: "flex", alignItems: "center"}} component="a">
+                            <PlaylistInfoIcon sx={{marginRight: 1}}/>
+                            Playlist Info
+                        </Box>
+                    </MenuItem>
+                </Link>
+                {((currentUser?.id === selectedPlaylist?.host) || (selectedPlaylist?.moderators.includes(currentUser?.id))
+                ) && (
+                        <Link href={`/playlist/${selectedPlaylist?.url}/manage`} passHref legacyBehavior>
+                            <MenuItem onClick={handleMenuClose}>
+                                <Box sx={{display: "flex", alignItems: "center"}} component="a">
+                                    <PlaylistManageIcon sx={{marginRight: 1}}/>
+                                    Manage Playlist
+                                </Box>
+                            </MenuItem>
+                        </Link>
+                )}
                 {(currentUser?.id !== selectedPlaylist?.host) && (
-                    <MenuItem onClick={() => setConfirmDialogOpen(true)}
-                              sx={{color: (theme) => theme.palette.error.main}}>
+                    <MenuItem onClick={() => setConfirmDialogOpen(true)} sx={{
+                        color: (theme) => theme.palette.error.main
+                    }}>
                         <Box sx={{display: "flex", alignItems: "center"}}>
                             <LeavePlaylistIcon sx={{marginRight: 1}}/>
                             Leave Playlist
@@ -238,8 +260,9 @@ export default function Playlists() {
                     </MenuItem>
                 )}
                 {(currentUser?.id === selectedPlaylist?.host) && (
-                    <MenuItem onClick={() => setDeleteDialogOpen(true)}
-                              sx={{color: (theme) => theme.palette.error.main}}>
+                    <MenuItem onClick={() => setDeleteDialogOpen(true)} sx={{
+                        color: (theme) => theme.palette.error.main
+                    }}>
                         <Box sx={{display: "flex", alignItems: "center"}}>
                             <DeletePlaylistIcon sx={{marginRight: 1}}/>
                             Delete Playlist

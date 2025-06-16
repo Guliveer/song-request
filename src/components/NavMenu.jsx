@@ -146,25 +146,29 @@ export default function NavMenu() {
                                 sx={{ display: { xs: "block", md: "none" } }}
                             >
                                 {pages.public.map((page) => (
-                                    <MenuItem key={page.name} onClick={handleCloseNavMenu}>
+                                    <Link key={page.name} sx={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: 1,
+                                        textTransform: "uppercase"
+                                    }} href={page.href} underline={"none"}>
+                                        <MenuItem onClick={handleCloseNavMenu}>
+                                            {page.name}
+                                        </MenuItem>
+                                    </Link>
+                                ))}
+                                {isAdmin &&
+                                    pages.admin.map((page) => (
                                         <Link sx={{
                                             display: "flex",
                                             alignItems: "center",
                                             gap: 1,
                                             textTransform: "uppercase"
-                                        }} href={page.href} underline={"none"}>{page.name}</Link>
-                                    </MenuItem>
-                                ))}
-                                {isAdmin &&
-                                    pages.admin.map((page) => (
-                                        <MenuItem key={page.name} onClick={handleCloseNavMenu}>
-                                            <Link sx={{
-                                                display: "flex",
-                                                alignItems: "center",
-                                                gap: 1,
-                                                textTransform: "uppercase"
-                                            }} href={page.href} underline={"none"}>{page.name}</Link>
-                                        </MenuItem>
+                                        }} href={page.href} underline={"none"}>
+                                            <MenuItem key={page.name} onClick={handleCloseNavMenu}>
+                                                {page.name}
+                                            </MenuItem>
+                                        </Link>
                                     ))}
                             </Menu>
                         </Box>
@@ -247,17 +251,19 @@ export default function NavMenu() {
                                 onClose={handleCloseUserMenu}
                             >
                                 {isLoggedIn && userMenu.loggedIn.map((item) => (
-                                    <MenuItem key={item.name} onClick={() => handleUserMenuClick(item)}>
-                                        <Link sx={{
+                                        <Link key={item.name} sx={{
                                             display: "flex",
                                             justifyContent: "flex-start",
                                             alignItems: "center",
                                             gap: 1.5,
                                         }} href={item.href} underline="none">
+                                        <MenuItem onClick={() => handleUserMenuClick(item)} sx={{
+                                            width: "100%",
+                                        }}>
                                             {item.icon}
                                             {item.name}
-                                        </Link>
-                                    </MenuItem>
+                                        </MenuItem>
+                                    </Link>
                                 ))}
                             </Menu>
                         </Box>
