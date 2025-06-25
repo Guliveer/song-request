@@ -8,6 +8,12 @@
 ![Spotify API Badge](https://img.shields.io/badge/Spotify%20API-1ED760?logo=spotify&logoColor=fff&style=for-the-badge)
 ![YouTube API Badge](https://img.shields.io/badge/YouTube%20API-F00?logo=youtube&logoColor=fff&style=for-the-badge)
 
+### Status  
+[![Track Drop Website](https://cronitor.io/badges/AG8CXU/production/o8Gvcwy9GIUCszl24N_6l6VM_PI.svg)](https://track-drop.cronitorstatus.com)  
+[![Track Drop Database](https://cronitor.io/badges/BDEGzZ/production/59qiuDtcV1g5eTg_7pgfN_hhqbY.svg)](https://track-drop.cronitorstatus.com)
+
+View status history [here](https://track-drop.cronitorstatus.com)
+
 # 🎧 Track Drop
 
 **Track Drop** is a modern web app for handling music requests during events, parties, or streams. It offers:
