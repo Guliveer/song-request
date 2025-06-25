@@ -11,14 +11,14 @@ import {
     DoneRounded as SuccessIcon,
 } from '@mui/icons-material';
 import { useRouter } from 'next/router';
-import {getJoinedPlaylists, playSound} from '@/utils/actions';
+import {getJoinedPlaylists, playSound} from '@/lib/actions';
 import { keyframes } from '@mui/system';
-import { supabase } from '@/utils/supabase';
+import { supabase } from '@/lib/supabase';
 import { useUser } from "@/context/UserContext";
 import { FormField } from "@/components/Items";
-import { extractVideoId, fetchYouTubeMetadata } from "@/utils/youtube";
-import {extractSpotifyTrackId, fetchSpotifyMetadata} from "@/utils/spotify";
-import { whitelistedUrls } from "@/utils/whitelistedUrls";
+import { extractVideoId, fetchYouTubeMetadata } from "@/lib/youtube";
+import {extractSpotifyTrackId, fetchSpotifyMetadata} from "@/lib/spotify";
+import { whitelistedUrls } from "@/lib/whitelistedUrls";
 import PropTypes from "prop-types";
 
 export default function AddSongForm({ playlist }) {

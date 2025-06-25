@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { getSpotifyUserAccessToken } from "@/utils/spotify";
+import { getSpotifyUserAccessToken } from "@/lib/spotify";
 
 export default function SpotifyPlayer({ trackId }) {
     const [deviceId, setDeviceId] = useState(null);

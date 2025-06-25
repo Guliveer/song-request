@@ -1,4 +1,4 @@
-import { supabase } from "@/utils/supabase";
+import { supabase } from "@/lib/supabase";
 import { useEffect, useState } from "react";
 import {
     Button, Dialog, DialogActions, DialogTitle,
@@ -21,7 +21,7 @@ import {
     ErrorOutlineRounded as ErrorOutlineIcon,
     LinkRounded as LinkRoundedIcon,
 }from '@mui/icons-material';
-import { authProviders, Spotify } from '@/utils/authProviders';
+import { authProviders, Spotify } from '@/lib/authProviders';
 
 export default function Providers() {
     const [identities, setIdentities] = useState([]);

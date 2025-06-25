@@ -2,8 +2,8 @@
 import {Alert, Avatar, Button, CircularProgress, TextField} from "@mui/material";
 import React, {useEffect, useState} from "react";
 import PropTypes from "prop-types";
-import {supabase} from "@/utils/supabase";
-import {genUserAvatar} from "@/utils/actions";
+import {supabase} from "@/lib/supabase";
+import {genUserAvatar} from "@/lib/actions";
 
 export function FormField({ slotProps, sx, ...rest }) {
     return (

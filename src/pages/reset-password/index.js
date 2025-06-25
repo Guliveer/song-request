@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import { supabase } from "@/utils/supabase";
+import { supabase } from "@/lib/supabase";
 import { Button, TextField, Typography, Box, CircularProgress } from "@mui/material";
 
 export default function ResetPasswordPage() {

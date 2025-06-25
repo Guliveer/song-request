@@ -1,4 +1,4 @@
-import { supabase } from "@/utils/supabase";
+import { supabase } from "@/lib/supabase";
 
 export function extractSpotifyTrackId(url) {
     // Regex to match Spotify track URLs

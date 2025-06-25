@@ -29,8 +29,8 @@ import {
 } from "@mui/icons-material";
 import Link from "next/link";
 import {useRouter} from "next/router";
-import {supabase} from "@/utils/supabase";
-import {getCurrentUser, getPlaylistData, leavePlaylist} from "@/utils/actions";
+import {supabase} from "@/lib/supabase";
+import {getCurrentUser, getPlaylistData, leavePlaylist} from "@/lib/actions";
 
 export default function Playlists() {
     const router = useRouter();

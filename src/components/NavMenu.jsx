@@ -27,7 +27,7 @@ import {
     PublicRounded as PlaylistIcon,
     PlaylistAddRounded as NewPlaylistIcon
 } from '@mui/icons-material';
-import {genUserAvatar, logOut, createPlaylist} from "@/utils/actions";
+import {genUserAvatar, logOut, createPlaylist} from "@/lib/actions";
 import NotificationBell from "@/components/NotificationBell";
 import {FormField} from "@/components/Items";
 

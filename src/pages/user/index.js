@@ -1,6 +1,6 @@
 import {useEffect, useState} from "react";
 import {useRouter} from "next/router";
-import {supabase} from "@/utils/supabase";
+import {supabase} from "@/lib/supabase";
 import SetTitle from "@/components/SetTitle";
 import Account from "@/components/User_Panel/Account";
 import Followers from "@/components/User_Panel/Followers";
@@ -14,7 +14,7 @@ import {
     QueueMusicRounded as PlaylistsIcon,
 } from '@mui/icons-material';
 
-import {genUserAvatar} from "@/utils/actions";
+import {genUserAvatar} from "@/lib/actions";
 
 export default function UserPanel() {
     const [isLoading, setIsLoading] = useState(true);

@@ -13,14 +13,14 @@ import {
     IconButton,
 } from "@mui/material";
 import { SketchPicker } from "react-color";
-import { supabase } from "@/utils/supabase";
+import { supabase } from "@/lib/supabase";
 import EmojiPicker from "emoji-picker-react";
 import EditIcon from '@mui/icons-material/Edit';
 import PersonIcon from '@mui/icons-material/Person';
 import PaletteIcon from '@mui/icons-material/Palette';
 import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
 import CloseIcon from '@mui/icons-material/Close';
-import {getCurrentUser} from "@/utils/actions";
+import {getCurrentUser} from "@/lib/actions";
 
 export default function Account() {
     const theme = useTheme();

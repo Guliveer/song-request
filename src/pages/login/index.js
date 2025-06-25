@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
-import { supabase } from '@/utils/supabase';
+import { supabase } from '@/lib/supabase';
 import HCaptcha from '@hcaptcha/react-hcaptcha';
 import { useUser } from "@/context/UserContext";
 import { LoginRounded as LoginIcon } from '@mui/icons-material';

@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 import React, {useState, useEffect, useCallback, useRef} from 'react';
 import Link from "next/link";
-import {supabase} from '@/utils/supabase';
+import {supabase} from '@/lib/supabase';
 import {useRouter} from 'next/router';
 import {
     Box, Card, CardContent, Typography, IconButton, Snackbar, Tooltip,
@@ -11,7 +11,7 @@ import SkeletonSongCard from "@/components/skeletons/SkeletonSongCard";
 import {
     getUserInfo, getSongData, getCurrentUser, removeUserVote,
     updateUserVote, playSound, genUserAvatar
-} from "@/utils/actions";
+} from "@/lib/actions";
 import debounce from 'lodash.debounce';
 import {
     KeyboardArrowUpRounded as UpvoteIcon,
@@ -28,9 +28,9 @@ import {
     Block as BlockIcon
 } from '@mui/icons-material';
 import {useTheme} from "@mui/material/styles";
-import {extractYoutubeVideoId, fetchYouTubeMetadata} from "@/utils/youtube";
-import { extractSpotifyTrackId} from "@/utils/spotify";
-import { fetchSpotifyMetadata } from "@/utils/spotify";
+import {extractYoutubeVideoId, fetchYouTubeMetadata} from "@/lib/youtube";
+import { extractSpotifyTrackId} from "@/lib/spotify";
+import { fetchSpotifyMetadata } from "@/lib/spotify";
 import SpotifyPlayer from "@/components/SpotifyPlayer";
 import YouTube from 'react-youtube';
 import SvgIcon from "@mui/material/SvgIcon";

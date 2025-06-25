@@ -3,18 +3,16 @@ import {ThemeProvider} from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import theme from '@/styles/theme';
 import '@/styles/globals.css';
+import '@/styles/shadcn.css';
 import NavMenu from '@/components/NavMenu';
 import Footer from '@/components/Footer';
 import PropTypes from "prop-types";
 import Box from "@mui/material/Box";
 import React from "react";
-import {useRouter} from "next/router";
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 
 export default function App({Component, pageProps}) {
-    const router = useRouter();
-
     return (
         <ThemeProvider theme={theme}>
             <UserProvider>

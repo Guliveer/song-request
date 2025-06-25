@@ -194,13 +194,13 @@ export default function Home() {
                             </Stack>
                             <Stack spacing={2}>
                                 {[
-                                    {name: 'Anna', song: 'Blinding Lights', avatar: '/avatars/user1.png'},
-                                    {name: 'Mike', song: 'Levitating', avatar: '/avatars/user2.png'},
-                                    {name: 'Sara', song: 'Shape of You', avatar: '/avatars/user3.png'}
+                                    {name: 'Anna', song: 'Blinding Lights'},
+                                    {name: 'Mike', song: 'Levitating'},
+                                    {name: 'Sara', song: 'Shape of You'}
                                 ].map(user => (
                                     <Stack direction="row" spacing={2} alignItems="center" key={user.name}>
-                                        <Avatar src={user.avatar}
-                                                sx={{width: 48, height: 48, border: '2px solid #a171f8'}}/>
+                                        <Avatar src={undefined}
+                                                sx={{width: 48, height: 48}}/>
                                         <Box>
                                             <Typography fontWeight={800}
                                                         sx={{color: '#e2f2fa'}}>{user.name}</Typography>

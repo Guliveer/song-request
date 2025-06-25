@@ -1,6 +1,6 @@
 import {useRouter} from "next/router";
 import {useEffect, useState} from "react";
-import {supabase} from "@/utils/supabase";
+import {supabase} from "@/lib/supabase";
 import SetTitle from "@/components/SetTitle";
 import PlaylistMenu from "@/components/PlaylistManagement/PlaylistMenu";
 import TopSongsOlympicPodium from "@/components/TopSongsOlympicPodium";
@@ -12,7 +12,7 @@ import {
     getJoinedPlaylists,
     isUserLoggedIn,
     joinPlaylist,
-} from "@/utils/actions";
+} from "@/lib/actions";
 import {
     Box,
     Button,

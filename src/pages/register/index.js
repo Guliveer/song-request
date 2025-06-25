@@ -2,7 +2,7 @@ import { useRouter } from 'next/router';
 import HCaptcha from '@hcaptcha/react-hcaptcha';
 import { Box, Button, CircularProgress, Divider, Link, Typography } from '@mui/material';
 import { HowToRegRounded as RegisterIcon } from '@mui/icons-material';
-import { signUp, isUsernameAvailable, playSound } from "@/utils/actions";
+import { signUp, isUsernameAvailable, playSound } from "@/lib/actions";
 import { ErrorAlert, FormField } from "@/components/Items";
 import { useEffect, useRef, useState } from 'react';
 import SetTitle from "@/components/SetTitle";

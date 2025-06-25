@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
-import { supabase } from '@/utils/supabase';
-import { sortSongs } from '@/utils/actions';
+import { supabase } from '@/lib/supabase';
+import { sortSongs } from '@/lib/actions';
 import SongCard from '@/components/SongCard';
 import {
     IconButton, Menu, MenuItem, Box, Pagination, Tooltip

@@ -11,7 +11,7 @@ import {
     getPlaylistMembers,
     getPlaylistModerators,
     getPlaylistData,
-} from "@/utils/actions";
+} from "@/lib/actions";
 import {
     TextField,
     Button,
@@ -37,7 +37,7 @@ import {
     AccountCircleRounded as ProfileIcon,
     DeleteRounded as DeleteIcon,
 } from "@mui/icons-material";
-import {supabase} from "@/utils/supabase";
+import {supabase} from "@/lib/supabase";
 import PropTypes from "prop-types";
 
 export default function PlaylistSettings({ playlistId }) {

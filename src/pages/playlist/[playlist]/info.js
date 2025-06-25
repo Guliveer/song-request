@@ -28,7 +28,7 @@ import {
     getFriendsOnPlaylist,
     genUserAvatar,
     getJoinedPlaylists
-} from "@/utils/actions";
+} from "@/lib/actions";
 import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
 import SetTitle from "@/components/SetTitle";

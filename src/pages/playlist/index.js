@@ -21,7 +21,7 @@ import {
     StarRounded as HostIcon,
     GroupRounded as MembersIcon,
 } from "@mui/icons-material"
-import { supabase } from "@/utils/supabase"
+import { supabase } from "@/lib/supabase"
 import SetTitle from "@/components/SetTitle";
 import Link from "next/link";
 

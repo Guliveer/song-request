@@ -1,7 +1,7 @@
 import PropTypes from "prop-types";
 import { AuthProviderButton } from '@/components/Items';
 import { Box } from '@mui/material';
-import { authProviders } from '@/utils/authProviders';
+import { authProviders } from '@/lib/authProviders';
 
 export default function AuthProvidersList({prompt}) {
     return (

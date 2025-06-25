@@ -1,7 +1,7 @@
 'use client';
 import {useEffect, useState} from 'react';
-import {supabase} from '@/utils/supabase';
-import {sortSongs} from '@/utils/actions';
+import {supabase} from '@/lib/supabase';
+import {sortSongs} from '@/lib/actions';
 import {
     Box, Typography, Paper, Grid, useMediaQuery,
     useTheme, CircularProgress, Skeleton

@@ -8,7 +8,7 @@ import {
     banPlaylistUser,
     unbanPlaylistUser,
     leavePlaylist, getCurrentUser,
-} from "@/utils/actions";
+} from "@/lib/actions";
 import {
     Divider,
     Avatar,

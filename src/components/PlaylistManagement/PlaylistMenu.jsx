@@ -5,7 +5,7 @@ import {
     getCurrentUser,
     getJoinedPlaylists,
     leavePlaylist,
-} from "@/utils/actions";
+} from "@/lib/actions";
 import {
     IconButton,
     Menu,

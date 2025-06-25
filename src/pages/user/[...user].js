@@ -1,5 +1,5 @@
 import UserProfile from "@/components/User_Panel/UserProfile";
-import {supabase} from "@/utils/supabase";
+import {supabase} from "@/lib/supabase";
 
 export async function getServerSideProps(context) {
     const targetUser = context.params.user[0]; // Extract the first segment of the catch-all route

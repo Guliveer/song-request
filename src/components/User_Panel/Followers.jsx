@@ -10,7 +10,7 @@ import {
     Search as SearchIcon,
     ErrorOutline as ErrorOutlineIcon,
 } from "@mui/icons-material";
-import {supabase} from "@/utils/supabase";
+import {supabase} from "@/lib/supabase";
 
 export default function Followers({userId, followingCount, followersCount, onFollowAction}) {
     const [friendUsername, setFriendUsername] = useState("");

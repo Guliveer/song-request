@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/utils/supabase";
+import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import {
     getPlaylistData,
@@ -7,7 +7,7 @@ import {
     removeSong,
     banSong,
     unbanSong,
-} from "@/utils/actions";
+} from "@/lib/actions";
 import {
     Table,
     TableBody,

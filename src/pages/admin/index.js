@@ -1,7 +1,7 @@
 import {useEffect, useState} from "react";
 import {useRouter} from "next/router";
-import {isUserAdmin, isUserLoggedIn, genUserAvatar} from "@/utils/actions";
-import {supabase} from "@/utils/supabase";
+import {isUserAdmin, isUserLoggedIn, genUserAvatar} from "@/lib/actions";
+import {supabase} from "@/lib/supabase";
 import {
     Box,
     Tabs,

@@ -46,7 +46,7 @@ import {
     isUserLoggedIn,
     getJoinedPlaylists,
     getPlaylistData,
-} from "@/utils/actions"
+} from "@/lib/actions"
 
 function TabPanel(props) {
     const { children, value, index, ...other } = props

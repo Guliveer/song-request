@@ -10,7 +10,7 @@ import {
     getJoinedPlaylists,
     getPlaylistData,
     getPlaylistModerators,
-} from "@/utils/actions";
+} from "@/lib/actions";
 import {
     Box,
     Container,

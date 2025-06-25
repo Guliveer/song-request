@@ -2,7 +2,7 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { Box, CircularProgress } from '@mui/material';
 import SongCard from '@/components/SongCard';
-import {getPlaylistData, getSongData, getCurrentUser, getJoinedPlaylists} from '@/utils/actions';
+import {getPlaylistData, getSongData, getCurrentUser, getJoinedPlaylists} from '@/lib/actions';
 
 export default function SongPage() {
     const router = useRouter();
