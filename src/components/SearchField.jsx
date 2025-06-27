@@ -1,116 +1,139 @@
 import { useState, useEffect } from 'react';
-import {
-    Box, IconButton, InputBase, Paper, Menu, MenuItem
-} from '@mui/material';
-import SearchIcon from '@mui/icons-material/Search';
-import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import { Input } from "shadcn/input"
+import { Button } from "shadcn/button"
+import { Popover, PopoverTrigger, PopoverContent } from "shadcn/popover"
+import { Command, CommandList, CommandItem, CommandGroup } from "shadcn/command"
+import { ArrowDownWideNarrow, Search, ArrowUpWideNarrow, Filter } from "lucide-react"
+import { motion } from "framer-motion";
 
 const FILTERS = [
-    { value: 'title', label: 'Song title' },
-    { value: 'author', label: 'Author' },
-    { value: 'user', label: 'User' },
+    { value: 'title',   label: 'Song title' },
+    { value: 'author',  label: 'Author' },
+    { value: 'user',    label: 'User' },
 ];
 
-function SearchField({ onSearchChange }) {
-    const [query, setQuery] = useState('');
-    const [filter, setFilter] = useState('title');
-    const [anchorEl, setAnchorEl] = useState(null);
+const SORT_OPTIONS = [
+    { value: 'score',    label: 'Score' },
+    { value: 'title',    label: 'Song title' },
+    { value: 'author',   label: 'Author' },
+    { value: 'added_at', label: 'Date added' },
+];
+
+export default function SearchField({ onSearchChange, onSortOrderChange }) {
+    const [query, setQuery]     = useState("");
+    const [filter, setFilter]   = useState("title");
+    const [sortField, setField] = useState("score");
+    const [sortOrder, setOrder] = useState("desc");
+    const [openSort, setOpenSort] = useState(false);
+    const [openFilter, setOpenFilter] = useState(false);
 
     useEffect(() => {
-        const delayDebounce = setTimeout(() => {
-            onSearchChange(query, filter);
-        }, 300);
-        return () => clearTimeout(delayDebounce);
+        const timeout = setTimeout(() => onSearchChange(query, filter), 300);
+        return () => clearTimeout(timeout);
     }, [query, filter, onSearchChange]);
 
-    const handleInputChange = (e) => setQuery(e.target.value);
-
-    const handleFilterClick = (event) => setAnchorEl(event.currentTarget);
-    const handleFilterClose = () => setAnchorEl(null);
-
-    const handleFilterSelect = (f) => {
-        setFilter(f);
-        setAnchorEl(null);
+    const selectField = (field) => {
+        setField(field);
+        onSortOrderChange(`${field},${sortOrder}`);
+        setOpenSort(false);
     };
 
-    const placeholder = `Search by ${FILTERS.find(f => f.value === filter).label.toLowerCase()}...`;
+    const toggleOrder = () => {
+        const next = sortOrder === "asc" ? "desc" : "asc";
+        setOrder(next);
+        onSortOrderChange(`${sortField},${next}`);
+    };
+
+    const selectFilter = (selectedFilter) => {
+        setFilter(selectedFilter);
+        setOpenFilter(false);
+    };
 
     return (
-        <Paper
-            component="form"
-            sx={{
-                flex: 1,
-                display: 'flex',
-                alignItems: 'center',
-                borderRadius: 3,
-                background: "none",
-                border: "1px solid #6beaf733",
-                height: 54,
-                pl: 2,
-                pr: 1,
-                boxShadow: "none",
-                minWidth: 100,
-                maxWidth: 'none',
-            }}
-            onSubmit={e => e.preventDefault()}
-        >
-            <SearchIcon sx={{ color: "#6beaf7", mr: 1, fontSize: 24 }} />
-            <InputBase
-                sx={{
-                    flex: 1,
-                    color: "#dff7ff",
-                    fontSize: 19,
-                    fontWeight: 500,
-                }}
-                placeholder={placeholder}
-                value={query}
-                onChange={handleInputChange}
-                inputProps={{ 'aria-label': 'search' }}
-            />
-            <Box>
-                <IconButton
-                    size="small"
-                    onClick={handleFilterClick}
-                    sx={{
-                        ml: 0.5,
-                        p: 0.5,
-                        borderRadius: "24px",
-                        color: "#bff6ff",
-                        background: "none",
-                        '&:hover': { background: "none" }
-                    }}
-                    aria-label="Select search filter"
-                >
-                    <ArrowDropDownIcon sx={{ fontSize: 28 }} />
-                </IconButton>
-                <Menu
-                    anchorEl={anchorEl}
-                    open={Boolean(anchorEl)}
-                    onClose={handleFilterClose}
-                    // BRAK PaperProps = domyślny wygląd jak w Queue
-                    anchorOrigin={{
-                        vertical: "bottom",
-                        horizontal: "right"
-                    }}
-                    transformOrigin={{
-                        vertical: "top",
-                        horizontal: "right"
-                    }}
-                >
-                    {FILTERS.map((f) => (
-                        <MenuItem
-                            key={f.value}
-                            onClick={() => handleFilterSelect(f.value)}
-                            selected={filter === f.value}
-                            // BRAK sx = domyślny wygląd jak w Queue
+        <div className="flex flex-col sm:flex-row w-full gap-3 max-w-full items-center border rounded-lg bg-card px-5 py-5 shadow-md h-auto sm:h-20 ">
+            {/* Top row: search icon + input */}
+            <div className="flex w-full items-center gap-2">
+                <Search className="w-6 h-auto aspect-square min-w-5 text-primary" />
+                <Input
+                    placeholder="Search..."
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                />
+            </div>
+
+            {/* Bottom row: filter and sort controls, stacked on mobile */}
+            <div className="flex w-full sm:w-auto gap-3 mt-2 sm:mt-0 justify-end">
+                {/* Filter Button */}
+                <Popover open={openFilter} onOpenChange={setOpenFilter}>
+                    <PopoverTrigger asChild>
+                        <Button
+                            variant="outline"
+                            className="flex items-center gap-2"
                         >
-                            {f.label}
-                        </MenuItem>
-                    ))}
-                </Menu>
-            </Box>
-        </Paper>
+                            <Filter className="w-4 h-4" />
+                            {FILTERS.find(f => f.value === filter)?.label}
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent>
+                        <Command>
+                            <CommandList>
+                                <CommandGroup>
+                                    {FILTERS.map(f => (
+                                        <CommandItem
+                                            key={f.value}
+                                            onSelect={() => selectFilter(f.value)}
+                                        >
+                                            {f.label}
+                                        </CommandItem>
+                                    ))}
+                                </CommandGroup>
+                            </CommandList>
+                        </Command>
+                    </PopoverContent>
+                </Popover>
+
+                {/* Sort Button Group */}
+                <div className="flex">
+                    <Button
+                        variant="outline"
+                        onClick={toggleOrder}
+                        className="rounded-none rounded-l-md border-r-0 px-3"
+                        aria-label="Toggle sort direction"
+                    >
+                        {sortOrder === "asc" ? (
+                            <ArrowUpWideNarrow className="w-4 h-4" />
+                        ) : (
+                            <ArrowDownWideNarrow className="w-4 h-4" />
+                        )}
+                    </Button>
+                    <Popover open={openSort} onOpenChange={setOpenSort}>
+                        <PopoverTrigger asChild>
+                            <Button
+                                variant="outline"
+                                className="rounded-none rounded-r-md border-l-0 px-3"
+                            >
+                                {SORT_OPTIONS.find(opt => opt.value === sortField)?.label}
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent>
+                            <Command>
+                                <CommandList>
+                                    <CommandGroup>
+                                        {SORT_OPTIONS.map(opt => (
+                                            <CommandItem
+                                                key={opt.value}
+                                                onSelect={() => selectField(opt.value)}
+                                            >
+                                                {opt.label}
+                                            </CommandItem>
+                                        ))}
+                                    </CommandGroup>
+                                </CommandList>
+                            </Command>
+                        </PopoverContent>
+                    </Popover>
+                </div>
+            </div>
+        </div>
     );
 }
-
-export default SearchField;

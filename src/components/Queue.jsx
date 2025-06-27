@@ -1,221 +1,171 @@
-'use client';
+'use server';
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { sortSongs } from '@/lib/actions';
 import SongCard from '@/components/SongCard';
-import {
-    IconButton, Menu, MenuItem, Box, Pagination, Tooltip
-} from '@mui/material';
-import SortIcon from '@mui/icons-material/Sort';
-import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
-import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import SkeletonQueue from '@/components/skeletons/SkeletonQueue';
 import SearchField from '@/components/SearchField';
+import {
+    Pagination,
+    PaginationContent,
+    PaginationItem,
+    PaginationPrevious,
+    PaginationNext,
+    PaginationLink,
+    PaginationEllipsis,
+} from "shadcn/pagination"
 
 export default function Queue({playlist}) {
-    const [songs, setSongs] = useState([]);
-    const [sortCriteria, setSortCriteria] = useState('score');
-    const [sortOrder, setSortOrder] = useState('desc');
-    const [anchorEl, setAnchorEl] = useState(null);
-
-    const [page, setPage] = useState(1);
-    const [pageSize] = useState(12);
-    const [totalPages, setTotalPages] = useState(1);
-
-    const [searchQuery, setSearchQuery] = useState('');
-    const [searchFilter, setSearchFilter] = useState('title');
-
-    const [currentlyPreviewingSongId, setCurrentlyPreviewingSongId] = useState(null);
+    const [songs, setSongs] = useState([])
+    const [sortCriteria, setSortCriteria] = useState("score")
+    const [sortOrder, setSortOrder] = useState("desc")
+    const [page, setPage] = useState(1)
+    const [loading, setLoading] = useState(true);
+    const pageSize = 12
+    const [totalPages, setTotalPages] = useState(1)
+    const [searchQuery, setSearchQuery] = useState("")
+    const [searchFilter, setSearchFilter] = useState("title")
+    const [currentlyPreviewingSongId, setCurrentlyPreviewingSongId] = useState(null)
 
     const handleSearchChange = useCallback((query, filter) => {
-        setSearchQuery(query);
-        setSearchFilter(filter);
-        setPage(1);
+        setSearchQuery(query)
+        setSearchFilter(filter)
+        setPage(1)
+    }, [])
+
+    const handleSortOrderChange = useCallback((criteria) => {
+        const [field, order] = criteria.split(",");
+        setSortCriteria(field);
+        setSortOrder(order);
     }, []);
 
     useEffect(() => {
         async function fetchQueue() {
+            setLoading(true)
+
             try {
                 let queryBuilder = supabase
                     .from("queue")
-                    .select("id, score, author, title, added_at, user_id", { count: 'exact' })
-                    .eq('playlist', playlist);
+                    .select("*")
+                    .eq("playlist", playlist)
 
-                if (searchQuery.trim() !== '') {
-                    if (searchFilter === 'title') {
-                        queryBuilder = queryBuilder.ilike('title', `%${searchQuery}%`);
-                    } else if (searchFilter === 'author') {
-                        queryBuilder = queryBuilder.ilike('author', `%${searchQuery}%`);
-                    } else if (searchFilter === 'user') {
+                if (searchQuery.trim() !== "") {
+                    if (searchFilter === "title") {
+                        queryBuilder = queryBuilder.ilike("title", `%${searchQuery}%`)
+                    } else if (searchFilter === "author") {
+                        queryBuilder = queryBuilder.ilike("author", `%${searchQuery}%`)
+                    } else if (searchFilter === "user") {
                         const { data: users, error: userError } = await supabase
-                            .from('users')
-                            .select('id')
-                            .ilike('username', `%${searchQuery}%`);
+                            .from("users")
+                            .select("id")
+                            .ilike("username", `%${searchQuery}%`)
 
-                        if (userError) {
-                            console.error("Błąd użytkownika:", userError.message);
-                            return;
-                        }
-
+                        if (userError) throw userError
                         if (users.length === 0) {
-                            setSongs([]);
-                            setTotalPages(1);
-                            return;
+                            setSongs([])
+                            setTotalPages(1)
+                            return
                         }
 
-                        const userIds = users.map((u) => u.id);
-                        queryBuilder = queryBuilder.in('user_id', userIds);
+                        const userIds = users.map((u) => u.id)
+                        queryBuilder = queryBuilder.in("user_id", userIds)
                     }
                 }
 
-                // Primary sorting
-                queryBuilder = queryBuilder.order(sortCriteria, { ascending: sortOrder === 'asc' });
+                const { data, error } = await queryBuilder
 
-                // Secondary sorting logic
-                if (sortCriteria === 'added_at') {
-                    queryBuilder = queryBuilder.order('score', { ascending: sortOrder === 'asc' });
-                } else {
-                    queryBuilder = queryBuilder.order('added_at', { ascending: false });
-                }
+                if (error) throw error
 
-                queryBuilder = queryBuilder.range((page - 1) * pageSize, page * pageSize - 1);
-
-                const { data, error, count } = await queryBuilder;
-
-                if (error) throw error;
-
-                setTotalPages(Math.ceil(count / pageSize));
-                setSongs(sortSongs(data, sortCriteria, sortOrder));
-            } catch (error) {
-                console.error("Error fetching queue:", error.message);
+                const sorted = sortSongs(data, sortCriteria, sortOrder)
+                setSongs(sorted)
+                setTotalPages(Math.max(1, Math.ceil(sorted.length / pageSize)))
+            } catch (err) {
+                console.error("Error fetching queue:", err.message)
+            } finally {
+                setLoading(false)
             }
         }
 
-        fetchQueue();
-    }, [sortCriteria, sortOrder, page, searchQuery, searchFilter]);
-
-    const handleSortClick = (event) => {
-        setAnchorEl(event.currentTarget);
-    };
-
-    const handleSortClose = () => {
-        setAnchorEl(null);
-    };
-
-    const handleSortChange = (criteria) => {
-        setSortCriteria(criteria);
-        setPage(1);
-        handleSortClose();
-    };
-
-    const handlePageChange = (event, value) => {
-        setPage(value);
-    };
+        fetchQueue()
+    }, [playlist, page, searchQuery, searchFilter, sortCriteria, sortOrder])
 
     return (
-        <Box sx={{
-            display: "flex",
-            flexDirection: "column",
-            flexWrap: 'nowrap',
-            alignItems: 'flex-start',
-            justifyContent: 'center',
-            gap: 3,
-            minWidth: '100px',
-            width: '100vw',
-            p: 3,
-        }}>
-            {/* One big bar, centered and wide */}
-            <Box sx={{
-                width: "100%",
-                maxWidth: 1100,
-                mx: "auto",
-                display: "flex",
-                flexDirection: 'row',
-                alignItems: "center",
-                justifyContent: 'center',
-                p: 3,
-                gap: 2,
-                background: "linear-gradient(90deg, #23253a 60%, #22253a 100%)",
-                borderRadius: 5,
-                boxShadow: "0 1.5px 12px 0 #13162c42",
-            }}>
-                <SearchField onSearchChange={handleSearchChange} />
-                <Tooltip title="Sort by">
-                    <IconButton
-                        onClick={handleSortClick}
-                        sx={{
-                            borderRadius: 3,
-                            aspectRatio: 1/1,
-                            width: 48,
-                            height: 48,
-                            background: "none",
-                            border: "1px solid #6beaf733",
-                            color: "#bff6ff",
-                        }}
-                    >
-                        <SortIcon />
-                    </IconButton>
-                </Tooltip>
-                <Tooltip title={"Sort order"}>
-                    <IconButton
-                        onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                        sx={{
-                            borderRadius: 3,
-                            aspectRatio: 1/1,
-                            width: 48,
-                            height: 48,
-                            background: "none",
-                            border: "1px solid #6beaf733",
-                            color: "#bff6ff",
-                        }}
-                    >
-                        {sortOrder === 'asc' ? <ArrowUpwardIcon /> : <ArrowDownwardIcon />}
-                    </IconButton>
-                </Tooltip>
-            </Box>
-
-            <Menu
-                anchorEl={anchorEl}
-                open={Boolean(anchorEl)}
-                onClose={handleSortClose}
-            >
-                <MenuItem onClick={() => handleSortChange('score')}>Score</MenuItem>
-                <MenuItem onClick={() => handleSortChange('author')}>Author</MenuItem>
-                <MenuItem onClick={() => handleSortChange('title')}>Title</MenuItem>
-                <MenuItem onClick={() => handleSortChange('added_at')}>Added Time</MenuItem>
-            </Menu>
-
-            <Box sx={{
-                display: 'flex',
-                flexDirection: 'row',
-                flexWrap: 'wrap',
-                gap: 3,
-                justifyContent: 'center',
-                alignItems: 'flex-start',
-                width: '100%',
-            }}>
-                {songs.length === 0 ? (
-                    <Box sx={{ textAlign: 'center', color: '#ccc' }}>No songs found</Box>
-                ) : (
-                    songs.map((song) => (
-                        <SongCard
-                            key={song.id}
-                            id={song.id}
-                            currentlyPreviewingSongId={currentlyPreviewingSongId}
-                            setCurrentlyPreviewingSongId={setCurrentlyPreviewingSongId}
-                        />
-                    ))
-                )}
-            </Box>
-
-            {(totalPages > 1) && (
-                <Pagination
-                    count={totalPages}
-                    page={page}
-                    onChange={handlePageChange}
-                    color="primary"
-                    sx={{ alignSelf: "center" }}
+        <div className="flex flex-col items-center gap-6 w-full px-4 py-6 min-w-[100px]">
+            {/* Search + Sort Bar */}
+            <div className="w-full max-w-[1100px] flex items-center justify-center p-4 rounded-2xl shadow-md">
+                <SearchField
+                    onSearchChange={handleSearchChange}
+                    onSortOrderChange={handleSortOrderChange}
                 />
+            </div>
+
+            {/* Songs list */}
+            {!loading ? (
+                <div className="w-full flex flex-wrap justify-center gap-6">
+                    {(songs.length === 0 && !loading) ? (
+                        <p className="text-muted-foreground text-center w-full">Playlist is empty</p>
+                    ) : (
+                        songs.slice((page - 1) * pageSize, page * pageSize).map((song) => (
+                            <SongCard
+                                key={song.id}
+                                id={song.id}
+                                currentlyPreviewingSongId={currentlyPreviewingSongId}
+                                setCurrentlyPreviewingSongId={setCurrentlyPreviewingSongId}
+                            />
+                        ))
+                    )}
+                </div>
+            ) : (
+                <SkeletonQueue />
             )}
-        </Box>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+                <Pagination className="mt-6">
+                    <PaginationContent>
+                        <PaginationItem>
+                            <PaginationPrevious
+                                onClick={() => setPage(Math.max(1, page - 1))}
+                                className={page === 1 ? "pointer-events-none opacity-50" : ""}
+                            />
+                        </PaginationItem>
+
+                        {Array.from({ length: totalPages }).map((_, i) => {
+                            const p = i + 1;
+                            const show =
+                                totalPages <= 7 ||
+                                p === 1 ||
+                                p === totalPages ||
+                                (p >= page - 1 && p <= page + 1);
+
+                            if (!show && (p === 2 || p === totalPages - 1)) {
+                                return (
+                                    <PaginationItem key={`ellipsis-${p}`}>
+                                        <PaginationEllipsis />
+                                    </PaginationItem>
+                                );
+                            }
+
+                            if (!show) return null;
+
+                            return (
+                                <PaginationItem key={p}>
+                                    <PaginationLink isActive={p === page} onClick={() => setPage(p)}>
+                                        {p}
+                                    </PaginationLink>
+                                </PaginationItem>
+                            );
+                        })}
+
+                        <PaginationItem>
+                            <PaginationNext
+                                onClick={() => setPage(Math.min(totalPages, page + 1))}
+                                className={page === totalPages ? "pointer-events-none opacity-50" : ""}
+                            />
+                        </PaginationItem>
+                    </PaginationContent>
+                </Pagination>
+            )}
+        </div>
     );
 }

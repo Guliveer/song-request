@@ -1,90 +1,41 @@
-'use client'
-import React from 'react';
-import {Box, Card, CardContent, Skeleton} from "@mui/material";
+'use server'
+import { Card, CardContent } from "shadcn/card";
+import { Skeleton } from "shadcn/skeleton";
 
 export default function SkeletonSongCard() {
     return (
         <Card
-            sx={{
-                background: `linear-gradient(135deg, rgba(135, 229, 221, 0.08) 0%, rgba(161, 113, 248, 0.08) 100%)`,
-                border: `1px solid rgba(255,255,255,0.08)`,
-                borderRadius: 3,
-                overflow: "hidden",
-                position: "relative",
-                maxWidth: 500,
-                width: '100%',
-                minWidth: 'fit-content',
-            }}
+            className="px-2 w-max h-fit cursor-default border rounded-2xl"
         >
-            <CardContent sx={{p: 2.5}}>
-                {/* Header Row: Rank + ExternalLink */}
-                <Box
-                    sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        mb: 2,
-                        width: "100%",
-                        position: "relative",
-                    }}
-                >
-                    <Skeleton variant="text" width={32} height={28} sx={{borderRadius: 1}}/>
-                    <Skeleton
-                        variant="circular"
-                        width={28}
-                        height={28}
-                        sx={{
-                            position: 'relative',
-                            top: 0,
-                            right: 9.5,
-                            borderRadius: 1,
-                        }}
-                    />
-                </Box>
+            <CardContent className="py-2 space-y-4">
+                {/* Header */}
+                <div className="flex items-center justify-between">
+                    <Skeleton className="w-8 h-6" />
+                    <Skeleton className="w-6 h-6" />
+                </div>
 
-                {/* Main Content Row: Cover + Info + Votes */}
-                <Box sx={{display: "flex", gap: 2, alignItems: "center"}}>
-                    {/* Album Art */}
-                    <Skeleton
-                        variant="rectangular"
-                        width={56}
-                        height={56}
-                        sx={{borderRadius: 1, flexShrink: 0}}
-                    />
-                    {/* Song Info */}
-                    <Box sx={{flex: 1, minWidth: 0, mr: 1}}>
-                        <Skeleton variant="text" width="80%" height={22} sx={{borderRadius: 1, mb: 0.5}}/>
-                        <Skeleton variant="text" width="60%" height={18} sx={{borderRadius: 1, mb: 1}}/>
+                {/* Main content */}
+                <div className="flex gap-3 w-[425px] items-center">
+                    {/* Cover */}
+                    <Skeleton className="w-12 h-12 rounded-md" />
 
-                        <Box
-                            sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 1.5,
-                                flexWrap: "wrap",
-                            }}
-                        >
-                            <Skeleton variant="text" width={68} height={16} sx={{borderRadius: 1}}/>
-                            <Skeleton variant="text" width={48} height={16} sx={{borderRadius: 1}}/>
-                            <Skeleton variant="text" width={88} height={16} sx={{borderRadius: 1}}/>
-                        </Box>
-                    </Box>
-                    {/* Voting Section */}
-                    <Box
-                        sx={{
-                            display: "flex",
-                            flexDirection: "column",
-                            alignItems: "center",
-                            gap: 0.5,
-                            minWidth: 48,
-                            py: 0.5,
-                        }}
-                    >
-                        <Skeleton variant="circular" width={32} height={32} sx={{borderRadius: 1}}/>
-                        <Skeleton variant="text" width={24} height={18} sx={{borderRadius: 1, my: 0.5}}/>
-                        <Skeleton variant="circular" width={32} height={32} sx={{borderRadius: 1}}/>
-                    </Box>
-                </Box>
+                    {/* Texts */}
+                    <div className="flex-1 min-w-0 space-y-2">
+                        <Skeleton className="w-[200px] h-4" />
+                        <Skeleton className="w-[125px] h-3" />
+                        <div className="flex gap-2 flex-wrap">
+                            <Skeleton className="w-20 h-3" />
+                            <Skeleton className="w-36 h-3" />
+                        </div>
+                    </div>
+
+                    {/* Voting */}
+                    <div className="flex flex-col items-center gap-2">
+                        <Skeleton className="w-8 h-8 rounded-full" />
+                        <Skeleton className="w-8 h-4" />
+                        <Skeleton className="w-8 h-8 rounded-full" />
+                    </div>
+                </div>
             </CardContent>
         </Card>
     );
