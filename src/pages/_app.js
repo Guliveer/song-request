@@ -3,7 +3,6 @@ import {ThemeProvider} from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import theme from '@/styles/theme';
 import '@/styles/globals.css';
-import '@/styles/shadcn.css';
 import NavMenu from '@/components/NavMenu';
 import Footer from '@/components/Footer';
 import PropTypes from "prop-types";
