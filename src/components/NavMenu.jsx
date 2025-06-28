@@ -1,320 +1,201 @@
-import { useUser } from "@/context/UserContext";
-import {useEffect, useState} from "react";
+import { useUser } from "@/context/UserContext"
+import { useEffect, useState } from "react"
+import Link from "next/link"
+import NotificationBell from "@/components/NotificationBell"
+import { genUserAvatar, logOut, createPlaylist } from "@/lib/actions"
 import {
-    AppBar,
-    Toolbar,
-    Box,
-    MenuItem,
-    Tooltip,
-    IconButton,
-    Menu,
-    Container,
-    Avatar,
-    Link, ButtonGroup, Button,
+    Sheet,
+    SheetContent,
+    SheetTrigger,
+} from "shadcn/sheet"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "shadcn/dropdown-menu"
+import {
     Dialog,
-    DialogActions,
     DialogContent,
+    DialogHeader,
+    DialogFooter,
     DialogTitle,
-} from "@mui/material";
-import {
-    MenuRounded as MenuIcon,
-    HowToRegRounded as RegisterIcon,
-    LoginRounded as LoginIcon,
-    LogoutRounded as LogoutIcon,
-    MiscellaneousServicesRounded as UserPanelIcon,
-    AdminPanelSettingsRounded as AdminPanelIcon,
-    HomeRounded as HomeIcon,
-    PublicRounded as PlaylistIcon,
-    PlaylistAddRounded as NewPlaylistIcon
-} from '@mui/icons-material';
-import {genUserAvatar, logOut, createPlaylist} from "@/lib/actions";
-import NotificationBell from "@/components/NotificationBell";
-import {FormField} from "@/components/Items";
+} from "shadcn/dialog"
+import { Input } from "shadcn/input"
+import { Button } from "shadcn/button"
+import { Avatar, AvatarImage } from "shadcn/avatar"
+import { Menu, LogOut, UserPlus, LogIn, Home, PlusCircle, Settings, Radio, Shield } from "lucide-react"
 
 export default function NavMenu() {
-    const { isLoggedIn, isAdmin, uuid } = useUser();
-    const [avatarUrl, setAvatarUrl] = useState(undefined);
-    const [openDialog, setOpenDialog] = useState(false);
+    const { isLoggedIn, isAdmin, uuid } = useUser()
+    const [avatarUrl, setAvatarUrl] = useState("")
+    const [openDialog, setOpenDialog] = useState(false)
     const [formData, setFormData] = useState({
         name: "",
         description: "",
         url: "",
-    });
+    })
 
     useEffect(() => {
         if (isLoggedIn) {
-            let isMounted = true;
+            let isMounted = true
 
             async function fetchAvatar() {
-                const url = await genUserAvatar(uuid);
+                const url = await genUserAvatar(uuid)
                 if (isMounted) {
-                    setAvatarUrl(url);
+                    setAvatarUrl(url)
                 }
             }
 
-            fetchAvatar();
-
+            fetchAvatar()
             return () => {
-                isMounted = false; // Cleanup
-            };
+                isMounted = false
+            }
         }
-    }, [isLoggedIn, uuid]);
+    }, [isLoggedIn, uuid])
 
-    const pages = {
-        public: [
-            { name: "Home", href: "/", icon: <HomeIcon /> },
-            { name: "Public Playlists", href: "/playlist", icon: <PlaylistIcon /> },
-        ],
-        admin: [
-            { name: "Admin Panel", href: "/admin", icon: <AdminPanelIcon /> },
-        ],
-    };
-
-
-    const userMenu = {
-        loggedIn: [
-            { name: "User Panel", href: "/user", icon: <UserPanelIcon /> },
-            { name: "Create Playlist", action: "createPlaylist", icon: <NewPlaylistIcon /> },
-            { name: "Log out", action: "logout", icon: <LogoutIcon /> }
-        ],
-        loggedOut: [
-            { name: "Log in", href: "/login", icon: <LoginIcon /> },
-            { name: "Register", href: "/register", icon: <RegisterIcon /> }
-        ]
-    };
-
-    const [anchorElNav, setAnchorElNav] = useState(null);
-    const [anchorElUser, setAnchorElUser] = useState(null);
-
-    const handleOpenNavMenu = (event) => setAnchorElNav(event.currentTarget);
-    const handleCloseNavMenu = () => setAnchorElNav(null);
-
-    const handleOpenUserMenu = (event) => setAnchorElUser(event.currentTarget);
-    const handleCloseUserMenu = () => setAnchorElUser(null);
-
-    const handleUserMenuClick = (item) => {
-        handleCloseUserMenu();
-        if (item.action === "logout") {
-            logOut();
-        }
-
-        if (item.action === "createPlaylist") {
-            handleOpenDialog();
-        }
-    };
-
-    const handleOpenDialog = () => setOpenDialog(true);
-    const handleCloseDialog = () => setOpenDialog(false);
     const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: value }));
-    };
+        const { name, value } = e.target
+        setFormData((prev) => ({ ...prev, [name]: value }))
+    }
+
     const handleSubmit = async () => {
         try {
-            await createPlaylist(formData.name, formData.description, formData.url);
-            handleCloseDialog();
-            setFormData({ name: "", description: "", url: "" }); // Reset form data
+            await createPlaylist(formData.name, formData.description, formData.url)
+            setOpenDialog(false)
+            setFormData({ name: "", description: "", url: "" })
         } catch (error) {
-            console.error("Error creating playlist:", error.message);
+            console.error("Error creating playlist:", error.message)
         }
-    };
+    }
 
     return (
-        <>
-            <AppBar position="static">
-                <Container maxWidth="xl">
-                    <Toolbar disableGutters>
-                        {/* Menu na mobile */}
-                        <Box sx={{ flexGrow: 1, display: { xs: "flex", md: "none" } }}>
-                            <IconButton
-                                size="large"
-                                aria-label="menu"
-                                aria-controls="menu-appbar"
-                                aria-haspopup="true"
-                                onClick={handleOpenNavMenu}
-                            >
-                                <MenuIcon />
-                            </IconButton>
-                            <Menu
-                                id="menu-appbar"
-                                anchorEl={anchorElNav}
-                                anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-                                keepMounted
-                                transformOrigin={{ vertical: "top", horizontal: "left" }}
-                                open={Boolean(anchorElNav)}
-                                onClose={handleCloseNavMenu}
-                                sx={{ display: { xs: "block", md: "none" } }}
-                            >
-                                {pages.public.map((page) => (
-                                    <Link key={page.name} sx={{
-                                        display: "flex",
-                                        alignItems: "center",
-                                        gap: 1,
-                                        textTransform: "uppercase"
-                                    }} href={page.href} underline={"none"}>
-                                        <MenuItem onClick={handleCloseNavMenu}>
-                                            {page.name}
-                                        </MenuItem>
-                                    </Link>
-                                ))}
-                                {isAdmin &&
-                                    pages.admin.map((page) => (
-                                        <Link sx={{
-                                            display: "flex",
-                                            alignItems: "center",
-                                            gap: 1,
-                                            textTransform: "uppercase"
-                                        }} href={page.href} underline={"none"}>
-                                            <MenuItem key={page.name} onClick={handleCloseNavMenu}>
-                                                {page.name}
-                                            </MenuItem>
-                                        </Link>
-                                    ))}
-                            </Menu>
-                        </Box>
-
-                        {/* Menu dla desktopów */}
-                        <Box sx={{ flexGrow: 1, display: { xs: "none", md: "flex" }, gap: 3 }}>
-                            {pages.public.map((page) => (
-                                <Link
-                                    key={page.name}
-                                    href={page.href}
-                                    underline={"none"}
-                                    sx={{
-                                        display: "flex",
-                                        alignItems: "center",
-                                        gap: 1,
-                                        textTransform: "uppercase"
-                                    }}
-                                >
-                                    {page.icon}
-                                    {page.name}
+        <header className="w-full border-b px-2">
+            <div className="flex h-16 items-center justify-between px-4">
+                <div className="flex items-center gap-4">
+                    <Sheet>
+                        <SheetTrigger asChild>
+                            <Button variant="ghost" size="icon" className="md:hidden">
+                                <Menu className="h-5 w-5" />
+                            </Button>
+                        </SheetTrigger>
+                        <SheetContent side="left">
+                            <div className="grid gap-4 py-4">
+                                <Link href="/" className="flex items-center gap-2">
+                                    <Home className="h-4 w-4" /> Home
                                 </Link>
-                            ))}
-
-                            {isAdmin &&
-                                pages.admin.map((page) => (
-                                    <Link
-                                        key={page.name}
-                                        href={page.href}
-                                        underline={"none"}
-                                        sx={{
-                                            display: "flex",
-                                            alignItems: "center",
-                                            gap: 1,
-                                            textTransform: "uppercase"
-                                        }}
-                                    >
-                                        {page.icon}
-                                        {page.name}
+                                <Link href="/playlist" className="flex items-center gap-2">
+                                    <Radio className="h-4 w-4" /> Public Playlists
+                                </Link>
+                                {isAdmin && (
+                                    <Link href="/admin" className="flex items-center gap-2">
+                                        <Shield className="h-4 w-4" /> Admin Panel
                                     </Link>
-                                ))}
-                        </Box>
+                                )}
+                            </div>
+                        </SheetContent>
+                    </Sheet>
+                    <div className="hidden md:flex items-center gap-6">
+                        <Link href="/" className="flex items-center gap-2 text-sm font-medium">
+                            <Home className="h-4 w-4" /> Home
+                        </Link>
+                        <Link href="/playlist" className="flex items-center gap-2 text-sm font-medium">
+                            <Radio className="h-4 w-4" /> Public Playlists
+                        </Link>
+                        {isAdmin && (
+                            <Link href="/admin" className="flex items-center gap-2 text-sm font-medium">
+                                <Shield className="h-4 w-4" /> Admin Panel
+                            </Link>
+                        )}
+                    </div>
+                </div>
 
-                        {/* Logowanie / Rejestracja */}
-                        <Box sx={{ flexGrow: 0, display: "flex", alignItems: "center", gap: 2 }}>
-                            {!isLoggedIn &&
-                                <ButtonGroup>
-                                    {!isLoggedIn && userMenu.loggedOut.map((item) => (
-                                        <Link key={item.name} href={item.href} underline="none">
-                                            <Button
-                                                variant={item.name === "Register" ? "contained" : "outlined"}
-                                                //? (un)comment below line to show/hide icons for "Log in" and "Register"
-                                                // startIcon={item.icon}
-                                            >
-                                                {item.name}
-                                            </Button>
+                <div className="flex items-center gap-4">
+                    {!isLoggedIn && (
+                        <div className="flex gap-2">
+                            <Link href="/login">
+                                <Button variant="outline" size="sm">
+                                    <LogIn className="mr-2 h-4 w-4" /> Log in
+                                </Button>
+                            </Link>
+                            <Link href="/register">
+                                <Button size="sm">
+                                    <UserPlus className="mr-2 h-4 w-4" /> Register
+                                </Button>
+                            </Link>
+                        </div>
+                    )}
+
+                    {isLoggedIn && (
+                        <div className="flex items-center gap-2">
+                            <NotificationBell userId={uuid} />
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Avatar className="h-10 w-10 cursor-pointer">
+                                        <AvatarImage src={avatarUrl} alt="Avatar" className={"w-fit h-fit"} />
+                                    </Avatar>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-48">
+                                    <DropdownMenuItem asChild>
+                                        <Link href="/user" className="inline-flex items-center w-full">
+                                            <Settings className="h-4 w-4 mr-2" /> User Panel
                                         </Link>
-                                    ))}
-                                </ButtonGroup>
-                            }
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => setOpenDialog(true)} className="cursor-pointer">
+                                        <PlusCircle className="h-4 w-4 mr-2" /> Create Playlist
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={logOut} className="cursor-pointer">
+                                        <LogOut className="h-4 w-4 mr-2" /> Log out
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
+                    )}
+                </div>
+            </div>
 
-                            {isLoggedIn && (
-                                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                                    <NotificationBell userId={uuid} />
-                                    <Tooltip title="Open settings">
-                                        <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                                            <Avatar alt="Avatar" src={avatarUrl} />
-                                        </IconButton>
-                                    </Tooltip>
-                                </Box>
-                            )}
-                            {/* Menu użytkownika */}
-                            <Menu
-                                sx={{ mt: "45px" }}
-                                id="menu-appbar"
-                                anchorEl={anchorElUser}
-                                anchorOrigin={{ vertical: "top", horizontal: "right" }}
-                                keepMounted
-                                transformOrigin={{ vertical: "top", horizontal: "right" }}
-                                open={Boolean(anchorElUser)}
-                                onClose={handleCloseUserMenu}
-                            >
-                                {isLoggedIn && userMenu.loggedIn.map((item) => (
-                                        <Link key={item.name} sx={{
-                                            display: "flex",
-                                            justifyContent: "flex-start",
-                                            alignItems: "center",
-                                            gap: 1.5,
-                                        }} href={item.href} underline="none">
-                                        <MenuItem onClick={() => handleUserMenuClick(item)} sx={{
-                                            width: "100%",
-                                        }}>
-                                            {item.icon}
-                                            {item.name}
-                                        </MenuItem>
-                                    </Link>
-                                ))}
-                            </Menu>
-                        </Box>
-                    </Toolbar>
-                </Container>
-            </AppBar>
-
-            {/* Dialog for creating new playlist */}
-            <Dialog open={openDialog} onClose={handleCloseDialog}>
-                <DialogTitle>Create New Playlist</DialogTitle>
+            <Dialog open={openDialog} onOpenChange={setOpenDialog}>
                 <DialogContent>
-                    <FormField
-                        margin="dense"
-                        label="Name"
-                        name="name"
-                        fullWidth
-                        required
-                        value={formData.name}
-                        onChange={handleInputChange}
-                    />
-                    <FormField
-                        margin="dense"
-                        label="Description"
-                        name="description"
-                        fullWidth
-                        required
-                        value={formData.description}
-                        onChange={handleInputChange}
-                    />
-                    <FormField
-                        margin="dense"
-                        label="Accessible URL"
-                        name="url"
-                        fullWidth
-                        required
-                        value={formData.url}
-                        onChange={handleInputChange}
-                        inputProps={{ pattern: "^[a-zA-Z-]+$" }}
-                        error={!/^[a-zA-Z-]*$/.test(formData.url)}
-                        helperText={
-                            !/^[a-zA-Z-]*$/.test(formData.url)
-                                ? "Invalid format. Only letters and dashes are allowed."
-                                : "Defines the accessible URL for this playlist."
-                        }
-                    />
+                    <DialogHeader>
+                        <DialogTitle>Create New Playlist</DialogTitle>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <Input
+                            placeholder="Name"
+                            name="name"
+                            value={formData.name}
+                            onChange={handleInputChange}
+                            required
+                        />
+                        <Input
+                            placeholder="Description"
+                            name="description"
+                            value={formData.description}
+                            onChange={handleInputChange}
+                            required
+                        />
+                        <Input
+                            placeholder="Accessible URL (e.g. party-mix)"
+                            name="url"
+                            value={formData.url}
+                            onChange={handleInputChange}
+                            required
+                            pattern="^[a-zA-Z-]+$"
+                        />
+                        {!/^[a-zA-Z-]*$/.test(formData.url) && (
+                            <p className="text-sm text-red-500">
+                                Invalid format. Only letters and dashes are allowed.
+                            </p>
+                        )}
+                    </div>
+                    <DialogFooter>
+                        <Button variant="ghost" onClick={() => setOpenDialog(false)}>
+                            Cancel
+                        </Button>
+                        <Button onClick={handleSubmit}>Create</Button>
+                    </DialogFooter>
                 </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleCloseDialog}>Cancel</Button>
-                    <Button onClick={handleSubmit} variant="contained">Create</Button>
-                </DialogActions>
             </Dialog>
-        </>
-    );
+        </header>
+    )
 }

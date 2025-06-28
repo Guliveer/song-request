@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types';
 import React, {useState, useEffect, useCallback} from 'react';
 import Link from "next/link";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {supabase} from '@/lib/supabase';
 import {useRouter} from 'next/router';
 import SkeletonSongCard from "@/components/skeletons/SkeletonSongCard";
@@ -39,7 +40,6 @@ import {
     RotateCw,
     CalendarClock as DateAddedIcon,
 } from "lucide-react"
-import {Spotify as SpotifyIcon} from "@/lib/authProviders";
 
 function SongCard({id, currentlyPreviewingSongId, setCurrentlyPreviewingSongId}) {
     const [songData, setSongData] = useState(null);
@@ -433,7 +433,7 @@ function SongCard({id, currentlyPreviewingSongId, setCurrentlyPreviewingSongId})
                                     {isSpotify ? (
                                         spotifyConnected && showPlayer ?
                                             <StopCircle className="w-4 h-4" /> :
-                                            <SpotifyIcon className="w-4 h-4" />
+                                            <FontAwesomeIcon icon="fa-brands fa-spotify" className={"w-4 h-4"}/>
                                         ) :
                                         (currentlyPreviewingSongId === id ?
                                             <StopCircle className="w-4 h-4" /> :

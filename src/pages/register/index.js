@@ -1,152 +1,135 @@
 import { useRouter } from 'next/router';
 import HCaptcha from '@hcaptcha/react-hcaptcha';
-import { Box, Button, CircularProgress, Divider, Link, Typography } from '@mui/material';
-import { HowToRegRounded as RegisterIcon } from '@mui/icons-material';
 import { signUp, isUsernameAvailable, playSound } from "@/lib/actions";
-import { ErrorAlert, FormField } from "@/components/Items";
 import { useEffect, useRef, useState } from 'react';
 import SetTitle from "@/components/SetTitle";
 import { useUser } from "@/context/UserContext";
+import { Input } from "shadcn/input"
+import { Button } from "shadcn/button"
+import { Alert, AlertTitle, AlertDescription } from "shadcn/alert"
+import { UserPlus, Loader2 } from "lucide-react"
 
 export default function Register() {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    const [username, setUsername] = useState('');
-    const [error, setError] = useState(null);
-    const [captchaToken, setCaptchaToken] = useState(null);
-    const [isSubmitting, setIsSubmitting] = useState(false); // for button loading state
-    const router = useRouter();
-    const captcha = useRef();
-    const { isLoggedIn } = useUser(); // Use global user state
+    const [email, setEmail] = useState("")
+    const [password, setPassword] = useState("")
+    const [confirmPassword, setConfirmPassword] = useState("")
+    const [username, setUsername] = useState("")
+    const [error, setError] = useState(null)
+    const [captchaToken, setCaptchaToken] = useState(null)
+    const [isSubmitting, setIsSubmitting] = useState(false)
+    const router = useRouter()
+    const captcha = useRef()
+    const { isLoggedIn } = useUser()
 
     useEffect(() => {
         if (isLoggedIn) {
-            router.push('/');
+            router.push("/")
         }
-    }, [isLoggedIn, router]);
+    }, [isLoggedIn, router])
 
     async function handleSignup(e) {
-        e.preventDefault();
-        setError(null);
-        setIsSubmitting(true);
+        e.preventDefault()
+        setError(null)
+        setIsSubmitting(true)
 
         try {
-            await router.prefetch('/register/success');
+            await router.prefetch("/register/success")
 
-            if (!captchaToken) throw new Error('Please complete the CAPTCHA');
-            if (password !== confirmPassword) throw new Error('Passwords do not match');
-            if (!/^[a-z0-9]+$/i.test(username)) throw new Error('Username must be alphanumeric-only');
+            if (!captchaToken) throw new Error("Please complete the CAPTCHA")
+            if (password !== confirmPassword) throw new Error("Passwords do not match")
+            if (!/^[a-z0-9]+$/i.test(username))
+                throw new Error("Username must be alphanumeric-only")
 
-            await isUsernameAvailable(username);
-
-            await signUp(email, password, username, captchaToken);
-
-            await playSound('swoosh', 0.8);
-            await router.push('/register/success');
+            await isUsernameAvailable(username)
+            await signUp(email, password, username, captchaToken)
+            await playSound("swoosh", 0.8)
+            await router.push("/register/success")
         } catch (err) {
-            captcha.current.resetCaptcha();
-            setError(err.message);
+            captcha.current?.resetCaptcha()
+            setError(err.message)
         } finally {
-            setIsSubmitting(false);
+            setIsSubmitting(false)
         }
     }
 
     function handleCaptchaChange(token) {
-        setCaptchaToken(token);
+        setCaptchaToken(token)
     }
 
     return (
         <>
-            <SetTitle text={"Register"} />
+            <SetTitle text="Register" />
 
-            <Box sx={{
-                display: 'flex',
-                gap: '2em',
-                flexWrap: 'nowrap',
-                flexDirection: 'column',
-                placeItems: 'center',
-                placeContent: 'center',
-                height: '90vh',
-            }}>
-                <h1>Register</h1>
+            <div className="flex flex-col gap-8 items-center justify-center h-[90vh] px-4">
+                <h1 className="text-3xl font-bold">Register</h1>
+
                 <form
                     onSubmit={handleSignup}
-                    style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '1rem',
-                        width: '19rem',
-                    }}
+                    className="flex flex-col gap-4 fit max-w-sm"
                 >
-                    <FormField
+                    <Input
                         type="text"
-                        label="Username"
+                        placeholder="Username"
                         value={username}
-                        fullWidth
                         onChange={(e) => setUsername(e.target.value)}
                         required
-                        variant="outlined"
                     />
-                    <FormField
+                    <Input
                         type="email"
-                        label="Email"
+                        placeholder="Email"
                         value={email}
-                        fullWidth
                         onChange={(e) => setEmail(e.target.value)}
                         required
-                        variant="outlined"
                     />
-                    <FormField
+                    <Input
                         type="password"
-                        label="Password"
+                        placeholder="Password"
                         value={password}
-                        fullWidth
                         onChange={(e) => setPassword(e.target.value)}
                         required
-                        variant="outlined"
                     />
-                    <FormField
+                    <Input
                         type="password"
-                        label="Confirm Password"
+                        placeholder="Confirm Password"
                         value={confirmPassword}
-                        fullWidth
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         required
-                        variant="outlined"
                     />
+
                     <HCaptcha
                         ref={captcha}
                         sitekey="b224d136-6a4c-407a-8d9c-01c2221a2dea"
                         theme="dark"
                         onVerify={handleCaptchaChange}
                     />
-                    {error &&
-                        <ErrorAlert
-                            sx={{
-                                width: '100%',
-                            }}
-                            onClose={() => {
-                                setError(null);
-                            }}
-                        >{error}
-                        </ErrorAlert>
-                    }
+
+                    {error && (
+                        <Alert variant="destructive">
+                            <AlertTitle>Error</AlertTitle>
+                            <AlertDescription>{error}</AlertDescription>
+                        </Alert>
+                    )}
+
                     <Button
                         type="submit"
-                        fullWidth
-                        variant="contained"
-                        size="large"
-                        startIcon={<RegisterIcon />}
                         disabled={isSubmitting || !email || !password || !captchaToken}
+                        className="w-full"
                     >
-                        {isSubmitting ? <CircularProgress size={26} /> : 'Create account'}
+                        {isSubmitting ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                            <><UserPlus className="w-4 h-4 mr-2" />Create account</>
+                        )}
                     </Button>
                 </form>
-                <Typography variant="body2" align="center">
-                    Already registered? <Link href="/login">Log in</Link>
-                </Typography>
-            </Box>
+
+                <p className="text-sm text-muted-foreground inline-flex items-center gap-1">
+                    <span>Already have an account?</span>
+                    <Button variant="link" className={"p-0"} onClick={() => router.push("/login")}>
+                        Log in
+                    </Button>
+                </p>
+            </div>
         </>
-    );
+    )
 }

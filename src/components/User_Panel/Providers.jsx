@@ -12,16 +12,11 @@ import {
     CircularProgress
 } from "@mui/material";
 import {
-    Email as EmailIcon,
-    Google as GoogleIcon,
-    FacebookRounded as FacebookIcon,
-    GitHub as GitHubIcon,
     LinkOff as LinkOffIcon,
-    Verified as VerifiedIcon,
     ErrorOutlineRounded as ErrorOutlineIcon,
     LinkRounded as LinkRoundedIcon,
 }from '@mui/icons-material';
-import { authProviders, Spotify } from '@/lib/authProviders';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 export default function Providers() {
     const [identities, setIdentities] = useState([]);
@@ -30,11 +25,11 @@ export default function Providers() {
     const [loadingProvider, setLoadingProvider] = useState(null);
 
     const providerIcons = {
-        email: <EmailIcon sx={{color: '#8FE6D5' }} />,
-        google: <GoogleIcon sx={{color: '#8FE6D5' }} />,
-        facebook: <FacebookIcon sx={{color: '#8FE6D5' }} />,
-        github: <GitHubIcon sx={{color: '#8FE6D5' }} />,
-        spotify: <Spotify color='#8FE6D5' size={26} />,
+        email: <FontAwesomeIcon icon="fa-solid fa-envelope" />,
+        google: <FontAwesomeIcon icon="fa-brands fa-google" />,
+        facebook: <FontAwesomeIcon icon="fa-brands fa-facebook" />,
+        github: <FontAwesomeIcon icon="fa-brands fa-github" />,
+        spotify: <FontAwesomeIcon icon="fa-brands fa-spotify" />,
     };
 
     const allProviders = Object.keys(providerIcons);
