@@ -1,5 +1,4 @@
-import {Box, Typography, Stack, Link as MuiLink} from "@mui/material";
-import GitHubIcon from "@mui/icons-material/GitHub";
+import {Github} from "lucide-react";
 
 const authors = [
     {name: "Guliveer", url: "https://github.com/Guliveer"},
@@ -10,76 +9,43 @@ const authors = [
 
 export default function Footer() {
     return (
-        <Box
-            component="footer"
+        <footer
             id="site-footer"
-            sx={{
-                mt: "auto",
-                px: 2,
-                py: 3,
-                width: "100%",
-                background: "linear-gradient(90deg, #181c2a 60%, #20243a 100%)",
-                borderTop: "1px solid #282c40",
-                color: "text.secondary",
-                display: "flex",
-                flexDirection: {xs: "column", md: "row"},
-                alignItems: {xs: "center", md: "center"},
-                justifyContent: "space-between",
-                gap: 2,
-                fontSize: 15,
-                position: "relative",
-                zIndex: 10,
-            }}
+            className="w-full z-10 relative mt-auto px-4 py-5 border-t border-border bg-card text-muted-foreground text-[15px] flex flex-col md:flex-row items-center justify-between gap-3"
         >
             {/* Repozytorium */}
-            <Stack direction="row" spacing={1.2} alignItems="center" mb={{xs: 1, md: 0}}>
-                <GitHubIcon fontSize="small" sx={{color: "text.secondary"}}/>
-                <MuiLink
+            <div className="flex items-center gap-2 mb-2 md:mb-0">
+                <Github className="w-5 h-5 text-muted-foreground"/>
+                <a
                     href="https://github.com/Guliveer/song-request"
                     target="_blank"
                     rel="noopener"
-                    color="inherit"
-                    underline="hover"
-                    sx={{fontWeight: 500}}
+                    className="font-medium hover:text-primary transition-colors underline-offset-2 hover:underline"
                 >
                     Project repo
-                </MuiLink>
-            </Stack>
+                </a>
+            </div>
 
             {/* Autorzy */}
-            <Stack direction="row" spacing={2} alignItems="center" mb={{xs: 1, md: 0}}>
+            <div className="flex items-center gap-3 flex-wrap mb-2 md:mb-0">
                 {authors.map((author) => (
-                    <MuiLink
+                    <a
                         key={author.url}
                         href={author.url}
                         target="_blank"
                         rel="noopener"
-                        color="inherit"
-                        underline="hover"
-                        sx={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: 0.5,
-                            px: 0.5,
-                            py: 0.2,
-                            borderRadius: 1,
-                            transition: "color 0.2s",
-                            "&:hover": {
-                                color: "primary.main",
-                                background: "none",
-                            },
-                        }}
+                        className="inline-flex items-center gap-1 px-1 py-0.5 rounded transition-colors font-semibold hover:text-primary"
                     >
-                        <GitHubIcon fontSize="inherit" sx={{fontSize: 18}}/>
-                        <Typography variant="body2" sx={{fontWeight: 600}}>{author.name}</Typography>
-                    </MuiLink>
+                        <Github className="w-4 h-4"/>
+                        <span className="text-[15px]">{author.name}</span>
+                    </a>
                 ))}
-            </Stack>
+            </div>
 
             {/* Copyright */}
-            <Typography sx={{fontWeight: 400, letterSpacing: 0.3, fontSize: 13}}>
-                © {new Date().getFullYear()} Track Drop
-            </Typography>
-        </Box>
+            <span className="font-normal tracking-wide text-[13px]">
+                                    © {new Date().getFullYear()} Track Drop
+                                </span>
+        </footer>
     );
 }
