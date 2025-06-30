@@ -1,311 +1,271 @@
-import {useEffect, useState} from "react";
-import {
-    Box,
-    Button,
-    CircularProgress,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogContentText,
-    DialogTitle,
-    Divider,
-    IconButton,
-    List,
-    ListItem,
-    Menu,
-    MenuItem,
-    Typography,
-    Tooltip,
-} from "@mui/material";
-import {
-    DeleteRounded as DeletePlaylistIcon,
-    ExitToAppRounded as LeavePlaylistIcon,
-    GroupRounded as MembersIcon,
-    MoreVertRounded as MenuVertButtonIcon,
-    VisibilityRounded as ViewPlaylistIcon,
-    StarRounded as PlaylistHostIcon,
-    HomeRepairServiceRounded as PlaylistManageIcon,
-    InfoOutlined as PlaylistInfoIcon,
-} from "@mui/icons-material";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import {useRouter} from "next/router";
-import {supabase} from "@/lib/supabase";
-import {getCurrentUser, getPlaylistData, leavePlaylist} from "@/lib/actions";
+import { useRouter } from "next/router";
+import { supabase } from "@/lib/supabase";
+import { getCurrentUser, getPlaylistData, leavePlaylist } from "@/lib/actions";
+import {
+  Users,
+  Star,
+  Trash2,
+  LogOut,
+  MoreVertical,
+  Eye,
+  Info,
+  Settings,
+  Loader2,
+} from "lucide-react";
 
 export default function Playlists() {
-    const router = useRouter();
-    const [playlists, setPlaylists] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [currentUser, setCurrentUser] = useState(null);
-    const [anchorEl, setAnchorEl] = useState(null);
-    const [selectedPlaylist, setSelectedPlaylist] = useState(null);
-    const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const router = useRouter();
+  const [playlists, setPlaylists] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuAnchor, setMenuAnchor] = useState(null);
+  const [selectedPlaylist, setSelectedPlaylist] = useState(null);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
-    useEffect(() => {
-        const fetchCurrentUser = async () => {
-            const user = await getCurrentUser();
-            setCurrentUser(user);
-        };
-        fetchCurrentUser();
-    }, []);
-
-    useEffect(() => {
-        if (!router.isReady || !currentUser) return;
-
-        const fetchPlaylists = async () => {
-            try {
-                const {data, error} = await supabase
-                    .from("users")
-                    .select("playlists")
-                    .eq("id", currentUser.id)
-                    .single();
-
-                if (error) {
-                    console.error("Error fetching playlists:", error);
-                    setPlaylists([]);
-                    setLoading(false);
-                    return;
-                }
-
-                const playlistDetails = await Promise.all(
-                    data.playlists.map(async (playlistId) => {
-                        return await getPlaylistData(playlistId);
-                    })
-                );
-                setPlaylists(playlistDetails.filter(Boolean));
-            } catch (error) {
-                console.error("Unexpected error:", error);
-                setPlaylists([]);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchPlaylists();
-    }, [router.isReady, currentUser]);
-
-    const handleMenuOpen = (event, playlist) => {
-        setSelectedPlaylist(playlist);
-        setAnchorEl(event.currentTarget);
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      const user = await getCurrentUser();
+      setCurrentUser(user);
     };
+    fetchCurrentUser();
+  }, []);
 
-    const handleMenuClose = () => {
-        setAnchorEl(null);
-        if (anchorEl == null) {
-            setSelectedPlaylist(null)
+  useEffect(() => {
+    if (!router.isReady || !currentUser) return;
+
+    const fetchPlaylists = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("users")
+          .select("playlists")
+          .eq("id", currentUser.id)
+          .single();
+
+        if (error) {
+          setPlaylists([]);
+          setLoading(false);
+          return;
         }
-    };
 
-    const handleLeavePlaylist = async () => {
-        if (!currentUser || !selectedPlaylist) return;
-
-        try {
-            await leavePlaylist(selectedPlaylist.id);
-            const updatedPlaylists = playlists.filter((playlist) => playlist.id !== selectedPlaylist.id);
-            setPlaylists(updatedPlaylists);
-        } catch (error) {
-            console.error("Error leaving playlist:", error.message);
-        } finally {
-            setConfirmDialogOpen(false);
-            handleMenuClose();
-        }
-    };
-
-    const handleDeletePlaylist = async () => {
-        if (!currentUser || !selectedPlaylist) return;
-
-        try {
-            await handleDeletePlaylist(selectedPlaylist.id);
-            setPlaylists((prev) => prev.filter((playlist) => playlist.id !== selectedPlaylist.id));
-        } catch (error) {
-            console.error("Unexpected error:", error.message);
-        } finally {
-            setDeleteDialogOpen(false);
-            handleMenuClose();
-        }
-    };
-
-    if (loading) {
-        return (
-            <Box
-                sx={{
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    height: "90vh",
-                }}
-            >
-                <CircularProgress/>
-            </Box>
+        const playlistDetails = await Promise.all(
+          data.playlists.map(async (playlistId) => {
+            return await getPlaylistData(playlistId);
+          })
         );
-    }
+        setPlaylists(playlistDetails.filter(Boolean));
+      } catch {
+        setPlaylists([]);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    if (playlists.length === 0) {
-        return (
-            <>
-                <Typography variant="h5" component="h2" sx={{color: 'white', mb: 3, fontWeight: 500}}>
-                    Joined Playlists
-                </Typography>
-                <Divider sx={{mb: 3, backgroundColor: '#333'}}/>
-                <Typography variant="body1">
-                    You have not joined any playlists yet.
-                </Typography>
-            </>
-        );
-    }
+    fetchPlaylists();
+  }, [router.isReady, currentUser]);
 
+  const handleMenuOpen = (event, playlist) => {
+    setSelectedPlaylist(playlist);
+    setMenuAnchor(event.currentTarget);
+    setMenuOpen(true);
+  };
+
+  const handleMenuClose = () => {
+    setMenuOpen(false);
+    setMenuAnchor(null);
+    setSelectedPlaylist(null);
+  };
+
+  const handleLeavePlaylist = async () => {
+    if (!currentUser || !selectedPlaylist) return;
+    try {
+      await leavePlaylist(selectedPlaylist.id);
+      setPlaylists((prev) => prev.filter((playlist) => playlist.id !== selectedPlaylist.id));
+    } catch {}
+    setConfirmDialogOpen(false);
+    handleMenuClose();
+  };
+
+  const handleDeletePlaylist = async () => {
+    if (!currentUser || !selectedPlaylist) return;
+    try {
+      await handleDeletePlaylist(selectedPlaylist.id);
+      setPlaylists((prev) => prev.filter((playlist) => playlist.id !== selectedPlaylist.id));
+    } catch {}
+    setDeleteDialogOpen(false);
+    handleMenuClose();
+  };
+
+  if (loading) {
     return (
-        <>
-            <Typography variant="h5" component="h2" sx={{color: 'white', fontWeight: 500}}>
-                Joined Playlists
-            </Typography>
-            <Divider sx={{my: 2}}/>
-            <List>
-                {playlists.map((playlist, index) => (
-                    <Box key={playlist.id}>
-                        <ListItem
-                            sx={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
-                                py: 2,
-                            }}
-                        >
-                            <Box>
-                                <Link href={`/playlist/${playlist.url}`} passHref legacyBehavior>
-                                    <Typography
-                                        variant="body1"
-                                        sx={{
-                                            fontWeight: "bold",
-                                            color: "primary.main",
-                                            display: "inline-flex",
-                                            alignItems: "center",
-                                            cursor: "pointer",
-                                            textDecoration: "underline",
-                                            '&:hover': {color: "secondary.main"}
-                                        }}
-                                        component="a"
-                                    >
-                                        {currentUser?.id === playlist.host && (
-                                            <Tooltip title="You are the host">
-                                                <PlaylistHostIcon fontSize="small" sx={{color: "gold", mr: 0.5}}/>
-                                            </Tooltip>
-                                        )}
-                                        {playlist.name}
-                                    </Typography>
-                                </Link>
-                                <Typography variant="body2" color="text.secondary">
-                                    {playlist.description || "No description available"}
-                                </Typography>
-                                <Box sx={{display: "inline-flex", alignItems: "center", mt: 1}}>
-                                    <MembersIcon fontSize="small" sx={{mr: 0.5}}/>
-                                    <Typography variant="body2">
-                                        {playlist.userCount} members
-                                    </Typography>
-                                </Box>
-                            </Box>
-                            <IconButton onClick={(event) => handleMenuOpen(event, playlist)}>
-                                <MenuVertButtonIcon/>
-                            </IconButton>
-                        </ListItem>
-                        {index < playlists.length - 1 && <Divider/>}
-                    </Box>
-                ))}
-            </List>
-
-            {/* Menu */}
-            <Menu
-                anchorEl={anchorEl}
-                open={Boolean(anchorEl)}
-                onClose={handleMenuClose}
-                anchorOrigin={{vertical: "bottom", horizontal: "right"}}
-                transformOrigin={{vertical: "top", horizontal: "right"}}
-            >
-                <Link href={`/playlist/${selectedPlaylist?.url}`} passHref legacyBehavior>
-                    <MenuItem>
-                        <Box sx={{display: "flex", alignItems: "center"}} component="a">
-                            <ViewPlaylistIcon sx={{marginRight: 1}}/>
-                            Open Playlist
-                        </Box>
-                    </MenuItem>
-                </Link>
-                <Link href={`/playlist/${selectedPlaylist?.url}/info`} passHref legacyBehavior>
-                    <MenuItem>
-                        <Box sx={{display: "flex", alignItems: "center"}} component="a">
-                            <PlaylistInfoIcon sx={{marginRight: 1}}/>
-                            Playlist Info
-                        </Box>
-                    </MenuItem>
-                </Link>
-                {((currentUser?.id === selectedPlaylist?.host) || (selectedPlaylist?.moderators.includes(currentUser?.id))
-                ) && (
-                        <Link href={`/playlist/${selectedPlaylist?.url}/manage`} passHref legacyBehavior>
-                            <MenuItem onClick={handleMenuClose}>
-                                <Box sx={{display: "flex", alignItems: "center"}} component="a">
-                                    <PlaylistManageIcon sx={{marginRight: 1}}/>
-                                    Manage Playlist
-                                </Box>
-                            </MenuItem>
-                        </Link>
-                )}
-                {(currentUser?.id !== selectedPlaylist?.host) && (
-                    <MenuItem onClick={() => setConfirmDialogOpen(true)} sx={{
-                        color: (theme) => theme.palette.error.main
-                    }}>
-                        <Box sx={{display: "flex", alignItems: "center"}}>
-                            <LeavePlaylistIcon sx={{marginRight: 1}}/>
-                            Leave Playlist
-                        </Box>
-                    </MenuItem>
-                )}
-                {(currentUser?.id === selectedPlaylist?.host) && (
-                    <MenuItem onClick={() => setDeleteDialogOpen(true)} sx={{
-                        color: (theme) => theme.palette.error.main
-                    }}>
-                        <Box sx={{display: "flex", alignItems: "center"}}>
-                            <DeletePlaylistIcon sx={{marginRight: 1}}/>
-                            Delete Playlist
-                        </Box>
-                    </MenuItem>
-                )}
-            </Menu>
-
-            {/* Leave Confirmation Dialog */}
-            <Dialog open={confirmDialogOpen} onClose={() => setConfirmDialogOpen(false)}>
-                <DialogTitle>Confirm: Leave Playlist</DialogTitle>
-                <DialogContent>
-                    <DialogContentText>
-                        Are you sure you want to leave this playlist?
-                    </DialogContentText>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setConfirmDialogOpen(false)} color="primary">
-                        Cancel
-                    </Button>
-                    <Button onClick={handleLeavePlaylist} color="error">
-                        Leave
-                    </Button>
-                </DialogActions>
-            </Dialog>
-
-            {/* Delete Confirmation Dialog */}
-            <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
-                <DialogTitle>Confirm: Delete Playlist</DialogTitle>
-                <DialogContent>
-                    <DialogContentText>
-                        Are you sure you want to delete this playlist? This action cannot be undone.
-                    </DialogContentText>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setDeleteDialogOpen(false)} color="primary">
-                        Cancel
-                    </Button>
-                    <Button onClick={handleDeletePlaylist} color="error">
-                        Delete
-                    </Button>
-                </DialogActions>
-            </Dialog>
-        </>
+      <div className="flex justify-center items-center h-[90vh]">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
     );
+  }
+
+  if (playlists.length === 0) {
+    return (
+      <>
+        <h2 className="text-2xl font-semibold text-foreground mb-6">Joined Playlists</h2>
+        <div className="border-b border-border mb-6" />
+        <span className="text-muted-foreground">You have not joined any playlists yet.</span>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <h2 className="text-2xl font-semibold text-foreground mb-4">Joined Playlists</h2>
+      <div className="border-b border-border my-4" />
+      <ul className="divide-y divide-border bg-card rounded-xl shadow-sm">
+        {playlists.map((playlist) => (
+          <li key={playlist.id} className="flex justify-between items-center py-4 px-4">
+            <div>
+              <Link href={`/playlist/${playlist.url}`} className="font-bold text-primary underline hover:text-accent flex items-center gap-1">
+                {currentUser?.id === playlist.host && (
+                  <Star className="w-4 h-4 text-yellow-400" title="You are the host" />
+                )}
+                {playlist.name}
+              </Link>
+              <div className="text-sm text-muted-foreground">
+                {playlist.description || "No description available"}
+              </div>
+              <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
+                <Users className="w-4 h-4" />
+                {playlist.userCount} members
+              </div>
+            </div>
+            <button
+              className="rounded-full p-2 hover:bg-muted transition-colors"
+              onClick={(e) => handleMenuOpen(e, playlist)}
+              aria-label="Open playlist menu"
+            >
+              <MoreVertical className="w-5 h-5" />
+            </button>
+          </li>
+        ))}
+      </ul>
+
+      {/* Menu */}
+      {menuOpen && selectedPlaylist && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-card text-foreground rounded-xl shadow-lg w-64 p-4 flex flex-col gap-2">
+            <Link
+              href={`/playlist/${selectedPlaylist.url}`}
+              className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-muted transition-colors"
+              onClick={handleMenuClose}
+            >
+              <Eye className="w-4 h-4" />
+              Open Playlist
+            </Link>
+            <Link
+              href={`/playlist/${selectedPlaylist.url}/info`}
+              className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-muted transition-colors"
+              onClick={handleMenuClose}
+            >
+              <Info className="w-4 h-4" />
+              Playlist Info
+            </Link>
+            {(currentUser?.id === selectedPlaylist.host ||
+              selectedPlaylist.moderators?.includes(currentUser?.id)) && (
+              <Link
+                href={`/playlist/${selectedPlaylist.url}/manage`}
+                className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-muted transition-colors"
+                onClick={handleMenuClose}
+              >
+                <Settings className="w-4 h-4" />
+                Manage Playlist
+              </Link>
+            )}
+            {currentUser?.id !== selectedPlaylist.host && (
+              <button
+                className="flex items-center gap-2 px-3 py-2 rounded-md text-destructive hover:bg-destructive/10 transition-colors"
+                onClick={() => {
+                  setConfirmDialogOpen(true);
+                  setMenuOpen(false);
+                }}
+              >
+                <LogOut className="w-4 h-4" />
+                Leave Playlist
+              </button>
+            )}
+            {currentUser?.id === selectedPlaylist.host && (
+              <button
+                className="flex items-center gap-2 px-3 py-2 rounded-md text-destructive hover:bg-destructive/10 transition-colors"
+                onClick={() => {
+                  setDeleteDialogOpen(true);
+                  setMenuOpen(false);
+                }}
+              >
+                <Trash2 className="w-4 h-4" />
+                Delete Playlist
+              </button>
+            )}
+            <button
+              className="mt-2 text-xs text-muted-foreground hover:underline"
+              onClick={handleMenuClose}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Leave Confirmation Dialog */}
+      {confirmDialogOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="bg-card text-foreground rounded-2xl shadow-lg max-w-sm w-full p-6">
+            <div className="text-lg font-semibold mb-4">Confirm: Leave Playlist</div>
+            <div className="mb-6 text-muted-foreground">
+              Are you sure you want to leave this playlist?
+            </div>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setConfirmDialogOpen(false)}
+                className="px-4 py-2 rounded-md text-muted-foreground hover:bg-muted transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleLeavePlaylist}
+                className="px-4 py-2 rounded-md text-destructive hover:bg-destructive/10 transition-colors"
+              >
+                Leave
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {deleteDialogOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="bg-card text-foreground rounded-2xl shadow-lg max-w-sm w-full p-6">
+            <div className="text-lg font-semibold mb-4">Confirm: Delete Playlist</div>
+            <div className="mb-6 text-muted-foreground">
+              Are you sure you want to delete this playlist? This action cannot be undone.
+            </div>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setDeleteDialogOpen(false)}
+                className="px-4 py-2 rounded-md text-muted-foreground hover:bg-muted transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeletePlaylist}
+                className="px-4 py-2 rounded-md text-destructive hover:bg-destructive/10 transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
 }
