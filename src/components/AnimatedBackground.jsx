@@ -1,6 +1,13 @@
-import {Box} from "@mui/material"
 import {motion} from "framer-motion"
 import {useEffect, useState} from "react"
+
+const STAR_COLORS = [
+    "hsl(var(--primary))",
+    "hsl(var(--secondary))",
+    "hsl(var(--accent))",
+    "hsl(var(--foreground))",
+    "hsl(var(--muted))",
+]
 
 const AnimatedBackground = () => {
     const [dimensions, setDimensions] = useState({width: 0, height: 0})
@@ -9,13 +16,12 @@ const AnimatedBackground = () => {
         const updateDimensions = () => {
             setDimensions({
                 width: window.innerWidth,
-                height: window.innerHeight
+                height: window.innerHeight,
             })
         }
-
         updateDimensions()
-        window.addEventListener('resize', updateDimensions)
-        return () => window.removeEventListener('resize', updateDimensions)
+        window.addEventListener("resize", updateDimensions)
+        return () => window.removeEventListener("resize", updateDimensions)
     }, [])
 
     const stars = Array.from({length: 100}, (_, i) => ({
@@ -25,20 +31,13 @@ const AnimatedBackground = () => {
         size: Math.random() * 3 + 1,
         duration: Math.random() * 20 + 10,
         delay: Math.random() * 5,
+        color: STAR_COLORS[Math.floor(Math.random() * STAR_COLORS.length)],
     }))
 
     return (
-        <Box
-            sx={{
-                position: "fixed",
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                pointerEvents: "none",
-                zIndex: 0,
-                overflow: "hidden",
-            }}
+        <div
+            className="fixed inset-0 pointer-events-none z-0 overflow-hidden"
+            aria-hidden="true"
         >
             {stars.map((star) => (
                 <motion.div
@@ -67,11 +66,11 @@ const AnimatedBackground = () => {
                         width: star.size,
                         height: star.size,
                         borderRadius: "50%",
-                        background: Math.random() > 0.5 ? "#87e5dd" : "#a171f8",
+                        background: star.color,
                     }}
                 />
             ))}
-        </Box>
+        </div>
     )
 }
 
