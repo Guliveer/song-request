@@ -1,26 +1,6 @@
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import {
-    Box,
-    Typography,
-    Card,
-    CardContent,
-    Avatar,
-    Chip,
-    CircularProgress,
-    Tooltip,
-    Stack,
-    Divider,
-    Button,
-} from "@mui/material";
-import {
-    InfoOutlined as InfoIcon,
-    QueueMusicRounded as SongsIcon,
-    GroupRounded as UsersIcon,
-    StarRounded as HostIcon,
-    Person as PersonIcon,
-    ArrowBack as BackIcon,
-} from "@mui/icons-material";
+import Link from "next/link";
 import {
     getPlaylistData,
     getUserInfo,
@@ -33,6 +13,12 @@ import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
 import SetTitle from "@/components/SetTitle";
 import PlaylistMenu from "@/components/PlaylistManagement/PlaylistMenu";
+import { Button } from "shadcn/button";
+import { Card, CardContent } from "shadcn/card";
+import { Avatar, AvatarImage } from "shadcn/avatar";
+import { Separator } from "shadcn/separator";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "shadcn/tooltip";
+import { LoaderCircle, Users, Info, Music2, Star, ArrowLeft } from "lucide-react";
 
 export default function PlaylistInfo() {
     const router = useRouter();
@@ -75,11 +61,11 @@ export default function PlaylistInfo() {
             setLoading(true);
 
             try {
-                // Pobierz dane playlisty
+                // Get playlist data
                 const data = await getPlaylistData(playlist);
                 setPlaylistData(data);
 
-                // Sprawdź czy użytkownik dołączył
+                // Check if the playlist is public or if the user has joined
                 if (data?.id && currentUser) {
                     const joinedPlaylists = await getJoinedPlaylists(currentUser.id);
                     const joinStatus = joinedPlaylists.includes(data.id);
@@ -88,11 +74,11 @@ export default function PlaylistInfo() {
                     setJoinStatus(false);
                 }
 
-                // Pobierz dane hosta i avatar
+                // Get host information
                 if (data?.host) {
                     const hostInfo = await getUserInfo(data.host);
                     setHostData(hostInfo);
-                    // Generuj avatar hosta
+                    // Generate avatar for host if not available
                     if (hostInfo?.avatar_url) {
                         setHostAvatarUrl(hostInfo.avatar_url);
                     } else {
@@ -103,21 +89,17 @@ export default function PlaylistInfo() {
 
                 setIsAllowed(data?.host || joinStatus || data.is_public);
 
-                // Pobierz znajomych, którzy mają tę playlistę
+                // Get friends on playlist
                 const user = await getCurrentUser();
                 if (user && data?.id) {
                     const friendsOnPlaylist = await getFriendsOnPlaylist(user.id, data.id);
                     const friendsOnPlaylistFiltered = friendsOnPlaylist.filter(friend => friend.id !== user.id);
                     setFriends(friendsOnPlaylistFiltered);
 
-                    // Generuj awatary dla znajomych
+                    // Generate avatars for friends
                     const avatars = {};
-                    for (const friend of friendsOnPlaylist) {
-                        if (friend.avatar_url) {
-                            avatars[friend.id] = friend.avatar_url;
-                        } else {
-                            avatars[friend.id] = await genUserAvatar(friend.id);
-                        }
+                    for (const friend of friendsOnPlaylistFiltered) {
+                        avatars[friend.id] = friend.avatar_url || await genUserAvatar(friend.id);
                     }
                     setFriendAvatars(avatars);
                 } else {
@@ -130,198 +112,98 @@ export default function PlaylistInfo() {
             }
         };
         fetchAll();
-    }, [router.isReady, playlist]);
+    }, [router.isReady, playlist, currentUser]);
 
-    if (loading) {
-        return (
-            <Box sx={{ display: "flex", justifyContent: "center", mt: 8 }}>
-                <CircularProgress />
-            </Box>
-        );
-    }
-
-    if (!isAllowed || !playlistData) {
-        return (
-            <Typography color="error" sx={{ mt: 6, textAlign: "center" }}>
-                Playlist not found.
-            </Typography>
-        );
-    }
+    if (loading) return (
+        <div className="flex justify-center mt-12">
+            <LoaderCircle className="animate-spin w-10 h-10 text-muted-foreground" />
+        </div>
+    );
+    if (!playlistData || !isAllowed) return (
+        <p className="text-center text-destructive mt-10">
+            Playlist not found.
+        </p>
+    );
 
     const createdAt = playlistData.created_at
-        ? format(new Date(playlistData.created_at), "MMMM d, yyyy, HH:mm", { locale: enUS })
-        : "unknown";
+        ? format(new Date(playlistData.created_at), "MMMM d, yyyy, HH:mm:ss", { locale: enUS })
+        : "Unknown";
 
     return (
         <>
             <SetTitle>{playlistData.name}</SetTitle>
 
-            {/* Menu */}
-            <Box sx={{
-                display: 'flex',
-                width: "100%",
-                alignItems: 'center',
-                justifyContent: 'flex-end',
-                padding: '1rem 2rem',
-            }}>
+            <div className="flex justify-between px-6 py-4">
+                <Button variant="ghost" size="sm" onClick={() => router.push(`/playlist/${playlist}`)} className="mb-3">
+                    <ArrowLeft className="mr-1 w-4 h-4" /> Back
+                </Button>
                 <PlaylistMenu playlistId={playlistData.id} />
-            </Box>
+            </div>
 
-            <Box sx={{ py: 6, display: "flex", justifyContent: "center" }}>
-                <Card sx={{
-                    width: "100%",
-                    maxWidth: 400,
-                    mx: "auto",
-                    display: "flex",
-                    flexDirection: "column",
-                    borderRadius: 2,
-                    boxShadow: 4,
-                    bgcolor: "background.paper",
-                }}>
-                    <CardContent sx={{ pb: 2 }}>
-                        {/* Przycisk powrotu */}
-                        <Box sx={{ mb: 2 }}>
-                            <Button
-                                startIcon={<BackIcon />}
-                                onClick={goBack}
-                                variant="text"
-                                size="small"
-                                sx={{ textTransform: 'none' }}
-                            >
-                                Back
-                            </Button>
-                        </Box>
+            <div className="flex justify-center py-2">
+                <Card className="w-full max-w-md">
+                    <CardContent className="flex flex-col items-start gap-3">
+                        <div className="flex items-center gap-3">
+                            <Info className="w-7 h-7" />
+                            <div className="inline-flex flex-col gap-1">
+                                <h2 className="text-lg text-primary font-semibold truncate">{playlistData.name}</h2>
+                                {playlistData.description && <p className="text-muted-foreground text-sm truncate">{playlistData.description}</p>}
+                            </div>
+                        </div>
 
-                        <Box display="flex" alignItems="center" mb={2}>
-                            <Avatar sx={{ bgcolor: "primary.main", mr: 2 }}>
-                                <InfoIcon />
-                            </Avatar>
-                            <Box sx={{ cursor: 'pointer' }} onClick={navigateToPlaylist}>
-                                <Typography variant="h6" component="h2" sx={{
-                                    fontWeight: "bold",
-                                    '&:hover': { color: 'primary.main' }
-                                }} noWrap>
-                                    {playlistData.name}
-                                </Typography>
-                                {playlistData.description && (
-                                    <Typography variant="body2" color="text.secondary">
-                                        {playlistData.description}
-                                    </Typography>
-                                )}
-                            </Box>
-                        </Box>
-
-                        <Box display="flex" alignItems="center" mb={1}>
+                        <div className="flex items-center gap-2">
                             {hostData && (
                                 <>
-                                    <Avatar
-                                        src={hostAvatarUrl}
-                                        sx={{
-                                            width: 24,
-                                            height: 24,
-                                            mr: 1,
-                                            bgcolor: hostData.color || "primary.main",
-                                            fontSize: 14,
-                                        }}
-                                    >
-                                        {hostData.emoji || hostData.username[0]?.toUpperCase()}
+                                    <Avatar className="w-6 h-6 text-xs">
+                                        <AvatarImage src={hostAvatarUrl} alt="Avatar" className={"w-fit h-fit"} />
                                     </Avatar>
-                                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: "bold", mr: 1 }}>
-                                        @{hostData.username}
-                                    </Typography>
+                                    <Link href={`/user/${hostData.username}`}>
+                                        <p className="text-xs font-semibold text-muted-foreground">@{hostData.username}</p>
+                                    </Link>
                                 </>
                             )}
-                            <Chip
-                                icon={<HostIcon sx={{ fontSize: 18, color: "text.secondary" }} />}
-                                label="Host"
-                                color="secondary"
-                                size="small"
-                                sx={{ fontWeight: 700, height: 24, fontSize: 13 }}
-                            />
-                        </Box>
+                            <div className="flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-secondary text-secondary-foreground">
+                                <Star className="w-3 h-3" /> Host
+                            </div>
+                        </div>
 
-                        <Box display="flex" alignItems="center" mb={1}>
-                            <Typography variant="caption" color="text.secondary">
-                                Created: {createdAt}
-                            </Typography>
-                        </Box>
+                        <p className="text-xs text-muted-foreground">Created: {createdAt}</p>
 
-                        <Box display="flex" gap={1.5} mb={2}>
-                            <Chip
-                                icon={<SongsIcon />}
-                                label={`Songs: ${playlistData.songCount ?? 0}`}
-                                color="primary"
-                                variant="outlined"
-                                sx={{
-                                    fontWeight: 600,
-                                    fontSize: "0.98rem",
-                                    px: 1.5,
-                                    height: 30,
-                                    "& .MuiChip-icon": { fontSize: 20 },
-                                }}
-                            />
-                            <Chip
-                                icon={<UsersIcon />}
-                                label={`Members: ${playlistData.userCount ?? 0}`}
-                                color="secondary"
-                                variant="outlined"
-                                sx={{
-                                    fontWeight: 600,
-                                    fontSize: "0.98rem",
-                                    px: 1.5,
-                                    height: 30,
-                                    "& .MuiChip-icon": { fontSize: 20 },
-                                }}
-                            />
-                        </Box>
+                        <div className="flex gap-2">
+                            <div className="text-xs px-3 py-1 border rounded-md flex items-center gap-1">
+                                <Music2 className="w-3.5 h-3.5" /> {playlistData.songCount ?? 0} songs
+                            </div>
+                            <div className="text-xs px-3 py-1 border rounded-md flex items-center gap-1">
+                                <Users className="w-3.5 h-3.5" /> {playlistData.userCount ?? 0} members
+                            </div>
+                        </div>
 
-                        <Divider sx={{ my: 2 }} />
+                        <Separator className="my-2" />
 
-                        <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 700, color: "text.primary" }}>
-                            Friends who joined this playlist
-                        </Typography>
+                        <h4 className="text-sm font-semibold text-foreground">Friends who joined</h4>
                         {friends.length > 0 ? (
-                            <Stack direction="row" spacing={1}>
+                            <div className="flex gap-2 flex-wrap">
                                 {friends.map(friend => (
-                                    <Tooltip key={friend.id} title={`@${friend.username}`}>
-                                        <Avatar
-                                            src={friendAvatars[friend.id]}
-                                            sx={{
-                                                bgcolor: friend.color || "primary.main",
-                                                fontSize: 16,
-                                                width: 28,
-                                                height: 28,
-                                                border: "2px solid #87e5dd",
-                                                boxShadow: "0 2px 8px 0 rgba(135,229,221,0.12)",
-                                                transition: "transform 0.2s",
-                                                "&:hover": { transform: "scale(1.13)" }
-                                            }}
-                                        >
-                                            {friend.emoji || friend.username[0]?.toUpperCase() || <PersonIcon />}
-                                        </Avatar>
-                                    </Tooltip>
+                                    <TooltipProvider key={friend.id}>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Avatar className="w-7 h-7 border border-cyan-300 shadow-md text-xs hover:scale-105 transition-transform">
+                                                    <AvatarImage src={friendAvatars[friend.id]} alt={friend.username} />
+                                                </Avatar>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                @{friend.username}
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
                                 ))}
-                            </Stack>
+                            </div>
                         ) : (
-                            <Typography variant="body2" color="text.secondary">
-                                None of your friends have joined this playlist yet.
-                            </Typography>
+                            <p className="text-sm text-muted-foreground">None of your friends have joined this playlist yet.</p>
                         )}
-
-                        {/* Przycisk do playlisty */}
-                        <Box sx={{ mt: 3 }}>
-                            <Button
-                                variant="contained"
-                                fullWidth
-                                onClick={navigateToPlaylist}
-                                sx={{ textTransform: 'none' }}
-                            >
-                                View Playlist
-                            </Button>
-                        </Box>
                     </CardContent>
                 </Card>
-            </Box>
+            </div>
         </>
     );
 }

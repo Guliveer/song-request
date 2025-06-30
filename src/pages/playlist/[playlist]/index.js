@@ -1,6 +1,6 @@
+"use client"
 import {useRouter} from "next/router";
 import {useEffect, useState} from "react";
-import {supabase} from "@/lib/supabase";
 import SetTitle from "@/components/SetTitle";
 import PlaylistMenu from "@/components/PlaylistManagement/PlaylistMenu";
 import TopSongsOlympicPodium from "@/components/TopSongsOlympicPodium";
@@ -13,16 +13,9 @@ import {
     isUserLoggedIn,
     joinPlaylist,
 } from "@/lib/actions";
-import {
-    Box,
-    Button,
-    CircularProgress,
-    Typography,
-} from "@mui/material";
-import {
-    GroupAddRounded as JoinPlaylistIcon,
-    LocalLibraryRounded as PlaylistNameIcon,
-} from "@mui/icons-material";
+import { Button } from "shadcn/button"
+import { Spinner } from "shadcn/spinner"
+import { AudioLines as PlaylistIcon, PlusCircle } from "lucide-react"
 
 export default function Playlist() {
     const router = useRouter();
@@ -86,82 +79,44 @@ export default function Playlist() {
 
     if (loading) {
         return (
-            <Box
-                sx={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    height: '90vh',
-                }}
-            >
-                <CircularProgress />
-            </Box>
+            <div className="flex justify-center items-center h-[90vh]">
+                <Spinner />
+            </div>
         );
     }
 
-    if (playlistData === null) {
+    if (!playlistData) {
         return (
-            <Box
-                sx={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    height: '90vh',
-                }}
-            >
-                <p>Playlist not found</p>
-            </Box>
+            <div className="flex justify-center items-center h-[90vh]">
+                <p className="text-muted-foreground">Playlist not found</p>
+            </div>
         );
     }
 
-    const isHost = currentUser?.id === playlistData.host; //? Must be here - at the end of all loadings and checks
+    const isHost = currentUser?.id === playlistData.host
 
     return (
         <>
             <SetTitle text={playlistData.name} />
-            <Box sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '1rem 2rem',
-                }}
-            >
-                <Typography variant="h3" sx={{
-                    display: 'inline-flex',
-                    gap: 2,
-                }}>
-                    <PlaylistNameIcon sx={{ fontSize: '100%' }} />
-                    <Typography
-                        variant="inherit"
-                        sx={{
-                            fontWeight: '600',
-                        }}
-                    >{playlistData.name}</Typography>
-                </Typography>
+
+            <div className="flex items-center justify-between px-6 py-4">
+                <h1 className="text-2xl font-semibold flex items-center align-center gap-2">
+                    <PlaylistIcon className="w-auto h-full aspect-square" />
+                    {playlistData.name}
+                </h1>
+
                 {(!isHost && !hasJoined && loggedIn && playlistData) ? (
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        sx={{
-                            position: 'relative',
-                            right: 0,
-                            top: 0,
-                        }}
-                        startIcon={<JoinPlaylistIcon />}
-                        onClick={handleJoinPlaylist}
-                    >
-                        Join
+                    <Button onClick={handleJoinPlaylist}>
+                        <PlusCircle className="mr-2 h-4 w-4" /> Join
                     </Button>
                 ) : (
                     <PlaylistMenu playlistId={playlistData.id} />
-                    // <></>
                 )}
-            </Box>
+            </div>
+
             <TopSongsOlympicPodium playlist={playlistData.id} />
             <Queue playlist={playlistData.id} />
-            {hasJoined && (
-                <AddSongForm playlist={playlistData.id} />
-            )}
+            {hasJoined && <AddSongForm playlist={playlistData.id} />}
         </>
     );
 }

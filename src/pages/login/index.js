@@ -7,6 +7,7 @@ import AuthProvidersList from "@/components/AuthProvidersList";
 import SetTitle from "@/components/SetTitle";
 import { Input } from "shadcn/input"
 import { Button } from "shadcn/button"
+import { Separator } from "shadcn/separator"
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle } from "shadcn/dialog"
 import { Alert, AlertDescription, AlertTitle } from "shadcn/alert"
 import { Loader2, LogIn } from "lucide-react"
@@ -214,7 +215,7 @@ export default function Login() {
                         </Button>
                     </p>
 
-                    <hr />
+                    <Separator />
 
                     <AuthProvidersList />
                 </form>

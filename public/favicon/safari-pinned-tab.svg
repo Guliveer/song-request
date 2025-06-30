@@ -1,1 +1,8 @@
-<?xml version="1.0" encoding="UTF-8"?><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1963 1963"><rect width="1963" height="1963" rx="657.69" ry="657.69" style="stroke-width:0px;"/><path d="m1166.18,521.05v588.13h-.05c-1.26,100.82-82.09,182.16-181.64,182.16s-181.67-82.62-181.67-184.55,81.33-184.55,181.67-184.55c27.81,0,54.16,6.36,77.73,17.71v-442.11c-25.45-3.32-51.39-5.03-77.73-5.03-333.8,0-604.4,274.89-604.4,613.98s270.6,613.98,604.4,613.98,604.4-274.89,604.4-613.98c0-274.78-177.69-507.39-422.72-585.74Zm-462.26,866.51l-91.66,91.66c-92.9-95.81-150.24-227.31-150.24-372.43,0-292.96,233.66-530.48,521.99-530.74v130.66c-217.3.26-393.37,179.28-393.37,400.08,0,109.4,43.23,208.54,113.27,280.77Z" style="fill:#fff; stroke-width:0px;"/><path d="m984.5,257.5c-.16,0-.32,0-.48,0v129.71c.16,0,.32,0,.48,0,194.29,0,370.3,79.47,498.28,208.15l91-91c-151.14-152.57-359.37-246.85-589.28-246.85Z" style="fill:#fff; stroke-width:0px;"/></svg>
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" version="1.1" width="24" height="24"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f53543" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="10" />
+    <path d="M6 12c0-1.7.7-3.2 1.8-4.2" />
+    <circle cx="12" cy="12" r="2" />
+    <path d="M18 12c0 1.7-.7 3.2-1.8 4.2" />
+</svg><style>@media (prefers-color-scheme: light) { :root { filter: none; } }
+@media (prefers-color-scheme: dark) { :root { filter: none; } }
+</style></svg>

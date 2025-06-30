@@ -1,29 +1,19 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import {
-    Container,
-    Typography,
-    Grid,
-    Card,
-    CardContent,
-    CardActions,
-    Button,
-    CircularProgress,
-    Alert,
-    Box,
-    Chip,
-    Avatar,
-} from "@mui/material"
-import {
-    PlaylistPlayRounded as PlaylistIcon,
-    PublicRounded as GlobeIcon,
-    StarRounded as HostIcon,
-    GroupRounded as MembersIcon,
-} from "@mui/icons-material"
 import { supabase } from "@/lib/supabase"
 import SetTitle from "@/components/SetTitle";
 import Link from "next/link";
+import {
+    Card,
+    CardContent,
+    CardFooter,
+} from "shadcn/card"
+import { Button } from "shadcn/button"
+import { Avatar } from "shadcn/avatar"
+import { Alert, AlertDescription } from "shadcn/alert"
+import { Globe, Users, Star, ListMusic } from "lucide-react"
+import SkeletonPlaylists from "@/components/skeletons/SkeletonPlaylists"
 
 export default function PlaylistsPage() {
     const [playlists, setPlaylists] = useState([])
@@ -70,139 +60,81 @@ export default function PlaylistsPage() {
         fetchPlaylists();
     }, [])
 
-    if (loading) {
-        return (
-            <Container maxWidth="lg" sx={{ py: 4 }}>
-                <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
-                    <CircularProgress size={60} />
-                </Box>
-            </Container>
-        )
-    }
-
-    if (error) {
-        return (
-            <Container maxWidth="lg" sx={{ py: 4 }}>
-                <Alert severity="error" sx={{ mb: 2 }}>
-                    {error}
-                </Alert>
-            </Container>
-        )
-    }
-
     return (
         <>
-        <SetTitle text={`Public Playlists`} />
-        <Container maxWidth="lg" sx={{ py: 4 }}>
-            <Box sx={{ mb: 4, textAlign: "center" }}>
-                <Typography variant="h3" component="h1" gutterBottom sx={{ fontWeight: "bold" }}>
-                    Public Playlists
-                </Typography>
-                <Typography variant="h6" color="text.secondary" sx={{ mb: 2 }}>
-                    Discover the best playlists shared by our community
-                </Typography>
-                <Chip icon={<GlobeIcon />} label={`${playlists.length} public playlists`}
-                    color="primary"
-                    variant="outlined"
-                    sx={{
-                        // Make icon smaller for better alignment
-                        "& .MuiChip-icon": {
-                            fontSize: 20,
-                        },
-                    }}
-                />
-            </Box>
+            <SetTitle text="Public Playlists" />
+            <div className="max-w-6xl mx-auto py-10 px-4">
+                <div className="text-center mb-6">
+                    <h1 className="text-3xl font-bold tracking-tight">Public Playlists</h1>
+                    <p className="text-muted-foreground text-sm mt-2">
+                        Discover the best playlists shared by our community
+                    </p>
+                    <div className="inline-flex items-center gap-2 mt-3 text-sm text-primary border border-primary rounded-full px-3 py-1">
+                        <Globe className="w-4 h-4" />
+                        Public playlists: {playlists.length}
+                    </div>
+                </div>
 
-            {playlists.length === 0 && (
-                <Box textAlign="center" py={8}>
-                    <PlaylistIcon sx={{ fontSize: 80, color: "text.secondary", mb: 2 }} />
-                    <Typography variant="h5" color="text.secondary" gutterBottom>
-                        No Public Playlists
-                    </Typography>
-                    <Typography variant="body1" color="text.secondary">
-                        No public playlists found in the database.
-                    </Typography>
-                </Box>
-            )}
+                {loading && (
+                    <SkeletonPlaylists />
+                )}
 
-            {playlists.length > 0 && (
-                <Box
-                    sx={{
-                        display: "flex",
-                        flexWrap: "wrap",
-                        gap: 3,
-                        justifyContent: "center",
-                    }}
-                >
-                    {playlists.map((playlist) => (
-                        <Box
-                            key={playlist.id}
-                            sx={{
-                                flex: "1 1 300px", // Minimum width of 300px, adjusts based on available space
-                                maxWidth: "400px", // Optional: limit maximum width
-                                display: "flex",
-                                flexDirection: "column",
-                                transition: "transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out",
-                                "&:hover": {
-                                    transform: "translateY(-4px)",
-                                    boxShadow: 4,
-                                },
-                            }}
-                        >
-                            <Card sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
-                                <CardContent sx={{ flexGrow: 1 }}>
-                                    <Box display="flex" alignItems="center" mb={2}>
-                                        <Avatar sx={{ bgcolor: "primary.main", mr: 2 }}>
-                                            <PlaylistIcon />
+                {error && (
+                    <Alert variant="destructive">
+                        <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                )}
+
+                {!loading && playlists.length === 0 && (
+                    <div className="text-center py-16 text-muted-foreground">
+                        <ListMusic className="mx-auto w-16 h-16 mb-4" />
+                        <h2 className="text-xl font-semibold">No Public Playlists</h2>
+                        <p className="text-sm mt-1">No public playlists found in the database.</p>
+                    </div>
+                )}
+
+                {!loading && playlists.length > 0 && (
+                    <div className="flex flex-wrap gap-4 justify-center">
+                        {playlists.map((playlist) => (
+                            <Card key={playlist.id} className="hover:shadow-md transition-all">
+                                <CardContent className="py-2 max-w-[300px]">
+                                    <div className="flex items-center mb-4">
+                                        <Avatar className="mr-3 bg-primary text-white flex align-center items-center justify-center">
+                                            <ListMusic className="w-5 h-full" />
                                         </Avatar>
-                                        <Box>
-                                            {/* Name */}
-                                            <Typography variant="h6" component="h2" noWrap>
-                                                {playlist.name}
-                                            </Typography>
-                                            {/* Description */}
+                                        <div className="min-w-0">
+                                            <h3 className="text-base font-semibold truncate">{playlist.name}</h3>
                                             {playlist.description && (
-                                                <Typography variant="body2" color="text.secondary" noWrap>
+                                                <p className="inline-flex text-sm text-muted-foreground truncate">
                                                     {playlist.description}
-                                                </Typography>
+                                                </p>
                                             )}
-                                        </Box>
-                                    </Box>
+                                        </div>
+                                    </div>
 
-                                    <Box display="flex" alignItems="center" mb={1}>
-                                        <HostIcon sx={{ fontSize: 16, mr: 0.5, color: "text.secondary" }} />
-                                        <Typography variant="caption" color="text.secondary" sx={{fontWeight: "bold"}}>
-                                            <Link href={`/user/${playlist.users.username}`}>
-                                                @{playlist.users.username}
-                                            </Link>
-                                        </Typography>
-                                    </Box>
+                                    <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+                                        <Star className="w-3.5 h-3.5" />
+                                        <span className="font-medium">
+                                            <Link href={`/user/${playlist.users.username}`}>@{playlist.users.username}</Link>
+                                        </span>
+                                    </div>
 
-                                    <Box display="flex" alignItems="center" mb={1}>
-                                        <MembersIcon sx={{ fontSize: 16, mr: 0.5, color: "text.secondary" }} />
-                                        <Typography variant="caption" color="text.secondary">
-                                            {playlist.userCount} members
-                                        </Typography>
-                                    </Box>
+                                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                        <Users className="w-3.5 h-3.5" />
+                                        <span>{playlist.userCount} members</span>
+                                    </div>
                                 </CardContent>
 
-                                <CardActions sx={{ p: 2, pt: 0, width: "100%" }}>
-                                    <Link href={`/playlist/${playlist.url}`} passHref sx={{
-                                        width: "100%",
-                                    }}>
-                                        <Button size="small" variant="outlined" fullWidth sx={{
-                                            width: "100%",
-                                        }}>
-                                            View Playlist
-                                        </Button>
+                                <CardFooter>
+                                    <Link href={`/playlist/${playlist.url}`} className="w-full">
+                                        <Button className="w-full" variant="outline">View Playlist</Button>
                                     </Link>
-                                </CardActions>
+                                </CardFooter>
                             </Card>
-                        </Box>
-                    ))}
-                </Box>
-            )}
-        </Container>
+                        ))}
+                    </div>
+                )}
+            </div>
         </>
     )
 }
