@@ -1,6 +1,5 @@
 "use server";
 import SkeletonSongCard from "@/components/skeletons/SkeletonSongCard";
-import { Skeleton } from "shadcn/skeleton";
 import PropTypes from "prop-types";
 
 export default function SkeletonQueue({ length = 3 }) {

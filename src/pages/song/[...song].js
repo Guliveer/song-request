@@ -1,8 +1,8 @@
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import SongCard from '@/components/SongCard';
-import {getPlaylistData, getSongData, getCurrentUser, getJoinedPlaylists} from '@/lib/actions';
-import {Spinner} from "shadcn/spinner";
+import { getCurrentUser, getJoinedPlaylists, getPlaylistData, getSongData } from '@/lib/actions';
+import { Spinner } from "shadcn/spinner";
 
 export default function SongPage() {
     const router = useRouter();

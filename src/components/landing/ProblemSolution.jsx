@@ -1,8 +1,8 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Container } from "@/components/ui/container";
-import { Typography } from "@/components/ui/typography";
-import { Card, CardContent } from "@/components/ui/card";
+import { Container } from "shadcn/container";
+import { Typography } from "shadcn/typography";
+import { Card, CardContent } from "shadcn/card";
 import { AlertTriangle, CheckCircle, Music, ThumbsDown, Users, Volume2 } from "lucide-react";
 import FadeInSection from "@/components/FadeInSection";
 

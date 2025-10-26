@@ -6,13 +6,13 @@ import PlaylistQueue from "@/components/playlistManagement/PlaylistQueue";
 import PlaylistMembers from "@/components/playlistManagement/PlaylistMembers";
 import PlaylistSettings from "@/components/playlistManagement/PlaylistSettings";
 import { getCurrentUser, getJoinedPlaylists, getPlaylistData, getPlaylistModerators } from "@/lib/actions";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button";
-import { Container } from "@/components/ui/container";
-import { Spinner } from "@/components/ui/spinner";
+import { Card, CardContent } from "shadcn/card";
+import { Badge } from "shadcn/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "shadcn/tabs";
+import { Separator } from "shadcn/separator";
+import { Button } from "shadcn/button";
+import { Container } from "shadcn/container";
+import { Spinner } from "shadcn/spinner";
 import {
     ArrowLeft as BackIcon,
     Globe as PublicIcon,

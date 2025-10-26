@@ -1,9 +1,9 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Container } from "@/components/ui/container";
-import { Typography } from "@/components/ui/typography";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Container } from "shadcn/container";
+import { Typography } from "shadcn/typography";
+import { Card, CardContent } from "shadcn/card";
+import { Badge } from "shadcn/badge";
 import { BarChart3, Headphones, Music, Shield, Smartphone, Users, Vote, Zap } from "lucide-react";
 import FadeInSection from "@/components/FadeInSection";
 

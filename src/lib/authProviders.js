@@ -1,5 +1,5 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faSpotify, faGoogle, faFacebook, faGithub } from '@fortawesome/free-brands-svg-icons'
+import { faFacebook, faGithub, faGoogle, faSpotify } from '@fortawesome/free-brands-svg-icons'
 
 export const authProviders = [
     { providerName: 'spotify', displayName: 'Spotify', icon: <FontAwesomeIcon icon={faSpotify} /> },

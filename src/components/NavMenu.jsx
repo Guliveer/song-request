@@ -2,29 +2,14 @@ import { useUser } from "@/context/UserContext"
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import NotificationBell from "@/components/NotificationBell"
-import { genUserAvatar, logOut, createPlaylist } from "@/lib/actions"
-import {
-    Sheet,
-    SheetContent,
-    SheetTrigger,
-} from "shadcn/sheet"
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "shadcn/dropdown-menu"
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogFooter,
-    DialogTitle,
-} from "shadcn/dialog"
+import { createPlaylist, genUserAvatar, logOut } from "@/lib/actions"
+import { Sheet, SheetContent, SheetTrigger, } from "shadcn/sheet"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, } from "shadcn/dropdown-menu"
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, } from "shadcn/dialog"
 import { Input } from "shadcn/input"
 import { Button } from "shadcn/button"
 import { Avatar, AvatarImage } from "shadcn/avatar"
-import { Menu, LogOut, UserPlus, LogIn, Home, PlusCircle, Settings, Radio, Shield } from "lucide-react"
+import { Home, LogIn, LogOut, Menu, PlusCircle, Radio, Settings, Shield, UserPlus } from "lucide-react"
 
 export default function NavMenu() {
     const { isLoggedIn, isAdmin, uuid } = useUser()

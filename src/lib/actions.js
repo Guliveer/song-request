@@ -1,9 +1,9 @@
 'use server'
 import PropTypes from "prop-types";
-import {supabase} from '@/lib/supabase';
-import {createCanvas} from 'canvas';
-import {extractSpotifyTrackId, fetchSpotifyMetadata} from '@/lib/spotify';
-import {extractYoutubeVideoId, fetchYouTubeMetadata} from '@/lib/youtube';
+import { supabase } from '@/lib/supabase';
+import { createCanvas } from 'canvas';
+import { extractSpotifyTrackId, fetchSpotifyMetadata } from '@/lib/spotify';
+import { extractYoutubeVideoId, fetchYouTubeMetadata } from '@/lib/youtube';
 
 // Play a sound based on the type
 export async function playSound(type, volume = 1.0) {

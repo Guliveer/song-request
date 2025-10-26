@@ -1,9 +1,9 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Container } from "@/components/ui/container";
-import { Typography } from "@/components/ui/typography";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Container } from "shadcn/container";
+import { Typography } from "shadcn/typography";
+import { Card, CardContent } from "shadcn/card";
+import { Button } from "shadcn/button";
 import { ArrowRight, CheckCircle, Plus, Share2, Vote } from "lucide-react";
 import FadeInSection from "@/components/FadeInSection";
 

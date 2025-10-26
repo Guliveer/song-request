@@ -1,6 +1,6 @@
-import { createContext, useContext, useState, useEffect, useMemo } from "react";
-import { isUserLoggedIn, isUserAdmin } from "@/lib/actions";
-import {supabase} from "@/lib/supabase";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { isUserAdmin, isUserLoggedIn } from "@/lib/actions";
+import { supabase } from "@/lib/supabase";
 import PropTypes from "prop-types";
 
 const UserContext = createContext(null);

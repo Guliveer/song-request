@@ -1,9 +1,9 @@
 import React from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Container } from "@/components/ui/container";
-import { Typography } from "@/components/ui/typography";
-import { Button } from "@/components/ui/button";
+import { Container } from "shadcn/container";
+import { Typography } from "shadcn/typography";
+import { Button } from "shadcn/button";
 import { Music, Play, Users, Vote } from "lucide-react";
 
 const HeroSection = () => {

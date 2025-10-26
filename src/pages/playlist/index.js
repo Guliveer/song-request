@@ -1,18 +1,14 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import SetTitle from "@/components/SetTitle";
 import Link from "next/link";
-import {
-    Card,
-    CardContent,
-    CardFooter,
-} from "shadcn/card"
+import { Card, CardContent, CardFooter, } from "shadcn/card"
 import { Button } from "shadcn/button"
 import { Avatar } from "shadcn/avatar"
 import { Alert, AlertDescription } from "shadcn/alert"
-import { Globe, Users, Star, ListMusic } from "lucide-react"
+import { Globe, ListMusic, Star, Users } from "lucide-react"
 import SkeletonPlaylists from "@/components/skeletons/SkeletonPlaylists"
 
 export default function PlaylistsPage() {

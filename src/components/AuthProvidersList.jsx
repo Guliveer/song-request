@@ -6,7 +6,7 @@ import { Loader2 } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { authProviders } from "@/lib/authProviders"
 
-export default function AuthProvidersList({ prompt }) {
+export default function AuthProvidersList({prompt}) {
     return (
         <div className="flex flex-col gap-4 w-full">
             {authProviders.map((provider) => (
@@ -22,12 +22,12 @@ export default function AuthProvidersList({ prompt }) {
     )
 }
 
-export function AuthProviderButton({ providerName, displayName, icon, prompt = "" }) {
+export function AuthProviderButton({providerName, displayName, icon, prompt = ""}) {
     const [isPressed, setIsPressed] = useState(false)
 
     async function handleProviderLogin() {
         setIsPressed(true)
-        const { error } = await supabase.auth.signInWithOAuth({
+        const {error} = await supabase.auth.signInWithOAuth({
             provider: providerName,
             options: {
                 redirectTo: process.env.NEXT_PUBLIC_REDIRECT_URL || window.location.origin,
@@ -49,7 +49,7 @@ export function AuthProviderButton({ providerName, displayName, icon, prompt = "
             className="w-full inline-flex align-center gap-3"
         >
             {isPressed ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
+                <Loader2 className="w-5 h-5 animate-spin"/>
             ) : (
                 <>
                     {icon}

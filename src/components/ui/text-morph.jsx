@@ -1,7 +1,8 @@
-'use client';;
+'use client';
+;
 import { cn } from '@/lib/utils';
 import { AnimatePresence, motion } from 'motion/react';
-import { useMemo, useId } from 'react';
+import { useId, useMemo } from 'react';
 
 export function TextMorph({
   children,

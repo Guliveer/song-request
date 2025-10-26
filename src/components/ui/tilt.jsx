@@ -1,4 +1,5 @@
-'use client';;
+'use client';
+;
 import React, { useRef } from 'react';
 import { motion, useMotionTemplate, useMotionValue, useSpring, useTransform } from 'motion/react';
 

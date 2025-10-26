@@ -1,13 +1,13 @@
 import { useRouter } from 'next/router';
 import HCaptcha from '@hcaptcha/react-hcaptcha';
-import { signUp, isUsernameAvailable, playSound } from "@/lib/actions";
+import { isUsernameAvailable, playSound, signUp } from "@/lib/actions";
 import { useEffect, useRef, useState } from 'react';
 import SetTitle from "@/components/SetTitle";
 import { useUser } from "@/context/UserContext";
 import { Input } from "shadcn/input"
 import { Button } from "shadcn/button"
-import { Alert, AlertTitle, AlertDescription } from "shadcn/alert"
-import { UserPlus, Loader2 } from "lucide-react"
+import { Alert, AlertDescription, AlertTitle } from "shadcn/alert"
+import { Loader2, UserPlus } from "lucide-react"
 
 export default function Register() {
     const [email, setEmail] = useState("")

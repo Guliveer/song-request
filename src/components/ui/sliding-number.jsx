@@ -1,6 +1,7 @@
-'use client';;
+'use client';
+;
 import { useEffect, useId } from 'react';
-import { motion, useSpring, useTransform, motionValue } from 'motion/react';
+import { motion, motionValue, useSpring, useTransform } from 'motion/react';
 import useMeasure from 'react-use-measure';
 
 const TRANSITION = {

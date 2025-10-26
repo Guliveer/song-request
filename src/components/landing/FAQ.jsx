@@ -1,9 +1,9 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Container } from "@/components/ui/container";
-import { Typography } from "@/components/ui/typography";
-import { Card, CardContent } from "@/components/ui/card";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Container } from "shadcn/container";
+import { Typography } from "shadcn/typography";
+import { Card, CardContent } from "shadcn/card";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "shadcn/accordion";
 import { HelpCircle } from "lucide-react";
 import FadeInSection from "@/components/FadeInSection";
 
