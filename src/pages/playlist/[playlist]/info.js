@@ -2,27 +2,27 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
-    getPlaylistData,
-    getUserInfo,
+    genUserAvatar,
     getCurrentUser,
     getFriendsOnPlaylist,
-    genUserAvatar,
-    getJoinedPlaylists
+    getJoinedPlaylists,
+    getPlaylistData,
+    getUserInfo
 } from "@/lib/actions";
 import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
 import SetTitle from "@/components/SetTitle";
-import PlaylistMenu from "@/components/PlaylistManagement/PlaylistMenu";
+import PlaylistMenu from "@/components/playlistManagement/PlaylistMenu";
 import { Button } from "shadcn/button";
 import { Card, CardContent } from "shadcn/card";
 import { Avatar, AvatarImage } from "shadcn/avatar";
 import { Separator } from "shadcn/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "shadcn/tooltip";
-import { LoaderCircle, Users, Info, Music2, Star, ArrowLeft } from "lucide-react";
+import { ArrowLeft, Info, LoaderCircle, Music2, Star, Users } from "lucide-react";
 
 export default function PlaylistInfo() {
     const router = useRouter();
-    const { playlist } = router.query;
+    const {playlist} = router.query;
     const [playlistData, setPlaylistData] = useState(null);
     const [hostData, setHostData] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -116,7 +116,7 @@ export default function PlaylistInfo() {
 
     if (loading) return (
         <div className="flex justify-center mt-12">
-            <LoaderCircle className="animate-spin w-10 h-10 text-muted-foreground" />
+            <LoaderCircle className="animate-spin w-10 h-10 text-muted-foreground"/>
         </div>
     );
     if (!playlistData || !isAllowed) return (
@@ -126,7 +126,7 @@ export default function PlaylistInfo() {
     );
 
     const createdAt = playlistData.created_at
-        ? format(new Date(playlistData.created_at), "MMMM d, yyyy, HH:mm:ss", { locale: enUS })
+        ? format(new Date(playlistData.created_at), "MMMM d, yyyy, HH:mm:ss", {locale: enUS})
         : "Unknown";
 
     return (
@@ -135,19 +135,20 @@ export default function PlaylistInfo() {
 
             <div className="flex justify-between px-6 py-4">
                 <Button variant="ghost" size="sm" onClick={() => router.push(`/playlist/${playlist}`)} className="mb-3">
-                    <ArrowLeft className="mr-1 w-4 h-4" /> Back
+                    <ArrowLeft className="mr-1 w-4 h-4"/> Back
                 </Button>
-                <PlaylistMenu playlistId={playlistData.id} />
+                <PlaylistMenu playlistId={playlistData.id}/>
             </div>
 
             <div className="flex justify-center py-2">
                 <Card className="w-full max-w-md">
                     <CardContent className="flex flex-col items-start gap-3">
                         <div className="flex items-center gap-3">
-                            <Info className="w-7 h-7" />
+                            <Info className="w-7 h-7"/>
                             <div className="inline-flex flex-col gap-1">
                                 <h2 className="text-lg text-primary font-semibold truncate">{playlistData.name}</h2>
-                                {playlistData.description && <p className="text-muted-foreground text-sm truncate">{playlistData.description}</p>}
+                                {playlistData.description &&
+                                    <p className="text-muted-foreground text-sm truncate">{playlistData.description}</p>}
                             </div>
                         </div>
 
@@ -155,15 +156,16 @@ export default function PlaylistInfo() {
                             {hostData && (
                                 <>
                                     <Avatar className="w-6 h-6 text-xs">
-                                        <AvatarImage src={hostAvatarUrl} alt="Avatar" className={"w-fit h-fit"} />
+                                        <AvatarImage src={hostAvatarUrl} alt="Avatar" className={"w-fit h-fit"}/>
                                     </Avatar>
                                     <Link href={`/user/${hostData.username}`}>
                                         <p className="text-xs font-semibold text-muted-foreground">@{hostData.username}</p>
                                     </Link>
                                 </>
                             )}
-                            <div className="flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-secondary text-secondary-foreground">
-                                <Star className="w-3 h-3" /> Host
+                            <div
+                                className="flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-secondary text-secondary-foreground">
+                                <Star className="w-3 h-3"/> Host
                             </div>
                         </div>
 
@@ -171,14 +173,14 @@ export default function PlaylistInfo() {
 
                         <div className="flex gap-2">
                             <div className="text-xs px-3 py-1 border rounded-md flex items-center gap-1">
-                                <Music2 className="w-3.5 h-3.5" /> {playlistData.songCount ?? 0} songs
+                                <Music2 className="w-3.5 h-3.5"/> {playlistData.songCount ?? 0} songs
                             </div>
                             <div className="text-xs px-3 py-1 border rounded-md flex items-center gap-1">
-                                <Users className="w-3.5 h-3.5" /> {playlistData.userCount ?? 0} members
+                                <Users className="w-3.5 h-3.5"/> {playlistData.userCount ?? 0} members
                             </div>
                         </div>
 
-                        <Separator className="my-2" />
+                        <Separator className="my-2"/>
 
                         <h4 className="text-sm font-semibold text-foreground">Friends who joined</h4>
                         {friends.length > 0 ? (
@@ -187,8 +189,9 @@ export default function PlaylistInfo() {
                                     <TooltipProvider key={friend.id}>
                                         <Tooltip>
                                             <TooltipTrigger asChild>
-                                                <Avatar className="w-7 h-7 border border-cyan-300 shadow-md text-xs hover:scale-105 transition-transform">
-                                                    <AvatarImage src={friendAvatars[friend.id]} alt={friend.username} />
+                                                <Avatar
+                                                    className="w-7 h-7 border border-cyan-300 shadow-md text-xs hover:scale-105 transition-transform">
+                                                    <AvatarImage src={friendAvatars[friend.id]} alt={friend.username}/>
                                                 </Avatar>
                                             </TooltipTrigger>
                                             <TooltipContent>
@@ -199,7 +202,8 @@ export default function PlaylistInfo() {
                                 ))}
                             </div>
                         ) : (
-                            <p className="text-sm text-muted-foreground">None of your friends have joined this playlist yet.</p>
+                            <p className="text-sm text-muted-foreground">None of your friends have joined this playlist
+                                yet.</p>
                         )}
                     </CardContent>
                 </Card>

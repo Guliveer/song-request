@@ -1,25 +1,19 @@
 "use client"
-import {useRouter} from "next/router";
-import {useEffect, useState} from "react";
+import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
 import SetTitle from "@/components/SetTitle";
-import PlaylistMenu from "@/components/PlaylistManagement/PlaylistMenu";
+import PlaylistMenu from "@/components/playlistManagement/PlaylistMenu";
 import TopSongsOlympicPodium from "@/components/TopSongsOlympicPodium";
 import Queue from "@/components/Queue";
 import AddSongForm from "@/components/AddSongForm";
-import {
-    getPlaylistData,
-    getCurrentUser,
-    getJoinedPlaylists,
-    isUserLoggedIn,
-    joinPlaylist,
-} from "@/lib/actions";
+import { getCurrentUser, getJoinedPlaylists, getPlaylistData, isUserLoggedIn, joinPlaylist, } from "@/lib/actions";
 import { Button } from "shadcn/button"
 import { Spinner } from "shadcn/spinner"
 import { AudioLines as PlaylistIcon, PlusCircle } from "lucide-react"
 
 export default function Playlist() {
     const router = useRouter();
-    const { playlist } = router.query; // Use 'playlist' from the URL
+    const {playlist} = router.query; // Use 'playlist' from the URL
     const playlistId = Array.isArray(playlist) ? playlist[0] : playlist;
     const [playlistData, setPlaylistData] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -80,7 +74,7 @@ export default function Playlist() {
     if (loading) {
         return (
             <div className="flex justify-center items-center h-[90vh]">
-                <Spinner />
+                <Spinner/>
             </div>
         );
     }
@@ -97,26 +91,26 @@ export default function Playlist() {
 
     return (
         <>
-            <SetTitle text={playlistData.name} />
+            <SetTitle text={playlistData.name}/>
 
             <div className="flex items-center justify-between px-6 py-4">
                 <h1 className="text-2xl font-semibold flex items-center align-center gap-2">
-                    <PlaylistIcon className="w-auto h-full aspect-square" />
+                    <PlaylistIcon className="w-auto h-full aspect-square"/>
                     {playlistData.name}
                 </h1>
 
                 {(!isHost && !hasJoined && loggedIn && playlistData) ? (
                     <Button onClick={handleJoinPlaylist}>
-                        <PlusCircle className="mr-2 h-4 w-4" /> Join
+                        <PlusCircle className="mr-2 h-4 w-4"/> Join
                     </Button>
                 ) : (
-                    <PlaylistMenu playlistId={playlistData.id} />
+                    <PlaylistMenu playlistId={playlistData.id}/>
                 )}
             </div>
 
-            <TopSongsOlympicPodium playlist={playlistData.id} />
-            <Queue playlist={playlistData.id} />
-            {hasJoined && <AddSongForm playlist={playlistData.id} />}
+            <TopSongsOlympicPodium playlist={playlistData.id}/>
+            <Queue playlist={playlistData.id}/>
+            {hasJoined && <AddSongForm playlist={playlistData.id}/>}
         </>
     );
 }
