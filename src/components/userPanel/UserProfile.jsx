@@ -151,7 +151,7 @@ export default function UserProfile({userData}) {
     const handleBanConfirm = async () => {
         try {
             await hardBanUser(userData.id);
-            toast.success(`User ${(userData.ban_status = 0 ? "unbanned" : "banned")} successfully`);
+            toast.success(`User ${(userData.ban_status === 0 ? "unbanned" : "banned")} successfully`);
 
             // Refresh the page to get updated user data
             router.refresh();
