@@ -1,6 +1,6 @@
 ![React Badge](https://img.shields.io/badge/React-61DAFB?logo=react&logoColor=000&style=for-the-badge)
 ![Next.js Badge](https://img.shields.io/badge/Next.js-000?logo=nextdotjs&logoColor=fff&style=for-the-badge)
-![MUI Badge](https://img.shields.io/badge/MUI-007FFF?logo=mui&logoColor=fff&style=for-the-badge)
+![shadcn/ui Badge](https://img.shields.io/badge/shadcn%2Fui-000?logo=shadcnui&logoColor=fff&style=for-the-badge)
 ![Supabase Badge](https://img.shields.io/badge/Supabase-3FCF8E?logo=supabase&logoColor=fff&style=for-the-badge)
 ![PostgreSQL Badge](https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=fff&style=for-the-badge)
 ![Brevo Badge](https://img.shields.io/badge/Brevo-0B996E?logo=brevo&logoColor=fff&style=for-the-badge)
@@ -8,7 +8,8 @@
 ![Spotify API Badge](https://img.shields.io/badge/Spotify%20API-1ED760?logo=spotify&logoColor=fff&style=for-the-badge)
 ![YouTube API Badge](https://img.shields.io/badge/YouTube%20API-F00?logo=youtube&logoColor=fff&style=for-the-badge)
 
-### Status  
+### Status
+
 [![Track Drop Website](https://cronitor.io/badges/AG8CXU/production/o8Gvcwy9GIUCszl24N_6l6VM_PI.svg)](https://track-drop.cronitorstatus.com)  
 [![Track Drop Database](https://cronitor.io/badges/BDEGzZ/production/59qiuDtcV1g5eTg_7pgfN_hhqbY.svg)](https://track-drop.cronitorstatus.com)
 
@@ -25,7 +26,8 @@ View status history [here](https://track-drop.cronitorstatus.com)
 
 This project is a semester assignment at university and is an expansion of a personal project.
 The original version was built in PHP, followed by an attempt to migrate it to SvelteKit.
-Ultimately, as part of this team assignment, we collectively decided to rebuild it using Next.js and Supabase for a more scalable and modern solution.
+Ultimately, as part of this team assignment, we collectively decided to rebuild it using Next.js and Supabase for a more
+scalable and modern solution.
 
 ➡️ Check out our [GitHub Project board](https://github.com/users/Guliveer/projects/2) and see our journey!
 
@@ -34,22 +36,26 @@ Ultimately, as part of this team assignment, we collectively decided to rebuild 
 #### IDE
 
 > ![WebStorm Badge](https://img.shields.io/badge/WebStorm-000?logo=webstorm&logoColor=fff&style=flat-square)  
-> [JetBrains WebStorm](https://www.jetbrains.com/webstorm/) - Our main development environment, ensuring consistent code style and efficient collaboration, although each and every team member was free to use their preferred IDE.
+> [JetBrains WebStorm](https://www.jetbrains.com/webstorm/) - Our main development environment, ensuring consistent code
+> style and efficient collaboration, although each and every team member was free to use their preferred IDE.
 
 #### Version Control System
 
 > ![GitHub Badge](https://img.shields.io/badge/GitHub-181717?logo=github&logoColor=fff&style=flat-square)  
-> [GitHub](https://github.com/about) - All code was managed via GitHub repositories, with regular pull requests, code reviews, and feature branching.
+> [GitHub](https://github.com/about) - All code was managed via GitHub repositories, with regular pull requests, code
+> reviews, and feature branching.
 
 #### Database
 
 > ![Supabase Badge](https://img.shields.io/badge/Supabase-3FCF8E?logo=supabase&logoColor=fff&style=flat-square)  
-> [Supabase](https://supabase.com) - Used for PostgreSQL database hosting, authentication, and real-time data management.
+> [Supabase](https://supabase.com) - Used for PostgreSQL database hosting, authentication, and real-time data
+> management.
 
 #### Backlog & Task Management
 
 > ![GitHub Projects Badge](https://img.shields.io/badge/GitHub%20Projects-181717?logo=github&logoColor=fff&style=flat-square)  
-> [GitHub Projects](https://docs.github.com/en/issues/planning-and-tracking-with-projects/learning-about-projects/about-projects) - We tracked tasks, bugs, and progress using project boards and issues.
+> [GitHub Projects](https://docs.github.com/en/issues/planning-and-tracking-with-projects/learning-about-projects/about-projects) -
+> We tracked tasks, bugs, and progress using project boards and issues.
 
 #### Team Communication
 
@@ -59,23 +65,25 @@ Ultimately, as part of this team assignment, we collectively decided to rebuild 
 #### Additional Tools
 
 > ![GitKraken Badge](https://img.shields.io/badge/GitKraken-179287?logo=gitkraken&logoColor=fff&style=flat-square)  
-> [GitKraken](https://www.gitkraken.com/git-client) - For visualizing git history, resolving merge conflicts, and simplifying complex git operations.
+> [GitKraken](https://www.gitkraken.com/git-client) - For visualizing git history, resolving merge conflicts, and
+> simplifying complex git operations.
 
 ## ⚙️ Tech Overview
 
 - **Frontend:** [React](https://react.dev) + [Next.js](https://nextjs.org)
-- **UI:** [MUI](https://mui.com)
+- **UI:** [shadcn](https://ui.shadcn.com)
 - **Animations:** [Framer Motion](https://motion.dev)
 - **Database:** [Supabase](https://supabase.com)
 - **Auth:** [Supabase Auth](https://supabase.com/auth)
-- **External APIs:** [Spotify API](https://developer.spotify.com), [YouTube API](https://developers.google.com/youtube/v3)
+- **External APIs:
+  ** [Spotify API](https://developer.spotify.com), [YouTube API](https://developers.google.com/youtube/v3)
 - **CI/CD:** [Vercel](https://vercel.com)
 - **SMTP:** [Brevo](https://brevo.com)
 
 ## 👤 Our Team
 
 |                                                 Project&nbsp;Lead                                                 |                                                   Backend&nbsp;&amp;&nbsp;Auth Specialist                                                   |                                                     API&nbsp;Integration Engineer                                                      |                                                             UI/UX Designer                                                             |
-| :---------------------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------------------: |
+|:-----------------------------------------------------------------------------------------------------------------:|:-------------------------------------------------------------------------------------------------------------------------------------------:|:--------------------------------------------------------------------------------------------------------------------------------------:|:--------------------------------------------------------------------------------------------------------------------------------------:|
 | [<img src="https://github.com/Guliveer.png?size=512" width="128"><br/>**@Guliveer**](https://github.com/Guliveer) |               [<img src="https://github.com/Deerion.png?size=512" width="128"><br/>**@Deerion**](https://github.com/Deerion)                | [<img src="https://github.com/lukaszgrzecznik.png?size=512" width="128"><br/>**@lukaszgrzecznik**](https://github.com/lukaszgrzecznik) | [<img src="https://github.com/lifeoverthinker.png?size=512" width="128"><br/>**@lifeoverthinker**](https://github.com/lifeoverthinker) |
 |       Managed task assignments, supervised the team's work, and introduced many key changes to the project.       | Responsible for database work, implementing authentication processes, 2FA, and password recovery. Took on many smaller but essential tasks. |                            Focused on the most challenging tasks, including integrating with external APIs.                            |                          Made sure the application looks beautiful and provides a&nbsp;great user experience.                          |
 
