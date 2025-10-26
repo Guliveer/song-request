@@ -1,183 +1,131 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import {
-    getPlaylistData,
-    getCurrentUser,
-    getJoinedPlaylists,
-    leavePlaylist,
-} from "@/lib/actions";
-import {
-    IconButton,
-    Menu,
-    MenuItem,
-    Box,
-    CircularProgress,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogContentText,
-    DialogActions,
-    Button,
-} from "@mui/material";
-import {
-    MoreVertRounded as MenuVertButtonIcon,
-    ExitToAppRounded as LeavePlaylistIcon,
-    HomeRepairServiceRounded as ManageIcon,
-    InfoOutlined as PlaylistInfoIcon,
-} from "@mui/icons-material";
+import { getPlaylistData, getCurrentUser, getJoinedPlaylists, leavePlaylist } from "@/lib/actions";
+import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { MoreVertical as MenuVertButtonIcon, LogOut as LeavePlaylistIcon, Settings as ManageIcon, Info as PlaylistInfoIcon } from "lucide-react";
 
 export default function PlaylistMenu({ playlistId }) {
-    const [anchorEl, setAnchorEl] = useState(null);
-    const [playlistData, setPlaylistData] = useState(null);
-    const [currentUser, setCurrentUser] = useState(null);
-    const [hasJoined, setHasJoined] = useState(false);
-    const [isHost, setIsHost] = useState(false);
-    const [isModerator, setIsModerator] = useState(false);
-    const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-    const [loading, setLoading] = useState(true);
+  const [playlistData, setPlaylistData] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [hasJoined, setHasJoined] = useState(false);
+  const [isHost, setIsHost] = useState(false);
+  const [isModerator, setIsModerator] = useState(false);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const fetchData = async () => {
-            const user = await getCurrentUser();
-            setCurrentUser(user);
+  useEffect(() => {
+    const fetchData = async () => {
+      const user = await getCurrentUser();
+      setCurrentUser(user);
 
-            const playlist = await getPlaylistData(playlistId);
-            setPlaylistData(playlist);
+      const playlist = await getPlaylistData(playlistId);
+      setPlaylistData(playlist);
 
-            if (user && playlist) {
-                const joined = await getJoinedPlaylists(user.id);
-                const has = joined.includes(playlist.id);
-                setHasJoined(has);
+      if (user && playlist) {
+        const joined = await getJoinedPlaylists(user.id);
+        const has = joined.includes(playlist.id);
+        setHasJoined(has);
 
-                setIsHost(user.id === playlist.host);
-                setIsModerator(playlist.moderators?.includes(user.id));
-            }
+        setIsHost(user.id === playlist.host);
+        setIsModerator(playlist.moderators?.includes(user.id));
+      }
 
-            setLoading(false);
-        };
-        fetchData();
-    }, [playlistId]);
-
-    const handleMenuOpen = (e) => setAnchorEl(e.currentTarget);
-    const handleMenuClose = () => setAnchorEl(null);
-
-    const handleConfirmLeave = () => {
-        handleMenuClose();
-        setConfirmDialogOpen(true);
+      setLoading(false);
     };
+    fetchData();
+  }, [playlistId]);
 
-    const handleCancelLeave = () => setConfirmDialogOpen(false);
+  const handleConfirmLeave = () => {
+    setConfirmDialogOpen(true);
+  };
 
-    const handleLeavePlaylist = async () => {
-        if (!currentUser || !playlistData) return;
-        try {
-            await leavePlaylist(playlistData.id, currentUser.id);
-            setHasJoined(false);
-            window.location.reload();
-        } catch (err) {
-            console.error("Unexpected error:", err.message);
-        } finally {
-            setConfirmDialogOpen(false);
-        }
-    };
+  const handleCancelLeave = () => setConfirmDialogOpen(false);
 
-    if (loading || !playlistData) {
-        return (
-            <>
-                <IconButton onClick={handleMenuOpen}>
-                    <MenuVertButtonIcon />
-                </IconButton>
-                <Menu
-                    anchorEl={anchorEl}
-                    open={Boolean(anchorEl)}
-                    onClose={handleMenuClose}
-                    anchorOrigin={{
-                        vertical: 'bottom',
-                        horizontal: 'right',
-                    }}
-                    transformOrigin={{
-                        vertical: 'top',
-                        horizontal: 'right',
-                    }}
-                    sx={{
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        gap: 0.5,
-                    }}
-                >
-                    <CircularProgress sx={{
-                        mx: 8,
-                        my: 2,
-                    }}/>
-                </Menu>
-            </>
-        );
+  const handleLeavePlaylist = async () => {
+    if (!currentUser || !playlistData) return;
+    try {
+      await leavePlaylist(playlistData.id, currentUser.id);
+      setHasJoined(false);
+      window.location.reload();
+    } catch (err) {
+      console.error("Unexpected error:", err.message);
+    } finally {
+      setConfirmDialogOpen(false);
     }
+  };
 
+  if (loading || !playlistData) {
     return (
-        <>
-            <IconButton onClick={handleMenuOpen}>
-                <MenuVertButtonIcon />
-            </IconButton>
-            <Menu
-                anchorEl={anchorEl}
-                open={Boolean(anchorEl)}
-                onClose={handleMenuClose}
-                anchorOrigin={{
-                    vertical: 'bottom',
-                    horizontal: 'right',
-                }}
-                transformOrigin={{
-                    vertical: 'top',
-                    horizontal: 'right',
-                }}
-            >
-
-                {(isHost || hasJoined) && (
-                    <Link href={`/playlist/${playlistId}/info`} passHref>
-                        <MenuItem onClick={handleMenuClose}>
-                            <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>
-                                <PlaylistInfoIcon sx={{ mr: 1 }} />
-                                Playlist Info
-                            </Box>
-                        </MenuItem>
-                    </Link>
-                )}
-
-                {(isHost || isModerator) && (
-                    <Link href={`/playlist/${playlistId}/manage`} passHref>
-                        <MenuItem onClick={handleMenuClose}>
-                            <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>
-                                <ManageIcon sx={{ mr: 1 }} />
-                                Manage Playlist
-                            </Box>
-                        </MenuItem>
-                    </Link>
-                )}
-
-                {!isHost && hasJoined && (
-                    <MenuItem onClick={handleConfirmLeave}>
-                        <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>
-                            <LeavePlaylistIcon sx={{ mr: 1 }} />
-                            Leave Playlist
-                        </Box>
-                    </MenuItem>
-                )}
-            </Menu>
-
-            <Dialog open={confirmDialogOpen} onClose={handleCancelLeave}>
-                <DialogTitle>Confirm: Leave Playlist</DialogTitle>
-                <DialogContent>
-                    <DialogContentText>
-                        Leaving this playlist will remove all your placed votes and added songs. Are you sure you want to proceed?
-                    </DialogContentText>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleCancelLeave} color="primary">Cancel</Button>
-                    <Button onClick={handleLeavePlaylist} color="error">Leave</Button>
-                </DialogActions>
-            </Dialog>
-        </>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="sm">
+            <MenuVertButtonIcon className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <div className="flex justify-center items-center p-4">
+            <Spinner />
+          </div>
+        </DropdownMenuContent>
+      </DropdownMenu>
     );
+  }
+
+  return (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="sm">
+            <MenuVertButtonIcon className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          {(isHost || hasJoined) && (
+            <DropdownMenuItem asChild>
+              <Link href={`/playlist/${playlistId}/info`} className="flex items-center">
+                <PlaylistInfoIcon className="mr-2 h-4 w-4" />
+                Playlist Info
+              </Link>
+            </DropdownMenuItem>
+          )}
+
+          {(isHost || isModerator) && (
+            <DropdownMenuItem asChild>
+              <Link href={`/playlist/${playlistId}/manage`} className="flex items-center">
+                <ManageIcon className="mr-2 h-4 w-4" />
+                Manage Playlist
+              </Link>
+            </DropdownMenuItem>
+          )}
+
+          {!isHost && hasJoined && (
+            <DropdownMenuItem onClick={handleConfirmLeave}>
+              <LeavePlaylistIcon className="mr-2 h-4 w-4" />
+              Leave Playlist
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm: Leave Playlist</DialogTitle>
+            <DialogDescription>Leaving this playlist will remove all your placed votes and added songs. Are you sure you want to proceed?</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={handleCancelLeave} variant="outline">
+              Cancel
+            </Button>
+            <Button onClick={handleLeavePlaylist} variant="destructive">
+              Leave
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
 }

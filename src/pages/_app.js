@@ -1,41 +1,29 @@
-import {UserProvider} from "@/context/UserContext";
-import {ThemeProvider} from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
-import theme from '@/styles/theme';
-import '@/styles/globals.css';
-import NavMenu from '@/components/NavMenu';
-import Footer from '@/components/Footer';
+import { UserProvider } from "@/context/UserContext";
+import "@/styles/globals.css";
+import NavMenu from "@/components/NavMenu";
+import Footer from "@/components/Footer";
 import PropTypes from "prop-types";
-import Box from "@mui/material/Box";
 import React from "react";
-import { Analytics } from '@vercel/analytics/next';
-import { SpeedInsights } from '@vercel/speed-insights/next';
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Toaster } from "sonner";
 
-export default function App({Component, pageProps}) {
-    return (
-        <ThemeProvider theme={theme}>
-            <UserProvider>
-                <CssBaseline/>
-                <Box
-                    sx={{
-                        minHeight: "100vh",
-                        display: "flex",
-                        flexDirection: "column",
-                        maxWidth: "100vw", // limit page width to viewport width
-                    }}
-                >
-                    <NavMenu/>
-                    <Component {...pageProps} />
-                    <Footer/>
-                </Box>
-                <Analytics />
-                <SpeedInsights />
-            </UserProvider>
-        </ThemeProvider>
-    );
+export default function App({ Component, pageProps }) {
+  return (
+    <UserProvider>
+      <div className="min-h-screen flex flex-col max-w-full">
+        <NavMenu />
+        <Component {...pageProps} />
+        <Footer />
+      </div>
+      <Toaster />
+      <Analytics />
+      <SpeedInsights />
+    </UserProvider>
+  );
 }
 
 App.propTypes = {
-    Component: PropTypes.elementType.isRequired,
-    pageProps: PropTypes.object.isRequired,
-}
+  Component: PropTypes.elementType.isRequired,
+  pageProps: PropTypes.object.isRequired,
+};

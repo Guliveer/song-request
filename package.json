@@ -9,9 +9,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@emotion/react": "^11.14.0",
-    "@emotion/styled": "^11.14.0",
-    "@fontsource/roboto": "^5.2.5",
     "@fortawesome/fontawesome-svg-core": "^6.7.2",
     "@fortawesome/free-brands-svg-icons": "^6.7.2",
     "@fortawesome/free-regular-svg-icons": "^6.7.2",
@@ -20,9 +17,6 @@
     "@hcaptcha/react-hcaptcha": "^1.12.0",
     "@hookform/resolvers": "^5.1.1",
     "@marsidev/react-turnstile": "^1.1.0",
-    "@mui/icons-material": "^6.4.11",
-    "@mui/material": "^6.4.8",
-    "@mui/system": "^7.0.2",
     "@radix-ui/react-accordion": "^1.2.11",
     "@radix-ui/react-alert-dialog": "^1.1.14",
     "@radix-ui/react-aspect-ratio": "^1.1.7",
@@ -82,6 +76,7 @@
     "recharts": "^3.0.0",
     "sonner": "^2.0.5",
     "tailwind-merge": "^3.3.1",
+    "tailwindcss-animate": "^1.0.7",
     "vaul": "^1.1.2",
     "youtube-player": "^5.6.0",
     "zod": "^3.25.67"

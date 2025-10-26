@@ -3,56 +3,58 @@ https://ui.jln.dev
 */
 
 :root {
-    --background: 229 57% 100%;
-    --foreground: 229 63% 4%;
-    --muted: 229 12% 86%;
-    --muted-foreground: 229 10% 37%;
-    --popover: 0 0% 99%;
-    --popover-foreground: 229 63% 3%;
-    --card: 0 0% 99%;
-    --card-foreground: 229 63% 3%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --primary: 355.63 90.57% 58.43%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 229 20% 90%;
-    --secondary-foreground: 229 20% 30%;
-    --accent: 229 28% 85%;
-    --accent-foreground: 229 28% 25%;
-    --destructive: 3 100% 50%;
-    --destructive-foreground: 3 0% 100%;
-    --ring: 229 100% 62%;
-    --chart-1: 355.63 90.57% 58.43%;
-    --chart-2: 229 20% 90%;
-    --chart-3: 229 28% 85%;
-    --chart-4: 229 20% 93%;
-    --chart-5: 355.63 93.57% 58.43%;
-    --radius: 0.5rem;
+  /* Tryb jasny (fallback) */
+  --background: 0 0% 100%;
+  --foreground: 222.2 84% 4.9%;
+  --muted: 210 40% 96%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222.2 84% 4.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 84% 4.9%;
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+  --primary: 174 100% 71%; /* #87e5dd */
+  --primary-foreground: 222 84% 5%;
+  --secondary: 264 83% 71%; /* #a171f8 */
+  --secondary-foreground: 222 84% 5%;
+  --accent: 210 40% 96%;
+  --accent-foreground: 222.2 84% 4.9%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
+  --ring: 174 100% 71%;
+  --chart-1: 174 100% 71%;
+  --chart-2: 264 83% 71%;
+  --chart-3: 210 40% 96%;
+  --chart-4: 214.3 31.8% 91.4%;
+  --chart-5: 174 95% 75%;
+  --radius: 0.5rem;
 }
 
 .dark {
-    --background: 229 41% 4%;
-    --foreground: 229 23% 99%;
-    --muted: 229 12% 14%;
-    --muted-foreground: 229 10% 63%;
-    --popover: 229 41% 5%;
-    --popover-foreground: 0 0% 100%;
-    --card: 229 41% 5%;
-    --card-foreground: 0 0% 100%;
-    --border: 215 27.9% 16.9%;
-    --input: 215 27.9% 16.9%;
-    --primary: 355.63 90.57% 58.43%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 229 14% 8%;
-    --secondary-foreground: 229 14% 68%;
-    --accent: 229 23% 17%;
-    --accent-foreground: 229 23% 77%;
-    --destructive: 3 89% 54%;
-    --destructive-foreground: 0 0% 100%;
-    --ring: 229 100% 62%;
-    --chart-1: 355.63 90.57% 58.43%;
-    --chart-2: 229 14% 8%;
-    --chart-3: 229 23% 17%;
-    --chart-4: 229 14% 11%;
-    --chart-5: 355.63 93.57% 58.43%;
+  /* Tryb ciemny (domyślny) - kolory z tematu MUI */
+  --background: 222 47% 5%; /* #0a0e1a */
+  --foreground: 0 0% 100%; /* #ffffff */
+  --muted: 217 32% 17%; /* podobne do #1a1f2e */
+  --muted-foreground: 0 0% 70%; /* rgba(255, 255, 255, 0.7) */
+  --popover: 217 32% 17%; /* #1a1f2e */
+  --popover-foreground: 0 0% 100%;
+  --card: 217 32% 17%; /* #1a1f2e */
+  --card-foreground: 0 0% 100%;
+  --border: 174 100% 71% / 0.2; /* rgba(135, 229, 221, 0.2) */
+  --input: 215 27.9% 16.9%;
+  --primary: 174 100% 71%; /* #87e5dd */
+  --primary-foreground: 222 84% 5%; /* #0a0e1a */
+  --secondary: 264 83% 71%; /* #a171f8 */
+  --secondary-foreground: 222 84% 5%; /* #0a0e1a */
+  --accent: 217 32% 20%;
+  --accent-foreground: 0 0% 95%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
+  --ring: 174 100% 71%;
+  --chart-1: 174 100% 71%;
+  --chart-2: 264 83% 71%;
+  --chart-3: 217 32% 20%;
+  --chart-4: 217 32% 15%;
+  --chart-5: 174 95% 75%;
 }

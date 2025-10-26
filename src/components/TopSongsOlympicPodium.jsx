@@ -1,803 +1,318 @@
-'use client';
-import {useEffect, useState} from 'react';
-import {supabase} from '@/lib/supabase';
-import {sortSongs} from '@/lib/actions';
-import {
-    Box, Typography, Paper, Grid, useMediaQuery,
-    useTheme, CircularProgress, Skeleton
-} from '@mui/material';
-import MusicNoteIcon from '@mui/icons-material/MusicNote';
-import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
-import StarIcon from '@mui/icons-material/Star';
-import AlbumIcon from '@mui/icons-material/Album';
+"use client";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
+import { sortSongs } from "@/lib/actions";
 import PropTypes from "prop-types";
+import { Card } from "@/components/ui/card";
+import { Typography } from "@/components/ui/typography";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
+import { Music as MusicNoteIcon, Trophy as EmojiEventsIcon, Star as StarIcon, Disc3 as AlbumIcon } from "lucide-react";
 
-export default function TopSongsOlympicPodium({playlist}) {
-    const [topSongs, setTopSongs] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down('md'), { noSsr: true });
-    const [mounted, setMounted] = useState(false);
-    const [isHydrated, setIsHydrated] = useState(false);
-    const isMobileScreen = useMediaQuery(theme.breakpoints.down('md'), { noSsr: true });
+export default function TopSongsOlympicPodium({ playlist }) {
+  const [topSongs, setTopSongs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const isMobile = useIsMobile();
+  const [mounted, setMounted] = useState(false);
 
-    // Dodajemy stany dla kryteriów sortowania - domyślnie score/desc
-    const [sortCriteria, setSortCriteria] = useState('score');
-    const [sortOrder, setSortOrder] = useState('desc');
+  // Dodajemy stany dla kryteriów sortowania - domyślnie score/desc
+  const [sortCriteria, setSortCriteria] = useState("score");
+  const [sortOrder, setSortOrder] = useState("desc");
 
-    // Pobierz dane z Supabase
-    useEffect(() => {
-        async function fetchTopSongs() {
-            try {
-                const {data, error} = await supabase
-                    .from('queue')
-                    .select('id, title, author, added_at, score, user_id')
-                    .eq('playlist', playlist)
-                    .order(sortCriteria, {ascending: sortOrder === 'asc'})
-                    .limit(3);
+  // Pobierz dane z Supabase
+  useEffect(() => {
+    async function fetchTopSongs() {
+      try {
+        const { data, error } = await supabase
+          .from("queue")
+          .select("id, title, author, added_at, score, user_id")
+          .eq("playlist", playlist)
+          .order(sortCriteria, { ascending: sortOrder === "asc" })
+          .limit(3);
 
-                if (error) throw error;
+        if (error) throw error;
 
-                // Używamy funkcji sortSongs do ostatecznego sortowania
-                const sortedData = sortSongs(data, sortCriteria, sortOrder);
+        // Używamy funkcji sortSongs do ostatecznego sortowania
+        const sortedData = sortSongs(data, sortCriteria, sortOrder);
 
-                const formattedSongs = sortedData.map((song, index) => ({
-                    id: song.id,
-                    position: index + 1,
-                    title: song.title,
-                    author: song.author,
-                    date: new Date(song.added_at).toLocaleString(),
-                    votes: song.score
-                }));
+        const formattedSongs = sortedData.map((song, index) => ({
+          id: song.id,
+          position: index + 1,
+          title: song.title,
+          author: song.author,
+          date: new Date(song.added_at).toLocaleString(),
+          votes: song.score,
+        }));
 
-                setTopSongs(formattedSongs);
-            } catch (error) {
-                console.error('Error fetching songs:', error);
-                setTopSongs([]);
-            } finally {
-                setLoading(false);
-            }
-        }
+        setTopSongs(formattedSongs);
+      } catch (error) {
+        console.error("Error fetching songs:", error);
+        setTopSongs([]);
+      } finally {
+        setLoading(false);
+      }
+    }
 
-        fetchTopSongs();
-        setMounted(true);
-    }, [sortCriteria, sortOrder]);
+    fetchTopSongs();
+    setMounted(true);
+  }, [sortCriteria, sortOrder]);
 
-    const showMobileLayout = mounted ? isMobile : false; // domyślnie używamy layoutu desktopowego
-    // Sort songs by position
-    const sortedSongs = [...topSongs].sort((a, b) => a.position - b.position);
+  // Sort songs by position
+  const sortedSongs = [...topSongs].sort((a, b) => a.position - b.position);
+  const showMobileLayout = mounted ? isMobile : false;
 
-    if (loading) return (
-        <Box sx={{
-            width: '100%',
-            px: {xs: 1, md: 2}
-        }}>
-            <Paper sx={{
-                position: 'relative',
-                overflow: 'hidden',
-                background: 'linear-gradient(to bottom, rgba(20, 184, 166, 0.2), rgba(20, 184, 166, 0.05))',
-                borderRadius: 2,
-                p: 3
-            }}>
-                {/* Title skeleton */}
-                <Box sx={{
-                    position: 'relative',
-                    textAlign: 'center',
-                    mb: 4,
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    gap: 1
-                }}>
-                    <Skeleton variant="circular" width={32} height={32} sx={{bgcolor: 'rgba(250, 204, 21, 0.2)'}}/>
-                    <Skeleton variant="text" width={180} height={40} sx={{bgcolor: 'rgba(255, 255, 255, 0.1)'}}/>
-                </Box>
-
-                {showMobileLayout ? (
-                    // Mobile skeleton
-                    <Box sx={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: 2,
-                        px: 1,
-                        pb: 3
-                    }}>
-                        {[1, 2, 3].map((position) => (
-                            <Box key={position} sx={{
-                                p: 2,
-                                borderRadius: 2,
-                                bgcolor: `rgba(255, 255, 255, ${0.1 - position * 0.02})`,
-                                display: 'flex',
-                                gap: 1.5,
-                                transform: `scale(${1 - (position - 1) * 0.05})`,
-                                transformOrigin: 'center top'
-                            }}>
-                                <Skeleton variant="rounded" width={64} height={64}
-                                          sx={{bgcolor: 'rgba(255, 255, 255, 0.05)', flexShrink: 0}}/>
-                                <Box sx={{width: '100%'}}>
-                                    <Box sx={{display: 'flex', alignItems: 'center', gap: 1, mb: 0.5}}>
-                                        <Skeleton variant="circular" width={20} height={20}
-                                                  sx={{bgcolor: 'rgba(255, 255, 255, 0.05)'}}/>
-                                        <Skeleton variant="text" width="70%" height={24}
-                                                  sx={{bgcolor: 'rgba(255, 255, 255, 0.05)'}}/>
-                                    </Box>
-                                    <Box sx={{display: 'flex', alignItems: 'center', gap: 0.5, mb: 1}}>
-                                        <Skeleton variant="circular" width={14} height={14}
-                                                  sx={{bgcolor: 'rgba(255, 255, 255, 0.05)'}}/>
-                                        <Skeleton variant="text" width="50%" height={18}
-                                                  sx={{bgcolor: 'rgba(255, 255, 255, 0.05)'}}/>
-                                    </Box>
-                                    <Skeleton variant="rounded" width={80} height={24}
-                                              sx={{bgcolor: 'rgba(255, 255, 255, 0.05)'}}/>
-                                </Box>
-                            </Box>
-                        ))}
-                    </Box>
-                ) : (
-                    // Desktop skeleton - podium
-                    <Box sx={{
-                        position: 'relative',
-                        height: 360,
-                        mx: 'auto',
-                        maxWidth: '3xl'
-                    }}>
-                        <Grid container justifyContent="center" alignItems="flex-end">
-                            {/* Second Place Skeleton */}
-                            <Grid item xs={4} sx={{height: 296}}>
-                                <Box sx={{
-                                    height: '100%',
-                                    display: 'flex',
-                                    flexDirection: 'column'
-                                }}>
-                                    <Box sx={{
-                                        flex: 1,
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        alignItems: 'center',
-                                        justifyContent: 'flex-end',
-                                        pb: 1
-                                    }}>
-                                        <Skeleton variant="circular" width={64} height={64}
-                                                  sx={{bgcolor: 'rgba(209, 213, 219, 0.2)', mb: 1}}/>
-                                        <Skeleton variant="text" width={120} height={24}
-                                                  sx={{bgcolor: 'rgba(255, 255, 255, 0.1)'}}/>
-                                        <Skeleton variant="text" width={100} height={16}
-                                                  sx={{bgcolor: 'rgba(255, 255, 255, 0.1)', mt: 0.5}}/>
-                                        <Skeleton variant="rounded" width={80} height={24}
-                                                  sx={{bgcolor: 'rgba(255, 255, 255, 0.1)', mt: 1, borderRadius: 10}}/>
-                                    </Box>
-                                    <Skeleton variant="rectangular" height={176} sx={{
-                                        bgcolor: 'rgba(107, 114, 128, 0.2)',
-                                        borderRadius: '8px 8px 0 0'
-                                    }}/>
-                                </Box>
-                            </Grid>
-
-                            {/* First Place Skeleton */}
-                            <Grid item xs={4} sx={{height: 360, zIndex: 10}}>
-                                <Box sx={{
-                                    height: '100%',
-                                    display: 'flex',
-                                    flexDirection: 'column'
-                                }}>
-                                    <Box sx={{
-                                        flex: 1,
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        alignItems: 'center',
-                                        justifyContent: 'flex-end',
-                                        pb: 1
-                                    }}>
-                                        <Skeleton variant="circular" width={80} height={80}
-                                                  sx={{bgcolor: 'rgba(250, 204, 21, 0.2)', mb: 1}}/>
-                                        <Skeleton variant="text" width={140} height={32}
-                                                  sx={{bgcolor: 'rgba(255, 255, 255, 0.1)'}}/>
-                                        <Skeleton variant="text" width={120} height={20}
-                                                  sx={{bgcolor: 'rgba(255, 255, 255, 0.1)', mt: 0.5}}/>
-                                        <Skeleton variant="rounded" width={100} height={30}
-                                                  sx={{bgcolor: 'rgba(255, 255, 255, 0.1)', mt: 1, borderRadius: 10}}/>
-                                    </Box>
-                                    <Skeleton variant="rectangular" height={240} sx={{
-                                        bgcolor: 'rgba(234, 179, 8, 0.2)',
-                                        borderRadius: '8px 8px 0 0'
-                                    }}/>
-                                </Box>
-                            </Grid>
-
-                            {/* Third Place Skeleton */}
-                            <Grid item xs={4} sx={{height: 240}}>
-                                <Box sx={{
-                                    height: '100%',
-                                    display: 'flex',
-                                    flexDirection: 'column'
-                                }}>
-                                    <Box sx={{
-                                        flex: 1,
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        alignItems: 'center',
-                                        justifyContent: 'flex-end',
-                                        pb: 1
-                                    }}>
-                                        <Skeleton variant="circular" width={64} height={64}
-                                                  sx={{bgcolor: 'rgba(180, 83, 9, 0.2)', mb: 1}}/>
-                                        <Skeleton variant="text" width={120} height={24}
-                                                  sx={{bgcolor: 'rgba(255, 255, 255, 0.1)'}}/>
-                                        <Skeleton variant="text" width={100} height={16}
-                                                  sx={{bgcolor: 'rgba(255, 255, 255, 0.1)', mt: 0.5}}/>
-                                        <Skeleton variant="rounded" width={80} height={24}
-                                                  sx={{bgcolor: 'rgba(255, 255, 255, 0.1)', mt: 1, borderRadius: 10}}/>
-                                    </Box>
-                                    <Skeleton variant="rectangular" height={120} sx={{
-                                        bgcolor: 'rgba(180, 83, 9, 0.2)',
-                                        borderRadius: '8px 8px 0 0'
-                                    }}/>
-                                </Box>
-                            </Grid>
-                        </Grid>
-
-                        {/* Spotlight Effects */}
-                        <Box sx={{
-                            position: 'absolute',
-                            bottom: 80,
-                            left: '25%',
-                            width: 100,
-                            height: 180,
-                            bgcolor: 'rgba(20, 184, 166, 0.15)',
-                            borderRadius: '50%',
-                            filter: 'blur(30px)'
-                        }}/>
-                        <Box sx={{
-                            position: 'absolute',
-                            bottom: 80,
-                            right: '25%',
-                            width: 100,
-                            height: 180,
-                            bgcolor: 'rgba(20, 184, 166, 0.15)',
-                            borderRadius: '50%',
-                            filter: 'blur(30px)'
-                        }}/>
-                    </Box>
-                )}
-            </Paper>
-        </Box>
-    );
-
+  if (loading)
     return (
-        <Box sx={{
-            width: '100%',
-            px: {xs: 1, md: 2}
-        }}>
-            <Paper sx={{
-                position: 'relative',
-                overflow: 'hidden',
-                background: 'linear-gradient(to bottom, rgba(20, 184, 166, 0.2), rgba(20, 184, 166, 0.05))',
-                borderRadius: 2
-            }}>
-                {/* Title */}
-                <Box sx={{
-                    position: 'relative',
-                    textAlign: 'center',
-                    mb: 4,
-                    pt: 3,
-                }}>
-                    <Box sx={{
-                        position: 'absolute',
-                        left: '50%',
-                        top: '50%',
-                        width: '128px',
-                        height: '128px',
-                        bgcolor: 'rgba(20, 184, 166, 0.2)',
-                        borderRadius: '50%',
-                        filter: 'blur(24px)',
-                        transform: 'translate(-50%, -50%)',
-                        zIndex: 0
-                    }}/>
-                    <Typography variant="h4" sx={{
-                        fontWeight: 'bold',
-                        color: 'white',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 1
-                    }}>
-                        <EmojiEventsIcon sx={{color: '#facc15'}}/>
-                        Top 3 Songs
-                    </Typography>
-                </Box>
+      <div className="w-full px-1 md:px-2">
+        <Card className="relative overflow-hidden bg-gradient-to-b from-teal-500/20 to-teal-500/5 p-6">
+          {/* Title skeleton */}
+          <div className="relative text-center mb-6 flex justify-center items-center gap-2">
+            <Skeleton className="w-8 h-8 rounded-full bg-yellow-400/20" />
+            <Skeleton className="w-44 h-10 bg-white/10" />
+          </div>
 
-                {isMobile ? (
-                    // Mobile Layout - Stacked cards
-                    <Box sx={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: 2,
-                        px: 1,
-                        pb: 3
-                    }}>
-                        {sortedSongs.map((song) => {
-                            // Style based on position
-                            const positionStyles = {
-                                1: {
-                                    gradient: 'linear-gradient(to right, rgba(234, 179, 8, 0.2), rgba(250, 204, 21, 0.1), rgba(234, 179, 8, 0.2))',
-                                    border: '1px solid rgba(250, 204, 21, 0.5)',
-                                    badgeColor: '#facc15',
-                                    icon: <EmojiEventsIcon sx={{color: '#facc15'}}/>,
-                                    scale: 1
-                                },
-                                2: {
-                                    gradient: 'linear-gradient(to right, rgba(156, 163, 175, 0.2), rgba(209, 213, 219, 0.1), rgba(156, 163, 175, 0.2))',
-                                    border: '1px solid rgba(209, 213, 219, 0.5)',
-                                    badgeColor: '#d1d5db',
-                                    icon: <StarIcon sx={{color: '#d1d5db'}}/>,
-                                    scale: 0.95
-                                },
-                                3: {
-                                    gradient: 'linear-gradient(to right, rgba(180, 83, 9, 0.2), rgba(217, 119, 6, 0.1), rgba(180, 83, 9, 0.2))',
-                                    border: '1px solid rgba(217, 119, 6, 0.5)',
-                                    badgeColor: '#b45309',
-                                    icon: <StarIcon sx={{color: '#b45309'}}/>,
-                                    scale: 0.9
-                                }
-                            }[song.position];
+          {showMobileLayout ? (
+            // Mobile skeleton
+            <div className="flex flex-col gap-4 px-2 pb-6">
+              {[1, 2, 3].map((position) => (
+                <div
+                  key={position}
+                  className="p-4 rounded-lg bg-white/10 flex gap-3"
+                  style={{
+                    transform: `scale(${1 - (position - 1) * 0.05})`,
+                    transformOrigin: "center top",
+                  }}>
+                  <Skeleton className="w-16 h-16 rounded bg-white/5 flex-shrink-0" />
+                  <div className="w-full">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Skeleton className="w-5 h-5 rounded-full bg-white/5" />
+                      <Skeleton className="w-3/4 h-6 bg-white/5" />
+                    </div>
+                    <div className="flex items-center gap-1 mb-2">
+                      <Skeleton className="w-3.5 h-3.5 rounded-full bg-white/5" />
+                      <Skeleton className="w-1/2 h-4 bg-white/5" />
+                    </div>
+                    <Skeleton className="w-20 h-6 rounded-full bg-white/5" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            // Desktop skeleton - podium
+            <div className="relative h-90 mx-auto max-w-6xl">
+              <div className="grid grid-cols-3 justify-center items-end h-full">
+                {/* Second Place Skeleton */}
+                <div className="h-74 flex flex-col">
+                  <div className="flex-1 flex flex-col items-center justify-end pb-2">
+                    <Skeleton className="w-16 h-16 rounded-full bg-gray-300/20 mb-2" />
+                    <Skeleton className="w-30 h-6 bg-white/10" />
+                    <Skeleton className="w-25 h-4 bg-white/10 mt-1" />
+                    <Skeleton className="w-20 h-6 rounded-full bg-white/10 mt-2" />
+                  </div>
+                  <Skeleton className="h-44 bg-gray-500/20 rounded-t-lg" />
+                </div>
 
-                            return (
-                                <Paper key={song.id} sx={{
-                                    background: positionStyles.gradient,
-                                    border: positionStyles.border,
-                                    borderRadius: 2,
-                                    p: 2,
-                                    position: 'relative',
-                                    overflow: 'hidden',
-                                    transform: `scale(${positionStyles.scale})`,
-                                    transition: 'transform 0.3s',
-                                    '&:hover': {transform: 'scale(1.02)'}
-                                }}>
-                                    {/* Position Badge */}
-                                    <Box sx={{
-                                        position: 'absolute',
-                                        right: -16,
-                                        top: -16,
-                                        width: 64,
-                                        height: 64
-                                    }}>
-                                        <Box sx={{
-                                            bgcolor: positionStyles.badgeColor,
-                                            transform: 'rotate(45deg)',
-                                            width: 80,
-                                            height: 40,
-                                            transformOrigin: 'bottom right'
-                                        }}>
-                                            <Typography sx={{
-                                                position: 'absolute',
-                                                bottom: 0,
-                                                right: 20,
-                                                color: 'black',
-                                                fontWeight: 'bold'
-                                            }}>
-                                                #{song.position}
-                                            </Typography>
-                                        </Box>
-                                    </Box>
+                {/* First Place Skeleton */}
+                <div className="h-90 flex flex-col z-10">
+                  <div className="flex-1 flex flex-col items-center justify-end pb-2">
+                    <Skeleton className="w-20 h-20 rounded-full bg-yellow-400/20 mb-2" />
+                    <Skeleton className="w-35 h-8 bg-white/10" />
+                    <Skeleton className="w-30 h-5 bg-white/10 mt-1" />
+                    <Skeleton className="w-25 h-7 rounded-full bg-white/10 mt-2" />
+                  </div>
+                  <Skeleton className="h-60 bg-yellow-500/20 rounded-t-lg" />
+                </div>
 
-                                    <Box sx={{display: 'flex', gap: 1.5}}>
-                                        {/* Album Art */}
-                                        <Box sx={{
-                                            width: 64,
-                                            height: 64,
-                                            borderRadius: 1,
-                                            bgcolor: 'rgba(0, 0, 0, 0.5)',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            flexShrink: 0,
-                                            border: '1px solid rgba(20, 184, 166, 0.3)'
-                                        }}>
-                                            <AlbumIcon sx={{color: 'rgba(45, 212, 191, 0.7)', fontSize: 32}}/>
-                                        </Box>
+                {/* Third Place Skeleton */}
+                <div className="h-60 flex flex-col">
+                  <div className="flex-1 flex flex-col items-center justify-end pb-2">
+                    <Skeleton className="w-16 h-16 rounded-full bg-orange-600/20 mb-2" />
+                    <Skeleton className="w-30 h-6 bg-white/10" />
+                    <Skeleton className="w-25 h-4 bg-white/10 mt-1" />
+                    <Skeleton className="w-20 h-6 rounded-full bg-white/10 mt-2" />
+                  </div>
+                  <Skeleton className="h-30 bg-orange-600/20 rounded-t-lg" />
+                </div>
+              </div>
 
-                                        <Box sx={{flex: 1}}>
-                                            <Box sx={{display: 'flex', alignItems: 'center', gap: 1, mb: 0.5}}>
-                                                {positionStyles.icon}
-                                                <Typography sx={{
-                                                    fontWeight: 'bold',
-                                                    color: 'white',
-                                                    textOverflow: 'ellipsis',
-                                                    overflow: 'hidden',
-                                                    whiteSpace: 'nowrap'
-                                                }}>
-                                                    {song.title}
-                                                </Typography>
-                                            </Box>
-
-                                            <Box sx={{display: 'flex', alignItems: 'center', gap: 0.5, mb: 1}}>
-                                                <MusicNoteIcon sx={{color: 'rgb(45, 212, 191)', fontSize: '0.875rem'}}/>
-                                                <Typography sx={{
-                                                    fontSize: '0.875rem',
-                                                    color: 'rgb(209, 213, 219)',
-                                                    textOverflow: 'ellipsis',
-                                                    overflow: 'hidden',
-                                                    whiteSpace: 'nowrap'
-                                                }}>
-                                                    {song.author}
-                                                </Typography>
-                                            </Box>
-
-                                            <Box sx={{
-                                                bgcolor: 'rgba(0, 0, 0, 0.3)',
-                                                borderRadius: 10,
-                                                px: 1,
-                                                py: 0.25,
-                                                display: 'inline-block'
-                                            }}>
-                                                <Typography sx={{
-                                                    fontSize: '0.75rem',
-                                                    fontWeight: 500,
-                                                    color: 'rgb(94, 234, 212)'
-                                                }}>
-                                                    {song.votes} votes
-                                                </Typography>
-                                            </Box>
-                                        </Box>
-                                    </Box>
-                                </Paper>
-                            );
-                        })}
-                    </Box>
-                ) : (
-                    // Desktop Layout - Poprawione podium
-                    <Box sx={{
-                        position: 'relative',
-                        height: 360,
-                        mx: 'auto',
-                        maxWidth: '3xl'
-                    }}>
-                        <Box sx={{
-                            position: 'absolute',
-                            bottom: 0,
-                            left: 0,
-                            right: 0,
-                            display: 'flex',
-                            alignItems: 'flex-end',
-                            justifyContent: 'center',
-                            height: '100%'
-                        }}>
-                            {/* Podiums for 2nd, 1st and 3rd place */}
-                            <Grid container justifyContent="center" alignItems="flex-end">
-                                {/* Second Place */}
-                                <Grid item xs={4} sx={{height: 296}}>
-                                    <Box sx={{
-                                        height: '100%',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        position: 'relative'
-                                    }}>
-                                        <Box sx={{
-                                            flex: 1,
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            alignItems: 'center',
-                                            justifyContent: 'flex-end',
-                                            pb: 1
-                                        }}>
-                                            <Box sx={{
-                                                width: 64,
-                                                height: 64,
-                                                borderRadius: '50%',
-                                                bgcolor: 'rgba(0, 0, 0, 0.5)',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                mb: 1,
-                                                border: '2px solid rgba(209, 213, 219, 0.5)',
-                                                boxShadow: '0 0 10px rgba(209, 213, 219, 0.3)'
-                                            }}>
-                                                <StarIcon sx={{fontSize: 32, color: '#d1d5db'}}/>
-                                            </Box>
-                                            <Typography sx={{
-                                                fontWeight: 'bold',
-                                                color: 'white',
-                                                textAlign: 'center',
-                                                maxWidth: 200,
-                                                overflow: 'hidden',
-                                                textOverflow: 'ellipsis',
-                                                whiteSpace: 'nowrap'
-                                            }}>
-                                                {sortedSongs[1]?.title || "—"}
-                                            </Typography>
-                                            <Typography sx={{
-                                                fontSize: '0.875rem',
-                                                color: 'rgb(209, 213, 219)',
-                                                maxWidth: 200,
-                                                overflow: 'hidden',
-                                                textOverflow: 'ellipsis',
-                                                whiteSpace: 'nowrap'
-                                            }}>
-                                                {sortedSongs[1]?.author || "—"}
-                                            </Typography>
-                                            <Box sx={{
-                                                mt: 0.5,
-                                                bgcolor: 'rgba(0, 0, 0, 0.3)',
-                                                borderRadius: 10,
-                                                px: 1.5,
-                                                py: 0.5,
-                                            }}>
-                                                <Typography sx={{
-                                                    fontSize: '0.875rem',
-                                                    fontWeight: 500,
-                                                    color: 'rgb(94, 234, 212)'
-                                                }}>
-                                                    Score: {sortedSongs[1]?.votes || 0}
-                                                </Typography>
-                                            </Box>
-                                        </Box>
-
-                                        {/* Podium Block */}
-                                        <Box sx={{
-                                            height: 176,
-                                            width: '100%',
-                                            background: 'linear-gradient(to top, rgba(75, 85, 99, 0.5), rgba(107, 114, 128, 0.3))',
-                                            borderTop: '2px solid rgba(209, 213, 219, 0.5)',
-                                            position: 'relative',
-                                            boxShadow: 'inset 0 5px 15px rgba(0,0,0,0.2)'
-                                        }}>
-                                            {/* Numer na podium */}
-                                            <Box sx={{
-                                                position: 'absolute',
-                                                top: '50%',
-                                                left: '50%',
-                                                transform: 'translate(-50%, -50%)',
-                                                width: 36,
-                                                height: 36,
-                                                bgcolor: '#d1d5db',
-                                                color: 'black',
-                                                fontWeight: 'bold',
-                                                borderRadius: '50%',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                fontSize: '1.25rem',
-                                                boxShadow: '0 2px 4px rgba(0,0,0,0.25)',
-                                                border: '2px solid rgba(255,255,255,0.7)'
-                                            }}>
-                                                2
-                                            </Box>
-                                        </Box>
-                                    </Box>
-                                </Grid>
-
-                                {/* First Place */}
-                                <Grid item xs={4} sx={{height: 360, zIndex: 10}}>
-                                    <Box sx={{
-                                        height: '100%',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        position: 'relative'
-                                    }}>
-                                        <Box sx={{
-                                            flex: 1,
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            alignItems: 'center',
-                                            justifyContent: 'flex-end',
-                                            pb: 1
-                                        }}>
-                                            <Box sx={{
-                                                width: 80,
-                                                height: 80,
-                                                borderRadius: '50%',
-                                                bgcolor: 'rgba(0, 0, 0, 0.5)',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                mb: 1,
-                                                border: '2px solid rgba(250, 204, 21, 0.5)',
-                                                boxShadow: '0 0 15px rgba(250, 204, 21, 0.4)'
-                                            }}>
-                                                <EmojiEventsIcon sx={{fontSize: 40, color: '#facc15'}}/>
-                                            </Box>
-                                            <Typography variant="h6" sx={{
-                                                fontWeight: 'bold',
-                                                color: 'white',
-                                                textAlign: 'center',
-                                                maxWidth: 200,
-                                                overflow: 'hidden',
-                                                textOverflow: 'ellipsis',
-                                                whiteSpace: 'nowrap'
-                                            }}>
-                                                {sortedSongs[0]?.title || "—"}
-                                            </Typography>
-                                            <Typography sx={{
-                                                color: 'rgb(229, 231, 235)',
-                                                maxWidth: 200,
-                                                overflow: 'hidden',
-                                                textOverflow: 'ellipsis',
-                                                whiteSpace: 'nowrap'
-                                            }}>
-                                                {sortedSongs[0]?.author || "—"}
-                                            </Typography>
-                                            <Box sx={{
-                                                mt: 1,
-                                                bgcolor: 'rgba(0, 0, 0, 0.3)',
-                                                borderRadius: 10,
-                                                px: 2,
-                                                py: 0.5,
-                                            }}>
-                                                <Typography sx={{
-                                                    fontWeight: 500,
-                                                    color: 'rgb(153, 246, 228)'
-                                                }}>
-                                                    Score: {sortedSongs[0]?.votes || 0}
-                                                </Typography>
-                                            </Box>
-                                        </Box>
-
-                                        {/* Podium Block */}
-                                        <Box sx={{
-                                            height: 240,
-                                            width: '100%',
-                                            background: 'linear-gradient(to top, rgba(202, 138, 4, 0.5), rgba(234, 179, 8, 0.3))',
-                                            borderTop: '2px solid rgba(250, 204, 21, 0.5)',
-                                            position: 'relative',
-                                            boxShadow: 'inset 0 5px 15px rgba(0,0,0,0.2)'
-                                        }}>
-                                            {/* Numer na podium */}
-                                            <Box sx={{
-                                                position: 'absolute',
-                                                top: '50%',
-                                                left: '50%',
-                                                transform: 'translate(-50%, -50%)',
-                                                width: 44,
-                                                height: 44,
-                                                bgcolor: '#facc15',
-                                                color: 'black',
-                                                fontWeight: 'bold',
-                                                borderRadius: '50%',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                fontSize: '1.5rem',
-                                                boxShadow: '0 2px 4px rgba(0,0,0,0.25)',
-                                                border: '2px solid rgba(255,255,255,0.7)'
-                                            }}>
-                                                1
-                                            </Box>
-                                        </Box>
-                                    </Box>
-                                </Grid>
-
-                                {/* Third Place */}
-                                <Grid item xs={4} sx={{height: 240}}>
-                                    <Box sx={{
-                                        height: '100%',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        position: 'relative'
-                                    }}>
-                                        <Box sx={{
-                                            flex: 1,
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            alignItems: 'center',
-                                            justifyContent: 'flex-end',
-                                            pb: 1
-                                        }}>
-                                            <Box sx={{
-                                                width: 64,
-                                                height: 64,
-                                                borderRadius: '50%',
-                                                bgcolor: 'rgba(0, 0, 0, 0.5)',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                mb: 1,
-                                                border: '2px solid rgba(180, 83, 9, 0.5)',
-                                                boxShadow: '0 0 10px rgba(180, 83, 9, 0.3)'
-                                            }}>
-                                                <StarIcon sx={{fontSize: 32, color: '#b45309'}}/>
-                                            </Box>
-                                            <Typography sx={{
-                                                fontWeight: 'bold',
-                                                color: 'white',
-                                                textAlign: 'center',
-                                                maxWidth: 200,
-                                                overflow: 'hidden',
-                                                textOverflow: 'ellipsis',
-                                                whiteSpace: 'nowrap'
-                                            }}>
-                                                {sortedSongs[2]?.title || "—"}
-                                            </Typography>
-                                            <Typography sx={{
-                                                fontSize: '0.875rem',
-                                                color: 'rgb(209, 213, 219)',
-                                                maxWidth: 200,
-                                                overflow: 'hidden',
-                                                textOverflow: 'ellipsis',
-                                                whiteSpace: 'nowrap'
-                                            }}>
-                                                {sortedSongs[2]?.author || "—"}
-                                            </Typography>
-                                            <Box sx={{
-                                                mt: 0.5,
-                                                bgcolor: 'rgba(0, 0, 0, 0.3)',
-                                                borderRadius: 10,
-                                                px: 1.5,
-                                                py: 0.5,
-                                            }}>
-                                                <Typography sx={{
-                                                    fontSize: '0.875rem',
-                                                    fontWeight: 500,
-                                                    color: 'rgb(94, 234, 212)'
-                                                }}>
-                                                    Score: {sortedSongs[2]?.votes || 0}
-                                                </Typography>
-                                            </Box>
-                                        </Box>
-
-                                        {/* Podium Block */}
-                                        <Box sx={{
-                                            height: 120,
-                                            width: '100%',
-                                            background: 'linear-gradient(to top, rgba(146, 64, 14, 0.5), rgba(180, 83, 9, 0.3))',
-                                            borderTop: '2px solid rgba(180, 83, 9, 0.5)',
-                                            position: 'relative',
-                                            boxShadow: 'inset 0 5px 15px rgba(0,0,0,0.2)'
-                                        }}>
-                                            {/* Numer na podium */}
-                                            <Box sx={{
-                                                position: 'absolute',
-                                                top: '50%',
-                                                left: '50%',
-                                                transform: 'translate(-50%, -50%)',
-                                                width: 36,
-                                                height: 36,
-                                                bgcolor: '#b45309',
-                                                color: 'black',
-                                                fontWeight: 'bold',
-                                                borderRadius: '50%',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                fontSize: '1.25rem',
-                                                boxShadow: '0 2px 4px rgba(0,0,0,0.25)',
-                                                border: '2px solid rgba(255,255,255,0.7)'
-                                            }}>
-                                                3
-                                            </Box>
-                                        </Box>
-                                    </Box>
-                                </Grid>
-                            </Grid>
-                        </Box>
-
-                        {/* Spotlight Effects */}
-                        <Box sx={{
-                            position: 'absolute',
-                            bottom: 80,
-                            left: '25%',
-                            width: 100,
-                            height: 180,
-                            bgcolor: 'rgba(20, 184, 166, 0.15)',
-                            borderRadius: '50%',
-                            filter: 'blur(30px)'
-                        }}/>
-                        <Box sx={{
-                            position: 'absolute',
-                            bottom: 80,
-                            right: '25%',
-                            width: 100,
-                            height: 180,
-                            bgcolor: 'rgba(20, 184, 166, 0.15)',
-                            borderRadius: '50%',
-                            filter: 'blur(30px)'
-                        }}/>
-                    </Box>
-                )}
-            </Paper>
-        </Box>
+              {/* Spotlight Effects */}
+              <div className="absolute bottom-20 left-1/4 w-25 h-45 bg-teal-500/15 rounded-full blur-3xl" />
+              <div className="absolute bottom-20 right-1/4 w-25 h-45 bg-teal-500/15 rounded-full blur-3xl" />
+            </div>
+          )}
+        </Card>
+      </div>
     );
+
+  return (
+    <div className="w-full px-1 md:px-2">
+      <Card className="relative overflow-hidden bg-gradient-to-b from-teal-500/20 to-teal-500/5">
+        {/* Title */}
+        <div className="relative text-center mb-6 pt-6">
+          <div className="absolute left-1/2 top-1/2 w-32 h-32 bg-teal-500/20 rounded-full blur-2xl transform -translate-x-1/2 -translate-y-1/2 z-0" />
+          <Typography variant="h4" className="font-bold text-white flex items-center justify-center gap-2 relative z-10">
+            <EmojiEventsIcon className="w-8 h-8 text-yellow-400" />
+            Top 3 Songs
+          </Typography>
+        </div>
+
+        {isMobile ? (
+          // Mobile Layout - Stacked cards
+          <div className="flex flex-col gap-4 px-2 pb-6">
+            {sortedSongs.map((song) => {
+              // Style based on position
+              const positionStyles = {
+                1: {
+                  gradient: "bg-gradient-to-r from-yellow-600/20 via-yellow-400/10 to-yellow-600/20",
+                  border: "border border-yellow-400/50",
+                  badgeColor: "bg-yellow-400",
+                  icon: <EmojiEventsIcon className="w-5 h-5 text-yellow-400" />,
+                  scale: "scale-100",
+                },
+                2: {
+                  gradient: "bg-gradient-to-r from-gray-400/20 via-gray-300/10 to-gray-400/20",
+                  border: "border border-gray-300/50",
+                  badgeColor: "bg-gray-300",
+                  icon: <StarIcon className="w-5 h-5 text-gray-300" />,
+                  scale: "scale-95",
+                },
+                3: {
+                  gradient: "bg-gradient-to-r from-orange-600/20 via-orange-500/10 to-orange-600/20",
+                  border: "border border-orange-500/50",
+                  badgeColor: "bg-orange-600",
+                  icon: <StarIcon className="w-5 h-5 text-orange-600" />,
+                  scale: "scale-90",
+                },
+              }[song.position];
+
+              return (
+                <Card key={song.id} className={cn(positionStyles.gradient, positionStyles.border, positionStyles.scale, "p-4 relative overflow-hidden transition-transform duration-300 hover:scale-105")}>
+                  {/* Position Badge */}
+                  <div className="absolute -right-4 -top-4 w-16 h-16">
+                    <div className={cn(positionStyles.badgeColor, "transform rotate-45 w-20 h-10 origin-bottom-right")}>
+                      <Typography className="absolute bottom-0 right-5 text-black font-bold">#{song.position}</Typography>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3">
+                    {/* Album Art */}
+                    <div className="w-16 h-16 rounded bg-black/50 flex items-center justify-center flex-shrink-0 border border-teal-500/30">
+                      <AlbumIcon className="w-8 h-8 text-teal-400/70" />
+                    </div>
+
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        {positionStyles.icon}
+                        <Typography className="font-bold text-white truncate">{song.title}</Typography>
+                      </div>
+
+                      <div className="flex items-center gap-1 mb-2">
+                        <MusicNoteIcon className="w-3.5 h-3.5 text-teal-400" />
+                        <Typography variant="sm" className="text-gray-300 truncate">
+                          {song.author}
+                        </Typography>
+                      </div>
+
+                      <div className="bg-black/30 rounded-full px-2 py-1 inline-block">
+                        <Typography variant="xs" className="font-medium text-teal-200">
+                          {song.votes} votes
+                        </Typography>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        ) : (
+          // Desktop Layout - Podium
+          <div className="relative h-90 mx-auto max-w-6xl pb-6">
+            <div className="absolute bottom-0 left-0 right-0 flex items-end justify-center h-full">
+              {/* Podiums for 2nd, 1st and 3rd place */}
+              <div className="grid grid-cols-3 justify-center items-end w-full">
+                {/* Second Place */}
+                <div className="h-74 flex flex-col relative">
+                  <div className="flex-1 flex flex-col items-center justify-end pb-2">
+                    <div className="w-16 h-16 rounded-full bg-black/50 flex items-center justify-center mb-2 border-2 border-gray-300/50 shadow-lg shadow-gray-300/30">
+                      <StarIcon className="w-8 h-8 text-gray-300" />
+                    </div>
+                    <Typography className="font-bold text-white text-center max-w-50 truncate">{sortedSongs[1]?.title || "—"}</Typography>
+                    <Typography variant="sm" className="text-gray-300 max-w-50 truncate">
+                      {sortedSongs[1]?.author || "—"}
+                    </Typography>
+                    <div className="mt-1 bg-black/30 rounded-full px-3 py-1">
+                      <Typography variant="sm" className="font-medium text-teal-200">
+                        Score: {sortedSongs[1]?.votes || 0}
+                      </Typography>
+                    </div>
+                  </div>
+
+                  {/* Podium Block */}
+                  <div className="h-44 w-full bg-gradient-to-t from-gray-600/50 to-gray-500/30 border-t-2 border-gray-300/50 relative shadow-inner">
+                    {/* Number on podium */}
+                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-9 h-9 bg-gray-300 text-black font-bold rounded-full flex items-center justify-center text-xl shadow-md border-2 border-white/70">2</div>
+                  </div>
+                </div>
+
+                {/* First Place */}
+                <div className="h-90 flex flex-col relative z-10">
+                  <div className="flex-1 flex flex-col items-center justify-end pb-2">
+                    <div className="w-20 h-20 rounded-full bg-black/50 flex items-center justify-center mb-2 border-2 border-yellow-400/50 shadow-lg shadow-yellow-400/40">
+                      <EmojiEventsIcon className="w-10 h-10 text-yellow-400" />
+                    </div>
+                    <Typography variant="h6" className="font-bold text-white text-center max-w-50 truncate">
+                      {sortedSongs[0]?.title || "—"}
+                    </Typography>
+                    <Typography className="text-gray-200 max-w-50 truncate">{sortedSongs[0]?.author || "—"}</Typography>
+                    <div className="mt-2 bg-black/30 rounded-full px-4 py-1">
+                      <Typography className="font-medium text-teal-100">Score: {sortedSongs[0]?.votes || 0}</Typography>
+                    </div>
+                  </div>
+
+                  {/* Podium Block */}
+                  <div className="h-60 w-full bg-gradient-to-t from-yellow-700/50 to-yellow-600/30 border-t-2 border-yellow-400/50 relative shadow-inner">
+                    {/* Number on podium */}
+                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-11 h-11 bg-yellow-400 text-black font-bold rounded-full flex items-center justify-center text-2xl shadow-md border-2 border-white/70">1</div>
+                  </div>
+                </div>
+
+                {/* Third Place */}
+                <div className="h-60 flex flex-col relative">
+                  <div className="flex-1 flex flex-col items-center justify-end pb-2">
+                    <div className="w-16 h-16 rounded-full bg-black/50 flex items-center justify-center mb-2 border-2 border-orange-600/50 shadow-lg shadow-orange-600/30">
+                      <StarIcon className="w-8 h-8 text-orange-600" />
+                    </div>
+                    <Typography className="font-bold text-white text-center max-w-50 truncate">{sortedSongs[2]?.title || "—"}</Typography>
+                    <Typography variant="sm" className="text-gray-300 max-w-50 truncate">
+                      {sortedSongs[2]?.author || "—"}
+                    </Typography>
+                    <div className="mt-1 bg-black/30 rounded-full px-3 py-1">
+                      <Typography variant="sm" className="font-medium text-teal-200">
+                        Score: {sortedSongs[2]?.votes || 0}
+                      </Typography>
+                    </div>
+                  </div>
+
+                  {/* Podium Block */}
+                  <div className="h-30 w-full bg-gradient-to-t from-orange-800/50 to-orange-600/30 border-t-2 border-orange-600/50 relative shadow-inner">
+                    {/* Number on podium */}
+                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-9 h-9 bg-orange-600 text-black font-bold rounded-full flex items-center justify-center text-xl shadow-md border-2 border-white/70">3</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Spotlight Effects */}
+            <div className="absolute bottom-20 left-1/4 w-25 h-45 bg-teal-500/15 rounded-full blur-3xl" />
+            <div className="absolute bottom-20 right-1/4 w-25 h-45 bg-teal-500/15 rounded-full blur-3xl" />
+          </div>
+        )}
+      </Card>
+    </div>
+  );
 }
 
 TopSongsOlympicPodium.propTypes = {
-    playlist: PropTypes.number.isRequired,
-}
+  playlist: PropTypes.number.isRequired,
+};

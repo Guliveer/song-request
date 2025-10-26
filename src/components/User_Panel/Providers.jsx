@@ -1,214 +1,153 @@
 import { supabase } from "@/lib/supabase";
 import { useEffect, useState } from "react";
-import {
-    Button, Dialog, DialogActions, DialogTitle,
-    Divider,
-    List,
-    ListItem,
-    ListItemSecondaryAction,
-    Box,
-    Typography,
-    IconButton,
-    CircularProgress
-} from "@mui/material";
-import {
-    LinkOff as LinkOffIcon,
-    ErrorOutlineRounded as ErrorOutlineIcon,
-    LinkRounded as LinkRoundedIcon,
-}from '@mui/icons-material';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Link2Off, AlertCircle, Link as LinkIcon } from "lucide-react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Typography } from "@/components/ui/typography";
+import { Separator } from "@/components/ui/separator";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function Providers() {
-    const [identities, setIdentities] = useState([]);
-    const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-    const [identityToUnlink, setIdentityToUnlink] = useState(null);
-    const [loadingProvider, setLoadingProvider] = useState(null);
+  const [identities, setIdentities] = useState([]);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [identityToUnlink, setIdentityToUnlink] = useState(null);
+  const [loadingProvider, setLoadingProvider] = useState(null);
 
-    const providerIcons = {
-        email: <FontAwesomeIcon icon="fa-solid fa-envelope" />,
-        google: <FontAwesomeIcon icon="fa-brands fa-google" />,
-        facebook: <FontAwesomeIcon icon="fa-brands fa-facebook" />,
-        github: <FontAwesomeIcon icon="fa-brands fa-github" />,
-        spotify: <FontAwesomeIcon icon="fa-brands fa-spotify" />,
-    };
+  const providerIcons = {
+    email: <FontAwesomeIcon icon="fa-solid fa-envelope" />,
+    google: <FontAwesomeIcon icon="fa-brands fa-google" />,
+    facebook: <FontAwesomeIcon icon="fa-brands fa-facebook" />,
+    github: <FontAwesomeIcon icon="fa-brands fa-github" />,
+    spotify: <FontAwesomeIcon icon="fa-brands fa-spotify" />,
+  };
 
-    const allProviders = Object.keys(providerIcons);
+  const allProviders = Object.keys(providerIcons);
 
-    useEffect(() => {
-        async function fetchIdentities() {
-            const { data, error } = await supabase.auth.getUserIdentities();
-            if (error) {
-                console.error("Error fetching identities:", error);
-            } else {
-                setIdentities(data?.identities || []);
-            }
-        }
-        fetchIdentities();
-    }, []);
+  useEffect(() => {
+    async function fetchIdentities() {
+      const { data, error } = await supabase.auth.getUserIdentities();
+      if (error) {
+        console.error("Error fetching identities:", error);
+      } else {
+        setIdentities(data?.identities || []);
+      }
+    }
+    fetchIdentities();
+  }, []);
 
-    const handleConnectProvider = async (provider) => {
-        setLoadingProvider(provider);
-        try {
-            const { error } = await supabase.auth.linkIdentity({
-                provider: provider,
-                options: {
-                    redirectTo: window.location.origin,
-                    scopes: "streaming user-read-email user-read-private user-modify-playback-state user-read-playback-state"
-                }
-            });
-            if (error) throw error;
-        } catch (error) {
-            console.error("Connection error:", error);
-            throw new Error(`Failed to connect ${provider}: ${error.message}`);
-        }
-        setLoadingProvider(null);
-    };
+  const handleConnectProvider = async (provider) => {
+    setLoadingProvider(provider);
+    try {
+      const { error } = await supabase.auth.linkIdentity({
+        provider: provider,
+        options: {
+          redirectTo: window.location.origin,
+          scopes: "streaming user-read-email user-read-private user-modify-playback-state user-read-playback-state",
+        },
+      });
+      if (error) throw error;
+    } catch (error) {
+      console.error("Connection error:", error);
+      throw new Error(`Failed to connect ${provider}: ${error.message}`);
+    }
+    setLoadingProvider(null);
+  };
 
-    return (
-        <>
-            <Typography variant="h5" component="h2" sx={{ color: 'white', mb: 3, fontWeight: 500 }}>
-                Providers
-            </Typography>
-            <Divider sx={{ mb: 3, backgroundColor: '#333' }} />
+  const handleUnlinkProvider = async () => {
+    if (!identityToUnlink) return;
+    try {
+      const { error } = await supabase.auth.unlinkIdentity(identityToUnlink);
+      if (error) {
+        console.error("Unlink error:", error);
+      } else {
+        const { data } = await supabase.auth.getUserIdentities();
+        setIdentities(data.identities || []);
+      }
+    } catch (error) {
+      console.error("Error during unlinking:", error);
+    }
+    setConfirmDialogOpen(false);
+    setIdentityToUnlink(null);
+  };
 
-            <List sx={{ p: 0 }}>
-                {allProviders.map((provider, index) => {
-                    const isConnected = identities.some(id => id.provider === provider);
-                    const isEmail = provider === 'email';
-                    const isEmailVerified = identities.find(id => id.provider === provider)?.identity_data?.email_verified;
+  return (
+    <>
+      <Typography variant="h5" className="text-white mb-6 font-medium">
+        Providers
+      </Typography>
+      <Separator className="mb-6" />
 
-                    return (
-                        <Box key={provider}>
-                            <ListItem
-                                sx={{
-                                    py: 2,
-                                    borderRadius: 1,
-                                    '&:hover': {
-                                        backgroundColor: 'rgba(255, 255, 255, 0.03)'
-                                    }
-                                }}
-                            >
-                                {providerIcons[provider]}
-                                <Box sx={{ flex: 1, ml: 1 }}>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                        <Typography variant="body1" sx={{ color: 'white', fontWeight: 500, textTransform: 'capitalize' }}>
-                                            {provider}
-                                        </Typography>
-                                        {isEmail && isConnected && !isEmailVerified && (
-                                            <ErrorOutlineIcon fontSize="small" sx={{ color: '#ff9800' }} />
-                                        )}
-                                    </Box>
-                                    {isEmail && isConnected && (
-                                        <Typography variant="body2" sx={{ color: '#aaa', mt: 0.5 }}>
-                                            {isEmailVerified ? "Email verified" : "Email not verified"}
-                                        </Typography>
-                                    )}
-                                </Box>
-                                <ListItemSecondaryAction>
-                                    {isConnected ? (
-                                        provider !== "email" ? (
-                                            <IconButton
-                                                onClick={() => {
-                                                    setIdentityToUnlink(identities.find(id => id.provider === provider));
-                                                    setConfirmDialogOpen(true);
-                                                }}
-                                                title="Unlink this provider"
-                                                sx={{
-                                                    color: '#f44336',
-                                                    marginRight: '15px',
-                                                    '&:hover': {
-                                                        backgroundColor: 'rgba(244, 67, 54, 0.08)'
-                                                    }
-                                                }}
-                                            >
-                                                <LinkOffIcon />
-                                            </IconButton>
-                                        ) : null
-                                    ) : (
-                                        <IconButton
-                                            size="small"
-                                            disabled={loadingProvider === provider || isEmail}
-                                            onClick={() => !isEmail && handleConnectProvider(provider)}
-                                            sx={{
-                                                color: '#4caf50',
-                                                marginRight: '18px',
-                                                '&:hover': {
-                                                    backgroundColor: 'rgba(76, 175, 80, 0.15)',
-                                                },
-                                            }}
-                                            title="Connect this provider"
-                                        >
-                                            {loadingProvider === provider ? (
-                                                <CircularProgress size={20} color="inherit" />
-                                            ) : (
-                                                <LinkRoundedIcon />
-                                            )}
-                                        </IconButton>
+      <div className="space-y-4">
+        {allProviders.map((provider, index) => {
+          const isConnected = identities.some((id) => id.provider === provider);
+          const isEmail = provider === "email";
+          const isEmailVerified = identities.find((id) => id.provider === provider)?.identity_data?.email_verified;
 
+          return (
+            <div key={provider} className="space-y-4">
+              <div className="flex items-center justify-between py-4 px-2 rounded-lg hover:bg-white/5 transition-colors">
+                <div className="flex items-center flex-1">
+                  <div className="text-white mr-3">{providerIcons[provider]}</div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <Typography variant="body1" className="text-white font-medium capitalize">
+                        {provider}
+                      </Typography>
+                      {isEmail && isConnected && !isEmailVerified && <AlertCircle className="h-4 w-4 text-orange-500" />}
+                    </div>
+                    {isEmail && isConnected && (
+                      <Typography variant="body2" className="text-gray-400 mt-1">
+                        {isEmailVerified ? "Email verified" : "Email not verified"}
+                      </Typography>
+                    )}
+                  </div>
+                </div>
 
-                                    )}
-                                </ListItemSecondaryAction>
-                            </ListItem>
-                            {index < allProviders.length - 1 && <Divider sx={{ backgroundColor: '#333' }} />}
-                        </Box>
-                    );
-                })}
-            </List>
-
-            <Dialog
-                open={confirmDialogOpen}
-                onClose={() => setConfirmDialogOpen(false)}
-                PaperProps={{
-                    sx: {
-                        borderRadius: '16px',
-                        backgroundColor: '#2a2a2a',
-                        color: 'white'
-                    }
-                }}
-            >
-                <DialogTitle sx={{ color: 'white' }}>
-                    Are you sure you want to unlink {identityToUnlink?.provider}?
-                </DialogTitle>
-                <DialogActions>
-                    <Button
-                        onClick={() => setConfirmDialogOpen(false)}
-                        sx={{
-                            color: '#aaa',
-                            '&:hover': {
-                                backgroundColor: 'rgba(255, 255, 255, 0.05)'
-                            }
+                <div className="flex items-center">
+                  {isConnected ? (
+                    provider !== "email" ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setIdentityToUnlink(identities.find((id) => id.provider === provider));
+                          setConfirmDialogOpen(true);
                         }}
-                    >
-                        Cancel
+                        className="text-red-500 hover:bg-red-500/10"
+                        title="Unlink this provider">
+                        <Link2Off className="h-4 w-4" />
+                      </Button>
+                    ) : null
+                  ) : (
+                    <Button variant="ghost" size="sm" disabled={loadingProvider === provider || isEmail} onClick={() => !isEmail && handleConnectProvider(provider)} className="text-green-500 hover:bg-green-500/10 disabled:opacity-50" title="Connect this provider">
+                      {loadingProvider === provider ? <Spinner className="h-4 w-4" /> : <LinkIcon className="h-4 w-4" />}
                     </Button>
-                    <Button
-                        onClick={async () => {
-                            if (!identityToUnlink) return;
-                            try {
-                                const { error } = await supabase.auth.unlinkIdentity(identityToUnlink);
-                                if (error) {
-                                    console.error("Unlink error:", error);
-                                } else {
-                                    const { data } = await supabase.auth.getUserIdentities();
-                                    setIdentities(data.identities || []);
-                                }
-                            } catch (error) {
-                                console.error("Error during unlinking:", error);
-                            }
-                            setConfirmDialogOpen(false);
-                            setIdentityToUnlink(null);
-                        }}
-                        sx={{
-                            color: '#f44336',
-                            '&:hover': {
-                                backgroundColor: 'rgba(244, 67, 54, 0.08)'
-                            }
-                        }}
-                    >
-                        Unlink
-                    </Button>
-                </DialogActions>
-            </Dialog>
-        </>
-    );
+                  )}
+                </div>
+              </div>
+              {index < allProviders.length - 1 && <Separator />}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Unlink Confirmation Dialog */}
+      <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
+        <DialogContent className="rounded-2xl bg-gray-800 text-white">
+          <DialogHeader>
+            <DialogTitle className="text-white">Are you sure you want to unlink {identityToUnlink?.provider}?</DialogTitle>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmDialogOpen(false)} className="text-gray-400 hover:bg-white/5">
+              Cancel
+            </Button>
+            <Button onClick={handleUnlinkProvider} variant="destructive" className="bg-red-600 hover:bg-red-700">
+              Unlink
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
 }
