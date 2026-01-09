@@ -1071,3 +1071,23 @@ ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON T
 -- PostgreSQL database dump complete
 --
 
+CREATE TABLE IF NOT EXISTS keep_alive (
+    id SERIAL PRIMARY KEY,
+    last_ping TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    source TEXT DEFAULT 'cron'
+);
+
+ALTER TABLE keep_alive ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Deny all access for anon" ON keep_alive;
+DROP POLICY IF EXISTS "Deny all access for authenticated" ON keep_alive;
+
+CREATE POLICY "Deny all access for anon" ON keep_alive
+    FOR ALL
+    TO anon
+    USING (false);
+
+CREATE POLICY "Deny all access for authenticated" ON keep_alive
+    FOR ALL
+    TO authenticated
+    USING (false);
