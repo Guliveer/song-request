@@ -1,83 +1,43 @@
-import PropTypes from 'prop-types';
-import React, {useState, useEffect, useCallback, useRef} from 'react';
+import PropTypes from "prop-types";
+import React, { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import {supabase} from '@/utils/supabase';
-import {useRouter} from 'next/router';
-import {
-    Box, Card, CardContent, Typography, IconButton, Snackbar, Tooltip,
-    Avatar, AvatarGroup, Chip, Divider, Button
-} from "@mui/material";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/router";
 import SkeletonSongCard from "@/components/skeletons/SkeletonSongCard";
 import {
-    getUserInfo, getSongData, getCurrentUser, removeUserVote,
-    updateUserVote, playSound, genUserAvatar
-} from "@/utils/actions";
-import debounce from 'lodash.debounce';
-import {
-    KeyboardArrowUpRounded as UpvoteIcon,
-    KeyboardArrowDownRounded as DownvoteIcon,
-    AccountCircleRounded as WhoAddedIcon,
-    CalendarTodayRounded as DateAddedIcon,
-    MusicNoteRounded as MusicIcon,
-    NumbersRounded as RankIcon,
-    PersonAddRounded as FollowIcon,
-    OpenInNewRounded as ExternalLinkIcon,
-    PlayArrow as PlayIcon,
-    Delete as DeleteIcon,
-    RestartAlt as RestartAltIcon,
-    Block as BlockIcon
-} from '@mui/icons-material';
-import {useTheme} from "@mui/material/styles";
-import {extractYoutubeVideoId, fetchYouTubeMetadata} from "@/utils/youtube";
-import { extractSpotifyTrackId} from "@/utils/spotify";
-import { fetchSpotifyMetadata } from "@/utils/spotify";
+    genUserAvatar,
+    getCurrentUser,
+    getSongData,
+    getUserInfo,
+    playSound,
+    removeUserVote,
+    updateUserVote
+} from "@/lib/actions";
+import debounce from "lodash.debounce";
+import { extractYoutubeVideoId, fetchYouTubeMetadata } from "@/lib/youtube";
+import { extractSpotifyTrackId, fetchSpotifyMetadata } from "@/lib/spotify";
 import SpotifyPlayer from "@/components/SpotifyPlayer";
-import YouTube from 'react-youtube';
-import SvgIcon from "@mui/material/SvgIcon";
-import StopIcon from "@mui/icons-material/Stop";
-
-const VoteButtons = React.memo(({userVote, handleVote, score, disabled}) => (
-    <Box
-        sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            minWidth: '3em',
-        }}
-    >
-        <IconButton
-            onClick={() => handleVote(1)}
-            color={userVote === 1 ? "primary" : "disabled"}
-            size="small"
-            sx={{borderRadius: 3}}
-            disabled={disabled}
-        >
-            <UpvoteIcon color={userVote === 1 ? "primary" : "disabled"} sx={{fontSize: 30}}/>
-        </IconButton>
-        <Typography
-            variant="body1"
-            sx={{
-                fontWeight: 'bold',
-                fontSize: '1rem',
-            }}
-        >
-            {score}
-        </Typography>
-        <IconButton
-            onClick={() => handleVote(-1)}
-            color={userVote === -1 ? "primary" : "disabled"}
-            size="small"
-            sx={{borderRadius: 3}}
-            disabled={disabled}
-        >
-            <DownvoteIcon color={userVote === -1 ? "primary" : "disabled"} sx={{fontSize: 30}}/>
-        </IconButton>
-    </Box>
-));
+import YouTube from "react-youtube";
+import { Card, CardContent } from "shadcn/card";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "shadcn/tooltip";
+import { Button } from "shadcn/button";
+import { Avatar, AvatarFallback, AvatarImage } from "shadcn/avatar";
+import {
+    Ban,
+    CalendarClock as DateAddedIcon,
+    ChevronDown as VoteDown,
+    ChevronUp as VoteUp,
+    CirclePlay,
+    ExternalLink,
+    Music,
+    RotateCw,
+    StopCircle,
+    Trash2,
+    User
+} from "lucide-react";
 
 function SongCard({id, currentlyPreviewingSongId, setCurrentlyPreviewingSongId}) {
-    const theme = useTheme();
     const [songData, setSongData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState(null);
@@ -101,22 +61,19 @@ function SongCard({id, currentlyPreviewingSongId, setCurrentlyPreviewingSongId})
             if (currentUser) {
                 setUser(currentUser);
 
-                const {data: banData, error: banError} = await supabase
-                    .from('users')
-                    .select('ban_status')
-                    .eq('id', currentUser.id)
-                    .single();
+                const {
+                    data: banData,
+                    error: banError
+                } = await supabase.from("users").select("ban_status").eq("id", currentUser.id).single();
 
                 if (!banError && banData?.ban_status > 0) {
                     setIsBanned(true);
                 }
 
-                const {data: voteData, error: voteError} = await supabase
-                    .from('votes')
-                    .select('vote')
-                    .eq('song_id', id)
-                    .eq('user_id', currentUser.id)
-                    .single();
+                const {
+                    data: voteData,
+                    error: voteError
+                } = await supabase.from("votes").select("vote").eq("song_id", id).eq("user_id", currentUser.id).single();
 
                 if (!voteError) {
                     setUserVote(voteData.vote);
@@ -124,31 +81,31 @@ function SongCard({id, currentlyPreviewingSongId, setCurrentlyPreviewingSongId})
                     setUserVote(null);
                 }
 
-                const {data: userData, error: userError} = await supabase
-                    .from('users')
-                    .select('followed_users')
-                    .eq('id', currentUser.id)
-                    .single();
+                const {
+                    data: userData,
+                    error: userError
+                } = await supabase.from("users").select("followed_users").eq("id", currentUser.id).single();
 
                 if (!userError && userData.followed_users) {
                     setIsFollowing(userData.followed_users.includes(song.user_id));
                     if (userData.followed_users.length > 0) {
-                        const {data: followedVotes, error: followedVotesError} = await supabase
-                            .from('votes')
-                            .select('user_id, vote')
-                            .eq('song_id', id)
-                            .in('user_id', userData.followed_users);
+                        const {
+                            data: followedVotes,
+                            error: followedVotesError
+                        } = await supabase.from("votes").select("user_id, vote").eq("song_id", id).in("user_id", userData.followed_users);
 
                         if (!followedVotesError && followedVotes) {
-                            const votesWithUsernames = await Promise.all(followedVotes.map(async (vote) => {
-                                const userInfo = await getUserInfo(vote.user_id);
-                                const avatarUrl = await genUserAvatar(vote.user_id);
-                                return {
-                                    ...vote,
-                                    username: userInfo ? userInfo.username : 'User',
-                                    avatar: avatarUrl
-                                };
-                            }));
+                            const votesWithUsernames = await Promise.all(
+                                followedVotes.map(async (vote) => {
+                                    const userInfo = await getUserInfo(vote.user_id);
+                                    const avatarUrl = await genUserAvatar(vote.user_id);
+                                    return {
+                                        ...vote,
+                                        username: userInfo ? userInfo.username : "User",
+                                        avatar: avatarUrl,
+                                    };
+                                })
+                            );
 
                             setFollowedUsersVotes(votesWithUsernames);
                         }
@@ -157,14 +114,14 @@ function SongCard({id, currentlyPreviewingSongId, setCurrentlyPreviewingSongId})
             }
 
             const userInfo = await getUserInfo(song.user_id);
-            song.username = userInfo ? '@' + userInfo.username : song.user_id;
-            song.rawUsername = userInfo ? userInfo.username : '';
+            song.username = userInfo ? "@" + userInfo.username : song.user_id;
+            song.rawUsername = userInfo ? userInfo.username : "";
             song.rawUserId = song.user_id;
 
             setSongData(song);
 
-            // Jeśli brakuje tytułu lub autora – pobierz z YouTube
-            if ((!song.title || !song.author) && song.url.includes('youtube.com')) {
+            // If title or author is missing – get from YouTube
+            if ((!song.title || !song.author) && song.url.includes("youtube.com")) {
                 setYtMetadataLoading(true);
                 try {
                     const videoId = extractYoutubeVideoId(song.url);
@@ -173,7 +130,7 @@ function SongCard({id, currentlyPreviewingSongId, setCurrentlyPreviewingSongId})
                         if (metadata) {
                             song.title = metadata.title;
                             song.author = metadata.channelTitle;
-                            setSongData({ ...song }); // uaktualnij stan
+                            setSongData({...song}); // update state
                         }
                     }
                 } catch (err) {
@@ -183,7 +140,7 @@ function SongCard({id, currentlyPreviewingSongId, setCurrentlyPreviewingSongId})
                 }
             }
 
-            // Dodatkowe pobieranie metadanych ze Spotify
+            // Additionally, if title or author is missing – get from Spotify
             if ((!song.title || !song.author) && song.url.includes("spotify.com")) {
                 try {
                     const trackId = extractSpotifyTrackId(song.url);
@@ -192,16 +149,15 @@ function SongCard({id, currentlyPreviewingSongId, setCurrentlyPreviewingSongId})
                         if (metadata) {
                             song.title = metadata.title;
                             song.author = metadata.author;
-                            setSongData({ ...song }); // update
+                            setSongData({...song}); // update
                         }
                     }
                 } catch (err) {
                     console.error("Error fetching Spotify metadata", err);
                 }
             }
-
         } catch (error) {
-            console.error('Error fetching data:', error);
+            console.error("Error fetching data:", error);
         } finally {
             setLoading(false);
         }
@@ -214,8 +170,8 @@ function SongCard({id, currentlyPreviewingSongId, setCurrentlyPreviewingSongId})
         const isSpotify = Boolean(spotifyTrackId);
 
         async function checkSpotify() {
-            const { data } = await supabase.auth.getUserIdentities();
-            const spotify = data?.identities?.find(id => id.provider === "spotify");
+            const {data} = await supabase.auth.getUserIdentities();
+            const spotify = data?.identities?.find((id) => id.provider === "spotify");
             setSpotifyConnected(!!spotify);
         }
 
@@ -226,84 +182,72 @@ function SongCard({id, currentlyPreviewingSongId, setCurrentlyPreviewingSongId})
         fetchData();
     }, [fetchData]);
 
-    const handleVote = useCallback(debounce(async (newVoteValue) => {
-        if (!user) {
-            setError("You have to be logged in to vote.");
-            return;
-        }
-
-        let resultVoteVal = null;
-
-        try {
-            if (userVote === newVoteValue) {
-                const response = await removeUserVote(id, user.id);
-                if (response !== true) {
-                    setError(`Error while removing vote: ${response}`);
-                    resultVoteVal = null;
-                }
-            } else {
-                const response = await updateUserVote(id, user.id, newVoteValue);
-                if (response !== true) {
-                    setError(`Voting error: ${response}`);
-                    return;
-                }
-                resultVoteVal = newVoteValue;
-
-                // --- ANTI-SPAM: only one notification about liking a song per user ---
-                if (
-                    user.id !== songData.rawUserId && // do not send notifications to yourself
-                    newVoteValue === 1                // only for likes (upvotes)
-                ) {
-                    // Use props.id as the song identifier!
-                    const { data: existingNotifications } = await supabase
-                        .from("notifications")
-                        .select("id")
-                        .eq("user_id", songData.rawUserId)
-                        .eq("sender_id", user.id)
-                        .eq("type", "song_like")
-                        .eq("link", `/song/${id}`);
-
-                    if (!existingNotifications || existingNotifications.length === 0) {
-                        let username = user?.username;
-                        if (!username) {
-                            const { data: userInfo } = await supabase
-                                .from('users')
-                                .select('username')
-                                .eq('id', user.id)
-                                .single();
-                            username = userInfo?.username || user.id;
-                        }
-                        await supabase
-                            .from("notifications")
-                            .insert([{
-                                user_id: songData.rawUserId,
-                                sender_id: user.id,
-                                type: "song_like",
-                                message: `User ${username} liked your song "${songData.title}".`,
-                                link: `/song/${id}`,
-                                read: false
-                            }]);
-                    }
-                }
-                // --- KONIEC ANTY-SPAMU ---
+    const handleVote = useCallback(
+        debounce(async (newVoteValue) => {
+            if (!user) {
+                setError("You have to be logged in to vote.");
+                return;
             }
 
-            await playSound('click', 0.75);
-        } catch (error) {
-            console.error("Error while placing a vote:", error);
-            setError(`Something went wrong: ${error.message}`);
-        } finally {
-            await fetchData();
-            setUserVote(resultVoteVal);
-        }
-    }, 300), [user, userVote, id, fetchData, songData]);
+            let resultVoteVal = null;
+
+            try {
+                if (userVote === newVoteValue) {
+                    const response = await removeUserVote(id, user.id);
+                    if (response !== true) {
+                        setError(`Error while removing vote: ${response}`);
+                        resultVoteVal = null;
+                    }
+                } else {
+                    const response = await updateUserVote(id, user.id, newVoteValue);
+                    if (response !== true) {
+                        setError(`Voting error: ${response}`);
+                        return;
+                    }
+                    resultVoteVal = newVoteValue;
+
+                    if (
+                        user.id !== songData.rawUserId && // do not send notifications to yourself
+                        newVoteValue === 1 // only for likes (upvotes)
+                    ) {
+                        // Use props.id as the song identifier!
+                        const {data: existingNotifications} = await supabase.from("notifications").select("id").eq("user_id", songData.rawUserId).eq("sender_id", user.id).eq("type", "song_like").eq("link", `/song/${id}`);
+
+                        if (!existingNotifications || existingNotifications.length === 0) {
+                            let username = user?.username;
+                            if (!username) {
+                                const {data: userInfo} = await supabase.from("users").select("username").eq("id", user.id).single();
+                                username = userInfo?.username || user.id;
+                            }
+                            await supabase.from("notifications").insert([
+                                {
+                                    user_id: songData.rawUserId,
+                                    sender_id: user.id,
+                                    type: "song_like",
+                                    message: `User ${username} liked your song "${songData.title}".`,
+                                    link: `/song/${id}`,
+                                    read: false,
+                                },
+                            ]);
+                        }
+                    }
+                }
+
+                await playSound("click", 0.75);
+            } catch (error) {
+                console.error("Error while placing a vote:", error);
+                setError(`Something went wrong: ${error.message}`);
+            } finally {
+                await fetchData();
+                setUserVote(resultVoteVal);
+            }
+        }, 300),
+        [user, userVote, id, fetchData, songData]
+    );
 
     // Admin actions
     const handleDelete = async () => {
-        const {error} = await supabase
-            .from('queue')
-            .delete()
-            .eq('id', id);
+        const {error} = await supabase.from("queue").delete().eq("id", id);
 
         if (error) {
             setError("Błąd podczas usuwania piosenki.");
@@ -317,10 +261,7 @@ function SongCard({id, currentlyPreviewingSongId, setCurrentlyPreviewingSongId})
     };
 
     const handleResetVotes = async () => {
-        const {error} = await supabase
-            .from('votes')
-            .delete()
-            .eq('song_id', id);
+        const {error} = await supabase.from("votes").delete().eq("song_id", id);
 
         if (error) {
             setError("Błąd podczas resetowania głosów.");
@@ -330,19 +271,14 @@ function SongCard({id, currentlyPreviewingSongId, setCurrentlyPreviewingSongId})
     };
 
     const handleBanAndDelete = async () => {
-        const {error: insertError} = await supabase
-            .from('banned_url')
-            .insert([{url: songData.url}]);
+        const {error: insertError} = await supabase.from("banned_url").insert([{url: songData.url}]);
 
         if (insertError) {
             setError("Błąd podczas banowania URL.");
             return;
         }
 
-        const {error: deleteError} = await supabase
-            .from('queue')
-            .delete()
-            .eq('id', id);
+        const {error: deleteError} = await supabase.from("queue").delete().eq("id", id);
 
         if (deleteError) {
             setError("Błąd podczas usuwania piosenki.");
@@ -357,11 +293,10 @@ function SongCard({id, currentlyPreviewingSongId, setCurrentlyPreviewingSongId})
         }
 
         try {
-            const {data: userData, error: userError} = await supabase
-                .from('users')
-                .select('followed_users')
-                .eq('id', user.id)
-                .single();
+            const {
+                data: userData,
+                error: userError
+            } = await supabase.from("users").select("followed_users").eq("id", user.id).single();
 
             if (userError) {
                 setError("Cannot retrieve user data");
@@ -371,41 +306,32 @@ function SongCard({id, currentlyPreviewingSongId, setCurrentlyPreviewingSongId})
             const currentFollowed = userData.followed_users || [];
             const updatedFollowed = [...currentFollowed, songData.rawUserId];
 
-            const {error: updateError} = await supabase
-                .from('users')
-                .update({followed_users: updatedFollowed})
-                .eq('id', user.id);
+            const {error: updateError} = await supabase.from("users").update({followed_users: updatedFollowed}).eq("id", user.id);
 
             if (updateError) {
                 setError("Cannot update followed users list");
                 return;
             }
 
-            // --- DODAJ TEN FRAGMENT: pobierz username i wyślij powiadomienie ---
             let username = user.username;
             if (!username) {
-                const { data: userInfo } = await supabase
-                    .from('users')
-                    .select('username')
-                    .eq('id', user.id)
-                    .single();
+                const {data: userInfo} = await supabase.from("users").select("username").eq("id", user.id).single();
                 username = userInfo?.username || user.id;
             }
 
-            await supabase
-                .from("notifications")
-                .insert([{
+            await supabase.from("notifications").insert([
+                {
                     user_id: songData.rawUserId, // odbiorca powiadomienia (autor piosenki)
-                    sender_id: user.id,          // kto dodał (Ty)
+                    sender_id: user.id, // kto dodał (Ty)
                     type: "new_follower",
                     message: `User ${username} started following you!`,
                     link: `/user/${user.id}`,
-                    read: false
-                }]);
-            // --- KONIEC FRAGMENTU ---
+                    read: false,
+                },
+            ]);
 
             setIsFollowing(true);
-            await playSound('click', 0.5);
+            await playSound("click", 0.5);
         } catch (error) {
             console.error("Error following user:", error);
             setError(`Something went wrong: ${error.message}`);
@@ -413,456 +339,192 @@ function SongCard({id, currentlyPreviewingSongId, setCurrentlyPreviewingSongId})
     };
 
     if (loading || !songData) {
-        return <SkeletonSongCard/>
+        return <SkeletonSongCard/>;
     }
 
-    const {title, author, url, added_at, score, rank, username, duration} = songData;
+    const {title, author, url, added_at, score, rank, username} = songData;
     const trackId = extractSpotifyTrackId(url);
     const youtubeVideoId = extractYoutubeVideoId(url);
     const spotifyTrackId = extractSpotifyTrackId(url);
     const isSpotify = Boolean(spotifyTrackId);
-    const isYouTube = url.includes("youtube.com") || url.includes("youtu.be");
-
-    function SpotifyIcon(props) {
-        return (
-            <SvgIcon {...props} viewBox="0 0 168 168">
-                <path d="M84 0a84 84 0 1 0 0 168 84 84 0 0 0 0-168zm38.2 121.6c-1.4 2.3-4.4 3-6.7 1.6-18.3-11.2-41.4-13.8-68.6-7.6-2.6.6-5.2-1-5.8-3.6s1-5.2 3.6-5.8c30-6.9 56.6-4 77 8 2.4 1.4 3.1 4.4 1.5 6.7zm9.5-20.7c-1.8 2.8-5.6 3.7-8.4 1.9-20.9-12.8-52.8-16.5-77.5-9.1-3.1.9-6.4-.9-7.3-4-.9-3.1.9-6.4 4-7.3 29-8.4 64.2-4.3 88.6 10.7 2.8 1.8 3.7 5.6 1.9 8.4zm.8-22.5C108.1 63 67.9 61.5 41.9 69c-3.5 1-7.1-1-8.1-4.5s1-7.1 4.5-8.1c30.7-8.7 75.6-6.9 106.1 11 3.1 1.9 4.1 6 .2 9-2.1 1.8-5.4 2-7.9.5z" />
-            </SvgIcon>
-        );
-    }
-
-    // Score coloring like v0
-    const getScoreColor = () => {
-        if (score > 30) return theme.palette.primary.main;
-        if (score > 10) return theme.palette.secondary.main;
-        return theme.palette.text.secondary;
-    };
-
-    // AvatarGroup tooltip for +N
-    function additionalAvatarsTooltip(props) {
-        const hiddenVotes = followedUsersVotes.slice(3).map(vote => (
-            <div key={vote.user_id}>
-                {vote.username} {vote.vote === 1 ? 'upvoted' : 'downvoted'}
-            </div>
-        ));
-        return (
-            <Tooltip
-                title={<React.Fragment>{hiddenVotes}</React.Fragment>}
-                arrow
-                placement="bottom"
-            >
-                <Avatar {...props} />
-            </Tooltip>
-        );
-    }
 
     return (
-        <Card
-            onMouseEnter={() => setHovered(true)}
-            onMouseLeave={() => setHovered(false)}
-            sx={{
-                background: hovered
-                    ? `linear-gradient(135deg, rgba(135, 229, 221, 0.08) 0%, rgba(161, 113, 248, 0.08) 100%), ${theme.palette.background.paper}`
-                    : theme.palette.background.paper,
-                border: `1px solid ${hovered ? theme.palette.primary.main + "40" : "rgba(255, 255, 255, 0.08)"}`,
-                borderRadius: 3,
-                overflow: "hidden",
-                position: "relative",
-                transition: "all 0.2s ease-in-out",
-                cursor: "default",
-                "&:hover": {
-                    transform: "translateY(-2px)",
-                    boxShadow: `0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 1px ${theme.palette.primary.main}20`,
-                },
-                maxWidth: 500,
-                width: '100%',
-                minWidth: 'fit-content'
-            }}
-        >
-            <CardContent sx={{p: 2.5}}>
-                {/* Header Row: Rank + ExternalLink */}
-                <Box
-                    sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        mb: 2,
-                        width: "100%",
-                        position: "relative",
-                    }}
-                >
-                    <Typography
-                        variant="h6"
-                        sx={{
-                            color: theme.palette.text.disabled,
-                            fontWeight: 400,
-                            fontSize: "1.1rem",
-                            fontFamily: "monospace",
-                            minWidth: "32px",
-                        }}
-                    >
-                        #{rank}
-                    </Typography>
-                    <IconButton
-                        size="small"
-                        sx={{
-                            color: "text.secondary",
-                            position: 'relative',
-                            top: 0,
-                            right: 3,
-                            zIndex: 1,
-                        }}
-                    >
-                        <Link href={`/song/${id}`}>
-                            <Tooltip title="Open song page" arrow>
-                                <ExternalLinkIcon/>
-                            </Tooltip>
-                        </Link>
-                    </IconButton>
-                </Box>
+        <Card onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
+              className={"px-2 transition-all duration-200 w-fit h-min cursor-default border rounded-2xl relative overflow-hidden hover:shadow-xl"}>
+            <CardContent className={"py-2"}>
+                {/* Header Row */}
+                <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground font-mono font-normal text-sm">#{rank}</span>
+                    <TooltipProvider>
+                        <Tooltip variant={"outline"}>
+                            <TooltipTrigger asChild>
+                                <Link href={`/song/${id}`} className="text-muted-foreground">
+                                    <ExternalLink className="w-4 h-4"/>
+                                </Link>
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom">Open song page</TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                </div>
 
-                {/* Main Content Row: Cover + Info + Votes */}
-                <Box sx={{display: "flex", gap: 2, alignItems: "center"}}>
-                    {/* Album Art & Play Button */}
-                    <Box
-                        sx={{
-                            position: "relative",
-                            flexShrink: 0,
-                            width: 56,
-                            height: 56,
-                        }}
-                    >
-                        <Box
-                            sx={{
-                                width: "100%",
-                                height: "100%",
-                                borderRadius: 3, // 8px
-                                background: `linear-gradient(135deg, ${theme.palette.primary.main}25, ${theme.palette.secondary.main}25)`,
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                position: "relative",
-                                overflow: "hidden",
-                            }}
-                        >
-                            <MusicIcon
-                                sx={{
-                                    fontSize: 24,
-                                    color: theme.palette.primary.main,
-                                    opacity: 0.8,
-                                }}
-                            />
-                            {/* Play Button Overlay */}
-                            <Box
-                                sx={{
-                                    position: "absolute",
-                                    top: 0,
-                                    left: 0,
-                                    right: 0,
-                                    bottom: 0,
-                                    backgroundColor: "rgba(0, 0, 0, 0.7)",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    opacity: hovered ? 1 : 0,
-                                    transition: "opacity 0.2s ease",
-                                    borderRadius: 1,
-                                }}
-                            >
-                                <IconButton
-                                    sx={{
-                                        color: "black",
-                                        backgroundColor: theme.palette.primary.main,
-                                        width: 32,
-                                        height: 32,
-                                        "&:hover": {
-                                            backgroundColor: theme.palette.primary.light,
-                                            transform: "scale(1.05)",
-                                        },
-                                    }}
+                {/* Main Content */}
+                <div className="flex gap-3 items-center my-4">
+                    {/* Cover + Play */}
+                    <div
+                        className="relative w-14 h-14 rounded-md flex items-center justify-center bg-gradient-to-br from-primary/20 to-secondary/20">
+                        <Music className="w-6 h-6 text-primary opacity-80"/>
+                        {hovered && (
+                            <div
+                                className="absolute inset-0 bg-black/30 flex items-center justify-center rounded-md transition-opacity">
+                                <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="w-full h-full"
                                     onClick={() => {
                                         if (!isSpotify) {
-                                            setCurrentlyPreviewingSongId(
-                                                currentlyPreviewingSongId === id ? null : id
-                                            );
+                                            setCurrentlyPreviewingSongId(currentlyPreviewingSongId === id ? null : id);
                                             return;
                                         }
-
                                         if (spotifyConnected && trackId) {
                                             setShowPlayer(true);
-
-                                            if (window.toggleSpotifyPlayback) {
-                                                window.toggleSpotifyPlayback(); // steruje play/pause
-                                            }
+                                            if (window.toggleSpotifyPlayback) window.toggleSpotifyPlayback();
                                         } else {
                                             window.open(`https://open.spotify.com/track/${trackId}`, "_blank");
                                         }
-                                    }}
-                                >
-                                    {isSpotify ? (
-                                        spotifyConnected && showPlayer ? (
-                                            <StopIcon sx={{ fontSize: 18 }} />
-                                        ) : (
-                                            <SpotifyIcon sx={{ fontSize: 18 }} />
-                                        )
-                                    ) : currentlyPreviewingSongId === id ? (
-                                        <StopIcon sx={{ fontSize: 18 }} />
-                                    ) : (
-                                        <PlayIcon sx={{ fontSize: 18 }} />
-                                    )}
-                                </IconButton>
-                                {spotifyConnected && showPlayer && trackId && (
-                                    <SpotifyPlayer trackId={trackId} />
-                                )}
-                            </Box>
-                        </Box>
-                    </Box>
+                                    }}>
+                                    {isSpotify ? spotifyConnected && showPlayer ? <StopCircle className="w-4 h-4"/> :
+                                        <FontAwesomeIcon icon="fa-brands fa-spotify"
+                                                         className={"w-4 h-4"}/> : currentlyPreviewingSongId === id ?
+                                        <StopCircle className="w-4 h-4"/> : <CirclePlay className="w-4 h-4"/>}
+                                    {spotifyConnected && showPlayer && trackId && <SpotifyPlayer trackId={trackId}/>}
+                                </Button>
+                            </div>
+                        )}
+                    </div>
 
                     {/* Song Info */}
-                    <Box sx={{flex: 1, minWidth: 0, mr: 1}}>
-                        <Box sx={{
-                            display: 'inline-block',
-                            position: 'relative',
-                            width: 300, // Define the visible area
-                            overflow: 'hidden', // Hide overflowing text
-                            whiteSpace: 'nowrap',
-                        }}>
-                            <Typography
-                                variant="body1"
-                                sx={{
-                                    display: 'inline-block',
-                                    fontWeight: 600,
-                                    fontSize: "1rem",
-                                    color: theme.palette.text.primary,
-                                    mb: 0.25,
-                                    overflow: "hidden",
-                                    whiteSpace: "nowrap",
-                                    lineHeight: 1.3,
-                                    animation: title.length > 15 ? 'scrollText 10s linear infinite' : 'none',
-                                }}
-                                component="div"
-                            >
-                                <Link href={url} target="_blank" style={{color: 'inherit'}}>
-                                    {title}
+                    <div className="flex-1 min-w-0 mr-1">
+                        <div className="relative w-[300px] overflow-hidden whitespace-nowrap">
+                            <Link href={url} target="_blank"
+                                  className="text-base font-semibold text-foreground inline-block">
+                                {title}
+                            </Link>
+                        </div>
+                        <p className="text-sm text-muted-foreground truncate">{author}</p>
+
+                        <div className="flex items-center gap-3 flex-wrap mt-1.5">
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                <User className="w-3.5 h-3.5"/>
+                                <Link href={`/user/${songData.rawUserId}`} className="hover:underline">
+                                    {username}
                                 </Link>
-                            </Typography>
-                        </Box>
-
-                        <Typography
-                            variant="body2"
-                            sx={{
-                                color: theme.palette.text.secondary,
-                                fontSize: "0.875rem",
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                whiteSpace: "nowrap",
-                                mb: 1,
-                            }}
-                        >
-                            {author}
-                        </Typography>
-
-                        {/* Metadata Row */}
-                        <Box
-                            sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 1.5,
-                                flexWrap: "wrap",
-                            }}
-                        >
-                            <Box sx={{display: "flex", alignItems: "center", gap: 0.5}}>
-                                <WhoAddedIcon sx={{fontSize: 14, color: theme.palette.text.disabled}}/>
-                                <Typography variant="caption" color="text.disabled"
-                                            sx={{fontSize: "0.75rem", display: 'flex', alignItems: 'center', gap: 0.5}}>
-                                    <Link href={`/user/${songData.rawUserId}`}>
-                                        {username}
-                                        <Tooltip title="Open user profile" arrow>
-                                            <ExternalLinkIcon sx={{
-                                                color: 'text.secondary',
-                                                fontSize: '0.9rem',
-                                            }}/>
-                                        </Tooltip>
-                                    </Link>
-                                </Typography>
-                                {user && (songData.rawUserId !== user.id) && !isFollowing && (
-                                    <Tooltip title="Follow user">
-                                        <IconButton
-                                            size="small"
-                                            color="primary"
-                                            onClick={handleFollow}
-                                            sx={{ml: 1}}
-                                        >
-                                            <FollowIcon fontSize="small"/>
-                                        </IconButton>
-                                    </Tooltip>
+                                {user && songData.rawUserId !== user.id && !isFollowing && (
+                                    <Button variant="ghost" size="icon" className="w-5 h-5 ml-1" onClick={handleFollow}>
+                                        <User className="w-3.5 h-3.5"/>
+                                    </Button>
                                 )}
-                            </Box>
+                            </div>
 
-                            {duration && (
-                                <Box sx={{display: "flex", alignItems: "center", gap: 0.5}}>
-                                    <CalendarTodayRounded sx={{fontSize: 14, color: theme.palette.text.disabled}}/>
-                                    <Typography variant="caption" color="text.disabled" sx={{fontSize: "0.75rem"}}>
-                                        {duration}
-                                    </Typography>
-                                </Box>
-                            )}
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                <DateAddedIcon className="w-3.5 h-3.5"/>
+                                <span>{new Date(added_at).toLocaleString()}</span>
+                            </div>
+                        </div>
+                    </div>
 
-                            <Box sx={{display: 'flex', alignItems: 'center', gap: 0.5}}>
-                                <DateAddedIcon sx={{fontSize: 14, color: theme.palette.text.disabled}}/>
-                                <Typography variant="caption" color="text.disabled" sx={{fontSize: "0.75rem"}}>
-                                    {new Date(added_at).toLocaleString()}
-                                </Typography>
-                            </Box>
-                        </Box>
-                    </Box>
+                    {/* Voting */}
+                    <div className="flex flex-col items-center gap-1 py-1 min-w-[48px] w-fit">
+                        <Button size="icon" variant="ghost" className={`w-8 h-8 hover:bg-white/10`}
+                                onClick={() => handleVote(1)} disabled={isBanned}>
+                            <VoteUp
+                                className={`w-6 h-6 stroke-3 ${userVote === 1 ? "text-green-500" : "text-muted-foreground"}`}/>
+                        </Button>
+                        <span className="text-sm font-bold text-center text-primary">{score}</span>
+                        <Button size="icon" variant="ghost" className={`w-8 h-8 hover:bg-white/10`}
+                                onClick={() => handleVote(-1)} disabled={isBanned}>
+                            <VoteDown
+                                className={`w-6 h-6 stroke-3 ${userVote === -1 ? "text-rose-500" : "text-muted-foreground"}`}/>
+                        </Button>
+                    </div>
+                </div>
 
-                    {/* Voting Section */}
-                    <Box
-                        sx={{
-                            display: "flex",
-                            flexDirection: "column",
-                            alignItems: "center",
-                            gap: 0.5,
-                            minWidth: 48,
-                            py: 0.5,
-                        }}
-                    >
-                        <IconButton
-                            size="small"
-                            onClick={() => handleVote(1)}
-                            sx={{
-                                color: userVote === 1 ? theme.palette.primary.main : theme.palette.text.disabled,
-                                width: 32,
-                                height: 32,
-                                "&:hover": {
-                                    backgroundColor: `${theme.palette.primary.main}20`,
-                                    color: theme.palette.primary.main,
-                                },
-                            }}
-                            disabled={isBanned}
-                        >
-                            <UpvoteIcon sx={{fontSize: 20}}/>
-                        </IconButton>
-
-                        <Typography
-                            variant="body2"
-                            sx={{
-                                fontWeight: 700,
-                                color: getScoreColor(),
-                                fontSize: "0.875rem",
-                                textAlign: "center",
-                                minWidth: "24px",
-                            }}
-                        >
-                            {score}
-                        </Typography>
-
-                        <IconButton
-                            size="small"
-                            onClick={() => handleVote(-1)}
-                            sx={{
-                                color: userVote === -1 ? theme.palette.error.main : theme.palette.text.disabled,
-                                width: 32,
-                                height: 32,
-                                "&:hover": {
-                                    backgroundColor: `${theme.palette.error.main}20`,
-                                    color: theme.palette.error.main,
-                                },
-                            }}
-                            disabled={isBanned}
-                        >
-                            <DownvoteIcon sx={{fontSize: 20}}/>
-                        </IconButton>
-                    </Box>
-                </Box>
-
-                {/* Bottom Row - Tags and Voters */}
+                {/* Voters */}
                 {followedUsersVotes.length > 0 && (
-                <Box
-                    sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "flex-end",
-                        mt: 2,
-                        pt: 1.5,
-                    }}
-                >
-                    {/* Voters */}
-                    <Box sx={{display: "flex", alignItems: "center", gap: 1}}>
-                        <AvatarGroup
-                            max={3}
-                            sx={{
-                                "& .MuiAvatar-root": {
-                                    width: 20,
-                                    height: 20,
-                                    fontSize: "0.65rem",
-                                    border: `1px solid ${theme.palette.background.paper}`,
-                                },
-                            }}
-                            slotProps={{
-                                additionalAvatar: {
-                                    component: additionalAvatarsTooltip
-                                }
-                            }}
-                        >
-                            {followedUsersVotes.map((vote) => (
-                                <Tooltip
-                                    key={vote.user_id}
-                                    title={`${vote.username} ${vote.vote === 1 ? 'upvoted' : 'downvoted'}`}
-                                    arrow
-                                >
-                                    <Avatar
-                                        src={vote.avatar}
-                                        sx={{bgcolor: vote.vote === 1 ? 'primary.main' : 'error.light'}}
-                                    >
-                                        {vote.username.charAt(0).toUpperCase()}
-                                    </Avatar>
+                    <div className="flex items-center justify-end mt-4 gap-0.5">
+                        {followedUsersVotes.slice(0, 3).map((vote) => (
+                            <TooltipProvider key={vote.user_id}>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Avatar className={`w-5 h-auto aspect-square border`}>
+                                            <AvatarImage src={vote.avatar}/>
+                                            <AvatarFallback>{vote.username.charAt(0).toUpperCase()}</AvatarFallback>
+                                        </Avatar>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="bottom">
+                                        {vote.username} {vote.vote === 1 ? "upvoted" : "downvoted"}
+                                    </TooltipContent>
                                 </Tooltip>
-                            ))}
-                        </AvatarGroup>
-                    </Box>
-                    <Typography variant="caption" color="text.disabled" sx={{fontSize: "0.7rem", ml: 0.5}}>
-                        voted
-                    </Typography>
-                </Box>
+                            </TooltipProvider>
+                        ))}
+                        {followedUsersVotes.length > 3 && (
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <div
+                                            className="w-5 h-auto aspect-square flex items-center justify-center rounded-full bg-muted text-xs cursor-default">+{followedUsersVotes.length - 3}</div>
+                                    </TooltipTrigger>
+                                    <TooltipContent
+                                        side="bottom">{`${followedUsersVotes.length - 3} more voted`}</TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        )}
+                    </div>
                 )}
 
-                {/* Admin Panel Buttons */}
+                {/* Admin Panel */}
                 {isAdminPanel && (
-                    <Box sx={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        width: '100%',
-                        alignItems: 'center',
-                        mt: 2,
-                    }}>
-                        <Box sx={{display: 'flex', gap: 2}}>
-                            <Tooltip title="Ban URL">
-                                <IconButton onClick={handleBanAndDelete}>
-                                    <BlockIcon sx={{fontSize: 28}}/>
-                                </IconButton>
-                            </Tooltip>
-                            <Tooltip title="Remove song">
-                                <IconButton onClick={handleDelete}>
-                                    <DeleteIcon sx={{fontSize: 28}}/>
-                                </IconButton>
-                            </Tooltip>
-                            <Tooltip title="Reset votes">
-                                <IconButton onClick={handleResetVotes}>
-                                    <RestartAltIcon sx={{fontSize: 28}}/>
-                                </IconButton>
-                            </Tooltip>
-                        </Box>
-                    </Box>
+                    <div className="flex justify-between items-center mt-4">
+                        <div className="flex gap-3">
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button variant="ghost" size="icon" onClick={handleBanAndDelete}>
+                                            <Ban className="w-6 h-6"/>
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="bottom">Ban URL</TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button variant="ghost" size="icon" onClick={handleDelete}>
+                                            <Trash2 className="w-6 h-6"/>
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="bottom">Remove song</TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button variant="ghost" size="icon" onClick={handleResetVotes}>
+                                            <RotateCw className="w-6 h-6"/>
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="bottom">Reset votes</TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        </div>
+                    </div>
                 )}
 
                 {currentlyPreviewingSongId === id && youtubeVideoId && (
                     <YouTube
                         videoId={youtubeVideoId}
                         opts={{
-                            height: '0',
-                            width: '0',
+                            height: "0",
+                            width: "0",
                             playerVars: {
                                 autoplay: 1,
                                 controls: 0,
@@ -873,14 +535,9 @@ function SongCard({id, currentlyPreviewingSongId, setCurrentlyPreviewingSongId})
                     />
                 )}
 
-                {error && (
-                    <Snackbar
-                        open={!!error}
-                        autoHideDuration={10000}
-                        onClose={() => setError(null)}
-                        message={error}
-                    />
-                )}
+                {/* Error Display */}
+                {error && <div
+                    className="mt-4 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md p-2">{error}</div>}
             </CardContent>
         </Card>
     );
@@ -888,6 +545,8 @@ function SongCard({id, currentlyPreviewingSongId, setCurrentlyPreviewingSongId})
 
 SongCard.propTypes = {
     id: PropTypes.number.isRequired,
+    currentlyPreviewingSongId: PropTypes.number,
+    setCurrentlyPreviewingSongId: PropTypes.func.isRequired,
 };
 
 export default React.memo(SongCard);

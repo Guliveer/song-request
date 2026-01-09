@@ -1,127 +1,104 @@
-"use server"
-import {Alert, Avatar, Button, CircularProgress, TextField} from "@mui/material";
-import React, {useEffect, useState} from "react";
+"use server";
+import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
-import {supabase} from "@/utils/supabase";
-import {genUserAvatar} from "@/utils/actions";
+import { supabase } from "@/lib/supabase";
+import { genUserAvatar } from "@/lib/actions";
+import { Input } from "shadcn/input";
+import { Button } from "shadcn/button";
+import { Alert, AlertDescription } from "shadcn/alert";
+import { Avatar, AvatarFallback, AvatarImage } from "shadcn/avatar";
+import { Spinner } from "shadcn/spinner";
+import { cn } from "@/lib/utils";
 
-export function FormField({ slotProps, sx, ...rest }) {
-    return (
-        <TextField
-            {...rest}
-            variant="filled"
-            slotProps={{ input: { disableUnderline: true } }}
-            sx={{
-                '& .MuiFilledInput-root': {
-                    borderRadius: 1,
-                },
-                ...sx
-            }}
-        />
-    );
+export function FormField({className, ...rest}) {
+    return <Input {...rest}
+                  className={cn("bg-muted/50 border-0 rounded-md focus-visible:ring-1 focus-visible:ring-ring", className)}/>;
 }
 
 FormField.propTypes = {
-    slotProps: PropTypes.object,
-    sx: PropTypes.object
+    className: PropTypes.string,
 };
 
-export function ErrorAlert({ children, ...rest }) {
+export function ErrorAlert({children, className, ...rest}) {
     return (
-        <Alert
-            {...rest}
-            severity="error"
-            variant="outlined"
-        >
-            {children}
+        <Alert {...rest} className={cn("border-destructive/50 text-destructive", className)}>
+            <AlertDescription>{children}</AlertDescription>
         </Alert>
     );
 }
 
 ErrorAlert.propTypes = {
-    children: PropTypes.node
+    children: PropTypes.node,
+    className: PropTypes.string,
 };
 
-export function SuccessAlert({ children, ...rest }) {
+export function SuccessAlert({children, className, ...rest}) {
     return (
-        <Alert
-            {...rest}
-            severity="success"
-            variant="outlined"
-        >
-            {children}
+        <Alert {...rest} className={cn("border-green-500/50 text-green-700 dark:text-green-400", className)}>
+            <AlertDescription>{children}</AlertDescription>
         </Alert>
     );
 }
 
 SuccessAlert.propTypes = {
-    children: PropTypes.node
+    children: PropTypes.node,
+    className: PropTypes.string,
 };
 
-export function InfoAlert({ children, ...rest }) {
+export function InfoAlert({children, className, ...rest}) {
     return (
-        <Alert
-            {...rest}
-            severity="info"
-            variant="outlined"
-        >
-            {children}
+        <Alert {...rest} className={cn("border-blue-500/50 text-blue-700 dark:text-blue-400", className)}>
+            <AlertDescription>{children}</AlertDescription>
         </Alert>
     );
 }
 
 InfoAlert.propTypes = {
-    children: PropTypes.node
+    children: PropTypes.node,
+    className: PropTypes.string,
 };
 
-export function WarningAlert({ children, ...rest }) {
+export function WarningAlert({children, className, ...rest}) {
     return (
-        <Alert
-            {...rest}
-            severity="warning"
-            variant="outlined"
-        >
-            {children}
+        <Alert {...rest} className={cn("border-yellow-500/50 text-yellow-700 dark:text-yellow-400", className)}>
+            <AlertDescription>{children}</AlertDescription>
         </Alert>
     );
 }
 
 WarningAlert.propTypes = {
-    children: PropTypes.node
+    children: PropTypes.node,
+    className: PropTypes.string,
 };
 
-export function AuthProviderButton({ providerName, displayName, icon, prompt = '' }) {
+export function AuthProviderButton({providerName, displayName, icon, prompt = ""}) {
     const [isPressed, setIsPressed] = React.useState(false);
+
     async function handleProviderLogin() {
         setIsPressed(true);
-        const { error } = await supabase.auth.signInWithOAuth({
+        const {error} = await supabase.auth.signInWithOAuth({
             provider: providerName,
             options: {
                 redirectTo: process.env.NEXT_PUBLIC_REDIRECT_URL || window.location.origin,
-                scopes: providerName === 'spotify'
-                    ? 'streaming user-read-email user-read-private user-modify-playback-state app-remote-control'
-                    : ''
+                scopes: providerName === "spotify" ? "streaming user-read-email user-read-private user-modify-playback-state app-remote-control" : "",
             },
         });
         if (error) {
-            console.error('Error logging in with provider:', error.message);
+            console.error("Error logging in with provider:", error.message);
         }
     }
 
     return (
-        <Button
-            variant="contained"
-            color="primary"
-            fullWidth
-            startIcon={!isPressed && icon}
-            onClick={handleProviderLogin}
-            disabled={isPressed}
-            sx={{
-                fontSize: 16,
-                textTransform: 'none',
-            }}
-        >
-            {isPressed ? <CircularProgress size={27} /> : `${prompt} ${displayName}`}
+        <Button variant="default" className="w-full text-base normal-case" onClick={handleProviderLogin}
+                disabled={isPressed}>
+            {isPressed ? (
+                <Spinner className="w-6 h-6"/>
+            ) : (
+                <>
+                    {!isPressed && icon}
+                    {`${prompt} ${displayName}`}
+                </>
+            )}
         </Button>
     );
 }
@@ -131,9 +108,9 @@ AuthProviderButton.propTypes = {
     displayName: PropTypes.string.isRequired,
     icon: PropTypes.element.isRequired,
     prompt: PropTypes.string,
-}
+};
 
-export default function UserAvatar({ uuid }) {
+export default function UserAvatar({uuid}) {
     const [avatarUrl, setAvatarUrl] = useState(null);
 
     useEffect(() => {
@@ -154,7 +131,10 @@ export default function UserAvatar({ uuid }) {
     }, [uuid]);
 
     return (
-        <Avatar alt="User Avatar" src={avatarUrl} />
+        <Avatar>
+            <AvatarImage src={avatarUrl} alt="User Avatar"/>
+            <AvatarFallback>U</AvatarFallback>
+        </Avatar>
     );
 }
 

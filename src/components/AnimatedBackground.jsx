@@ -1,22 +1,21 @@
-import {Box} from "@mui/material"
-import {motion} from "framer-motion"
-import {useEffect, useState} from "react"
+import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 
 const AnimatedBackground = () => {
-    const [dimensions, setDimensions] = useState({width: 0, height: 0})
+    const [dimensions, setDimensions] = useState({width: 0, height: 0});
 
     useEffect(() => {
         const updateDimensions = () => {
             setDimensions({
                 width: window.innerWidth,
-                height: window.innerHeight
-            })
-        }
+                height: window.innerHeight,
+            });
+        };
 
-        updateDimensions()
-        window.addEventListener('resize', updateDimensions)
-        return () => window.removeEventListener('resize', updateDimensions)
-    }, [])
+        updateDimensions();
+        window.addEventListener("resize", updateDimensions);
+        return () => window.removeEventListener("resize", updateDimensions);
+    }, []);
 
     const stars = Array.from({length: 100}, (_, i) => ({
         id: i,
@@ -25,21 +24,10 @@ const AnimatedBackground = () => {
         size: Math.random() * 3 + 1,
         duration: Math.random() * 20 + 10,
         delay: Math.random() * 5,
-    }))
+    }));
 
     return (
-        <Box
-            sx={{
-                position: "fixed",
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                pointerEvents: "none",
-                zIndex: 0,
-                overflow: "hidden",
-            }}
-        >
+        <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
             {stars.map((star) => (
                 <motion.div
                     key={star.id}
@@ -71,8 +59,8 @@ const AnimatedBackground = () => {
                     }}
                 />
             ))}
-        </Box>
-    )
-}
+        </div>
+    );
+};
 
-export default AnimatedBackground
+export default AnimatedBackground;

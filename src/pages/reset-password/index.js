@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import { supabase } from "@/utils/supabase";
-import { Button, TextField, Typography, Box, CircularProgress } from "@mui/material";
+import { supabase } from "@/lib/supabase";
+import { Button } from "shadcn/button";
+import { Input } from "shadcn/input";
+import { Typography } from "shadcn/typography";
+import { Spinner } from "shadcn/spinner";
 
 export default function ResetPasswordPage() {
     const [password, setPassword] = useState("");
@@ -20,32 +23,30 @@ export default function ResetPasswordPage() {
                 const access_token = params.get("access_token");
                 const refresh_token = params.get("refresh_token");
                 if (access_token && refresh_token) {
-                    supabase.auth.setSession({
-                        access_token,
-                        refresh_token,
-                    }).then(({ error }) => {
-                        if (!error) {
-                            window.location.hash = "";
-                            // Ustaw flagę recovery, aby zablokować przekierowania w loginie
-                            localStorage.setItem('isRecovery', 'true');
-                            setCanShowForm(true);
-                            setLoading(false);
-                        } else {
-                            setCanShowForm(false);
-                            setLoading(false);
-                        }
-                    });
+                    supabase.auth
+                        .setSession({
+                            access_token,
+                            refresh_token,
+                        })
+                        .then(({error}) => {
+                            if (!error) {
+                                window.location.hash = "";
+                                // Ustaw flagę recovery, aby zablokować przekierowania w loginie
+                                localStorage.setItem("isRecovery", "true");
+                                setCanShowForm(true);
+                                setLoading(false);
+                            } else {
+                                setCanShowForm(false);
+                                setLoading(false);
+                            }
+                        });
                     return; // Zatrzymaj dalsze sprawdzanie sesji w tym momencie
                 }
             }
         }
         // Jeśli nie ma tokenów w URL, sprawdź sesję normalnie
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            if (
-                session &&
-                session.user &&
-                session.user.aud === "authenticated"
-            ) {
+        supabase.auth.getSession().then(({data: {session}}) => {
+            if (session && session.user && session.user.aud === "authenticated") {
                 setCanShowForm(true);
             } else {
                 setCanShowForm(false);
@@ -73,52 +74,31 @@ export default function ResetPasswordPage() {
             return;
         }
 
-        const { error } = await supabase.auth.updateUser({ password });
+        const {error} = await supabase.auth.updateUser({password});
         if (error) {
-            if (
-                error.message &&
-                error.message.includes(
-                    "Password should contain at least one character of each"
-                )
-            ) {
-                setError(
-                    "The password must contain at least one lowercase letter, one uppercase letter, and one digit."
-                );
+            if (error.message && error.message.includes("Password should contain at least one character of each")) {
+                setError("The password must contain at least one lowercase letter, one uppercase letter, and one digit.");
             } else {
                 setError("An error occurred while changing your password. Please try again.");
             }
         } else {
             // Po udanej zmianie hasła:
             setSuccess("Your password has been changed successfully! Redirecting to homepage...");
-            localStorage.removeItem('isRecovery');
+            localStorage.removeItem("isRecovery");
             setTimeout(() => {
                 router.replace("/");
             }, 1800);
-
         }
     };
 
     // Nie renderuj nic, dopóki nie sprawdzisz sesji recovery
     if (loading) {
         return (
-            <Box
-                sx={{
-                    width: 400,
-                    mx: "auto",
-                    my: 8,
-                    p: 4,
-                    borderRadius: 2,
-                    background: "#222",
-                    boxShadow: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    minHeight: 180,
-                }}
-            >
-                <CircularProgress color="inherit" />
-                <Typography sx={{ ml: 2 }}>Checking authorization...</Typography>
-            </Box>
+            <div
+                className="w-96 mx-auto my-16 p-8 rounded-lg bg-[#222] shadow-lg flex items-center justify-center min-h-[180px]">
+                <Spinner size="medium"/>
+                <Typography className="ml-4">Checking authorization...</Typography>
+            </div>
         );
     }
 
@@ -128,57 +108,21 @@ export default function ResetPasswordPage() {
     }
 
     return (
-        <Box
-            sx={{
-                width: 400,
-                mx: "auto",
-                my: 8,
-                p: 4,
-                borderRadius: 2,
-                background: "#222",
-                boxShadow: 2,
-            }}
-        >
-            <Typography variant="h5" color="white" mb={2}>
+        <div className="w-96 mx-auto my-16 p-8 rounded-lg bg-[#222] shadow-lg">
+            <Typography variant="h5" className="text-white mb-4">
                 Reset your password
             </Typography>
-            <form onSubmit={handleReset}>
-                <TextField
-                    label="New password"
-                    type="password"
-                    fullWidth
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                    sx={{ mt: 2 }}
-                />
-                <TextField
-                    label="Repeat new password"
-                    type="password"
-                    fullWidth
-                    value={repeatPassword}
-                    onChange={e => setRepeatPassword(e.target.value)}
-                    sx={{ mt: 2 }}
-                />
-                {error && (
-                    <Typography color="error" sx={{ mt: 2 }}>
-                        {error}
-                    </Typography>
-                )}
-                {success && (
-                    <Typography color="success.main" sx={{ mt: 2 }}>
-                        {success}
-                    </Typography>
-                )}
-                <Button
-                    type="submit"
-                    variant="contained"
-                    color="primary"
-                    fullWidth
-                    sx={{ mt: 3 }}
-                >
+            <form onSubmit={handleReset} className="space-y-4">
+                <Input type="password" placeholder="New password" value={password}
+                       onChange={(e) => setPassword(e.target.value)} className="w-full"/>
+                <Input type="password" placeholder="Repeat new password" value={repeatPassword}
+                       onChange={(e) => setRepeatPassword(e.target.value)} className="w-full"/>
+                {error && <Typography className="text-red-500 mt-4">{error}</Typography>}
+                {success && <Typography className="text-green-500 mt-4">{success}</Typography>}
+                <Button type="submit" className="w-full mt-6">
                     Set new password
                 </Button>
             </form>
-        </Box>
+        </div>
     );
 }

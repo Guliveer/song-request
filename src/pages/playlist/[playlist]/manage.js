@@ -2,45 +2,37 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import SetTitle from "@/components/SetTitle";
-import PlaylistQueue from "@/components/PlaylistManagement/PlaylistQueue";
-import PlaylistMembers from "@/components/PlaylistManagement/PlaylistMembers";
-import PlaylistSettings from "@/components/PlaylistManagement/PlaylistSettings";
+import PlaylistQueue from "@/components/playlistManagement/PlaylistQueue";
+import PlaylistMembers from "@/components/playlistManagement/PlaylistMembers";
+import PlaylistSettings from "@/components/playlistManagement/PlaylistSettings";
+import { getCurrentUser, getJoinedPlaylists, getPlaylistData, getPlaylistModerators } from "@/lib/actions";
+import { Card, CardContent } from "shadcn/card";
+import { Badge } from "shadcn/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "shadcn/tabs";
+import { Separator } from "shadcn/separator";
+import { Button } from "shadcn/button";
+import { Container } from "shadcn/container";
+import { Spinner } from "shadcn/spinner";
 import {
-    getCurrentUser,
-    getJoinedPlaylists,
-    getPlaylistData,
-    getPlaylistModerators,
-} from "@/utils/actions";
-import {
-    Box,
-    Container,
-    Chip,
-    CircularProgress,
-    Tab,
-    Tabs,
-    Typography,
-    Divider,
-} from "@mui/material";
-import {
-    QueueMusicRounded as QueueIcon,
-    PeopleRounded as MembersIcon,
-    SettingsRounded as SettingsIcon,
-    PlaylistPlayRounded as PlaylistIcon,
-    LockRounded as PrivateIcon,
-    PublicRounded as PublicIcon,
-    LinkRounded as LinkIcon,
-    ArrowBackRounded as BackIcon,
-} from '@mui/icons-material';
-import PlaylistMenu from "@/components/PlaylistManagement/PlaylistMenu";
+    ArrowLeft as BackIcon,
+    Globe as PublicIcon,
+    Link as LinkIcon,
+    ListMusic as QueueIcon,
+    Lock as PrivateIcon,
+    Music as PlaylistIcon,
+    Settings as SettingsIcon,
+    Users as MembersIcon
+} from "lucide-react";
+import PlaylistMenu from "@/components/playlistManagement/PlaylistMenu";
 
 export default function ManagePlaylist() {
     const router = useRouter();
-    const { playlist } = router.query; // Use 'playlist' from the URL
+    const {playlist} = router.query; // Use 'playlist' from the URL
     const playlistId = Array.isArray(playlist) ? playlist[0] : playlist;
     const [playlistData, setPlaylistData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [currentUser, setCurrentUser] = useState(null);
-    const [activeTab, setActiveTab] = useState(0);
+    const [activeTab, setActiveTab] = useState("queue");
     const [isAllowed, setIsAllowed] = useState(false);
 
     useEffect(() => {
@@ -69,7 +61,7 @@ export default function ManagePlaylist() {
                     const allowAccess = Object.keys(moderators).includes(currentUser.id) || data.host === currentUser.id;
                     setIsAllowed(allowAccess || joinStatus);
 
-                    if ((data.is_public === false && data.method === 'id' && !joinStatus) || !allowAccess || !joinStatus) {
+                    if ((data.is_public === false && data.method === "id" && !joinStatus) || !allowAccess || !joinStatus) {
                         console.warn("You cannot access this playlist right now.");
                         setPlaylistData(null);
                         setLoading(false);
@@ -79,7 +71,7 @@ export default function ManagePlaylist() {
 
                 setPlaylistData(data);
             } catch (error) {
-                console.error('Unexpected error:', error);
+                console.error("Unexpected error:", error);
                 setPlaylistData(null);
             } finally {
                 setLoading(false);
@@ -89,37 +81,19 @@ export default function ManagePlaylist() {
         fetchPlaylistData();
     }, [currentUser, router.isReady, playlist, playlistId]);
 
-    const handleTabChange = (event, newValue) => {
-        setActiveTab(newValue);
-    };
-
     if (!isAllowed || loading) {
         return (
-            <Box
-                sx={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    height: '90vh',
-                }}
-            >
-                <CircularProgress />
-            </Box>
+            <div className="flex justify-center items-center h-[90vh]">
+                <Spinner className="w-8 h-8"/>
+            </div>
         );
     }
 
     if (playlistData === null) {
         return (
-            <Box
-                sx={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    height: '90vh',
-                }}
-            >
+            <div className="flex justify-center items-center h-[90vh]">
                 <p>Playlist not found</p>
-            </Box>
+            </div>
         );
     }
 
@@ -127,210 +101,99 @@ export default function ManagePlaylist() {
 
     return (
         <>
-            <SetTitle text={`Manage Playlist - ${playlistData.name}`} />
+            <SetTitle text={`Manage Playlist - ${playlistData.name}`}/>
 
             {/* Menu */}
-            <Box sx={{
-                display: 'flex',
-                width: "100%",
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '1rem 2rem',
-            }}>
-                <Link href={`/playlist/${playlistData.url}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                    <Box sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 1,
-                        cursor: 'pointer',
-                    }}>
-                        <BackIcon />
-                    </Box>
+            <div className="flex w-full items-center justify-between p-4">
+                <Link href={`/playlist/${playlistData.url}`} className="no-underline text-inherit">
+                    <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                        <BackIcon className="w-4 h-4"/>
+                    </Button>
                 </Link>
-                <PlaylistMenu playlistId={playlistData.id} />
-            </Box>
+                <PlaylistMenu playlistId={playlistData.id}/>
+            </div>
 
-            <Container maxWidth="md" sx={{ mb: 3 }}>
+            <Container className="mb-12 max-w-4xl">
                 {/* Playlist Info Section */}
-                <Box
-                    sx={{
-                        maxWidth: 1200,
-                        mx: "auto",
-                        mb: 4,
-                        px: { xs: 1, md: 4 },
-                        py: { xs: 2, md: 5 },
-                        borderRadius: 4,
-                        bgcolor: "background.paper",
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                    }}
-                >
-                    <PlaylistIcon
-                        sx={{
-                            fontSize: 92,
-                            my: 1,
-                            color: "primary.main",
-                        }}
-                    />
-                    <Typography
-                        variant="h4"
-                        sx={{
-                            fontWeight: "bold",
-                            my: 1,
-                            textAlign: "center",
-                        }}
-                    >
-                        {playlistData?.name || ""}
-                    </Typography>
+                <Card className="mb-8 p-8 text-center">
+                    <CardContent className="space-y-6">
+                        <PlaylistIcon className="w-24 h-24 mx-auto text-primary"/>
 
-                    {/* Visibility Chip */}
-                    <Box sx={{ my: 2 }}>
-                        <Chip
-                            icon={playlistData?.is_public ? <PublicIcon /> : <PrivateIcon />}
-                            label={playlistData?.is_public ? "Public" : "Private"}
-                            color="primary"
-                            sx={{
-                                fontWeight: "bold",
-                                // Make icon smaller for better alignment
-                                "& .MuiChip-icon": {
-                                    fontSize: 20,
-                                },
-                                display: "flex",
-                                alignItems: "center",
-                            }}
-                        />
-                    </Box>
+                        <h1 className="text-4xl font-bold">{playlistData?.name || ""}</h1>
 
-                    {/* Access URL */}
-                    <Box sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        my: 1,
-                        gap: 1,
-                    }}>
-                        <LinkIcon sx={{ color: "text.secondary" }} />
-                        <Typography
-                            href={playlistData?.url ? playlistData.url : "#"}
-                            variant="body2"
-                            sx={{
-                                wordBreak: "none",
-                                fontWeight: 500,
-                            }}
-                        >
-                            <Link href={"/playlist/"+playlistData?.url}>/{playlistData?.url}</Link>
-                        </Typography>
-                    </Box>
+                        {/* Visibility Badge */}
+                        <div className="flex justify-center">
+                            <Badge variant={playlistData?.is_public ? "default" : "secondary"}
+                                   className="flex items-center gap-2">
+                                {playlistData?.is_public ? <PublicIcon className="w-4 h-4"/> :
+                                    <PrivateIcon className="w-4 h-4"/>}
+                                {playlistData?.is_public ? "Public" : "Private"}
+                            </Badge>
+                        </div>
 
-                    {/* Description */}
-                    <Typography
-                        variant="body1"
-                        sx={{
-                            my: 1,
-                            textAlign: "center",
-                            maxWidth: 600,
-                            color: "text.secondary",
-                        }}
-                    >
-                        {playlistData?.description || <Typography component="span" sx={{ fontStyle: "italic" }}>No description provided.</Typography>}
-                    </Typography>
+                        {/* Access URL */}
+                        <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                            <LinkIcon className="w-4 h-4"/>
+                            <Link href={"/playlist/" + playlistData?.url} className="font-medium hover:text-primary">
+                                /{playlistData?.url}
+                            </Link>
+                        </div>
 
-                    {/* Playlist Stats */}
-                    <Box
-                        sx={{
-                            display: "flex",
-                            justifyContent: "center",
-                            alignItems: "center",
-                            width: "100%",
-                            maxWidth: 380,
-                            my: 2,
-                        }}
-                    >
-                        <Box sx={{ flex: 1, textAlign: "center" }}>
-                            <Typography variant="h5" sx={{ fontWeight: 700 }}>
-                                {playlistData?.userCount || 0}
-                            </Typography>
-                            <Typography
-                                variant="body2"
-                                sx={{ mt: 0.5, fontWeight: 500 }}
-                            >
-                                Members
-                            </Typography>
-                        </Box>
-                        <Divider
-                            orientation="vertical"
-                            flexItem
-                            sx={{
-                                width: 10,
-                            }}
-                        />
-                        <Box sx={{ flex: 1, textAlign: "center" }}>
-                            <Typography variant="h5" sx={{ fontWeight: 700 }}>
-                                {playlistData?.songCount || 0}
-                            </Typography>
-                            <Typography
-                                variant="body2"
-                                sx={{ mt: 0.5, fontWeight: 500 }}
-                            >
-                                Songs
-                            </Typography>
-                        </Box>
-                    </Box>
-                </Box>
+                        {/* Description */}
+                        <p className="text-muted-foreground max-w-2xl mx-auto">{playlistData?.description ||
+                            <span className="italic">No description provided.</span>}</p>
+
+                        {/* Playlist Stats */}
+                        <div className="flex justify-center items-center max-w-sm mx-auto">
+                            <div className="flex-1 text-center">
+                                <div className="text-3xl font-bold">{playlistData?.userCount || 0}</div>
+                                <div className="text-sm font-medium text-muted-foreground mt-1">Members</div>
+                            </div>
+                            <Separator orientation="vertical" className="h-12 mx-4"/>
+                            <div className="flex-1 text-center">
+                                <div className="text-3xl font-bold">{playlistData?.songCount || 0}</div>
+                                <div className="text-sm font-medium text-muted-foreground mt-1">Songs</div>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
 
                 {/* Tabs Section */}
-                <Box
-                    sx={{
-                        maxWidth: 900,
-                        mx: "auto",
-                        bgcolor: "background.paper",
-                        borderRadius: 3,
-                        boxShadow: 2,
-                        overflow: "hidden",
-                    }}
-                >
-                    <Tabs
-                        value={activeTab}
-                        onChange={handleTabChange}
-                        variant="fullWidth"
-                        textColor="inherit"
-                        TabIndicatorProps={{ style: { height: 3 } }}
-                        sx={{
-                            "& .MuiTab-root": {
-                                fontWeight: "bold",
-                                fontSize: 16,
-                                textTransform: "none",
-                                py: 2,
-                            },
-                            "& .Mui-selected": {
-                                color: "primary.main",
-                            },
-                        }}
-                    >
-                        <Tab icon={<QueueIcon />} label="Queue" />
-                        <Tab icon={<MembersIcon />} label="Members" />
-                        {isHost && <Tab icon={<SettingsIcon />} label="Settings" />}
-                    </Tabs>
+                <Card className="overflow-hidden">
+                    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                        <TabsList className="grid w-full grid-cols-3 h-auto">
+                            <TabsTrigger value="queue" className="flex items-center gap-2 py-3">
+                                <QueueIcon className="w-4 h-4"/>
+                                Queue
+                            </TabsTrigger>
+                            <TabsTrigger value="members" className="flex items-center gap-2 py-3">
+                                <MembersIcon className="w-4 h-4"/>
+                                Members
+                            </TabsTrigger>
+                            {isHost && (
+                                <TabsTrigger value="settings" className="flex items-center gap-2 py-3">
+                                    <SettingsIcon className="w-4 h-4"/>
+                                    Settings
+                                </TabsTrigger>
+                            )}
+                        </TabsList>
 
-                    <Box sx={{ p: 3, width: "100%" }}>
-                        {activeTab === 0 && (
-                            <PlaylistQueue
-                                playlistId={playlistData.id}
-                            />
-                        )}
-                        {activeTab === 1 && (
-                            <PlaylistMembers
-                                playlistId={playlistData.id}
-                            />
-                        )}
-                        {activeTab === 2 && isHost && (
-                            <PlaylistSettings
-                                playlistId={playlistData.id}
-                            />
-                        )}
-                    </Box>
-                </Box>
+                        <div className="p-6">
+                            <TabsContent value="queue" className="mt-0">
+                                <PlaylistQueue playlistId={playlistData.id}/>
+                            </TabsContent>
+                            <TabsContent value="members" className="mt-0">
+                                <PlaylistMembers playlistId={playlistData.id}/>
+                            </TabsContent>
+                            {isHost && (
+                                <TabsContent value="settings" className="mt-0">
+                                    <PlaylistSettings playlistId={playlistData.id}/>
+                                </TabsContent>
+                            )}
+                        </div>
+                    </Tabs>
+                </Card>
             </Container>
         </>
-    )
+    );
 }

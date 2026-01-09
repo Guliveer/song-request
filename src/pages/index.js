@@ -1,220 +1,145 @@
-import React from "react"
-import {Container, Typography, Button, Grid, Box, Avatar, Stack, Card, CardContent} from "@mui/material"
-import HowToVoteIcon from "@mui/icons-material/HowToVoteRounded"
-import GroupAddIcon from "@mui/icons-material/GroupAddRounded"
-import PlaylistAddCheckIcon from "@mui/icons-material/PlaylistAddCheckRounded"
-import EmojiEventsIcon from "@mui/icons-material/EmojiEventsRounded"
-import PeopleAltIcon from "@mui/icons-material/PeopleRounded"
-import AnimatedBackground from "@/components/AnimatedBackground"
-import FadeInSection from "@/components/FadeInSection"
+import React, { useEffect } from "react";
+import Head from "next/head";
+import AnimatedBackground from "@/components/AnimatedBackground";
+import HeroSection from "@/components/landing/HeroSection";
+import ProblemSolution from "@/components/landing/ProblemSolution";
+import FeaturesGrid from "@/components/landing/FeaturesGrid";
+import HowItWorks from "@/components/landing/HowItWorks";
+import FAQ from "@/components/landing/FAQ";
 
 export default function Home() {
-    return (
-        <>
-            <AnimatedBackground/>
-            <Box sx={{minHeight: "100vh", position: "relative", zIndex: 1}}>
-                {/* HERO */}
-                <FadeInSection>
-                    <Container maxWidth="md" sx={{textAlign: "center", py: 10}}>
-                        <Typography
-                            variant="h1"
-                            sx={{
-                                fontWeight: 900,
-                                letterSpacing: "-0.04em",
-                                background: "linear-gradient(90deg, #87e5dd 20%, #a171f8 80%)",
-                                WebkitBackgroundClip: "text",
-                                WebkitTextFillColor: "transparent",
-                                mb: 2,
-                                fontSize: {xs: "2.5rem", md: "4.2rem"},
-                            }}
-                        >
-                            Track Drop
-                        </Typography>
-                        <Typography
-                            variant="h5"
-                            sx={{
-                                color: "#e2f2fa",
-                                mb: 4,
-                                fontWeight: 600,
-                                textShadow: "0 2px 8px #181c2a",
-                            }}
-                        >
-                            Vote, discover and share music with friends.<br/>
-                            A professional social platform for music fans.
-                        </Typography>
-                        <Button
-                            variant="contained"
-                            color="secondary"
-                            size="large"
-                            href="/register"
-                            sx={{
-                                px: 6,
-                                py: 2,
-                                fontWeight: 800,
-                                fontSize: "1.2rem",
-                                borderRadius: 99,
-                                boxShadow: "0 4px 24px #a171f855",
-                                color: "#181c2a",
-                                "&:hover": {
-                                    background: "linear-gradient(90deg, #a171f8 0%, #87e5dd 100%)",
-                                    color: "#181c2a",
-                                },
-                            }}
-                        >
-                            Get Started
-                        </Button>
-                    </Container>
-                </FadeInSection>
+  // Smooth scrolling effect
+  useEffect(() => {
+    // Add smooth scrolling to the document
+    document.documentElement.style.scrollBehavior = "smooth";
 
-                {/* FEATURES */}
-                <Container maxWidth="lg" sx={{mb: 10}}>
-                    <FadeInSection>
-                        <Grid container spacing={4} justifyContent="center">
-                            <Grid item xs={12} md={4}>
-                                <Card sx={{
-                                    backdropFilter: 'blur(12px)',
-                                    background: 'rgba(32,36,58,0.92)',
-                                    borderRadius: 6,
-                                    boxShadow: '0 8px 32px 0 #87e5dd33',
-                                    border: '2px solid #87e5dd',
-                                    color: '#e2f2fa'
-                                }}>
-                                    <CardContent sx={{textAlign: 'center', p: 4}}>
-                                        <HowToVoteIcon sx={{fontSize: 54, color: 'primary.main', mb: 1}}/>
-                                        <Typography variant="h6" gutterBottom fontWeight={800}>Vote for
-                                            Songs</Typography>
-                                        <Typography color="text.secondary" sx={{color: '#bdf6f2'}}>
-                                            Choose your favorite tracks and help them reach the top of the list.
-                                        </Typography>
-                                    </CardContent>
-                                </Card>
-                            </Grid>
-                            <Grid item xs={12} md={4}>
-                                <Card sx={{
-                                    backdropFilter: 'blur(12px)',
-                                    background: 'rgba(32,36,58,0.92)',
-                                    borderRadius: 6,
-                                    boxShadow: '0 8px 32px 0 #a171f833',
-                                    border: '2px solid #a171f8',
-                                    color: '#e2f2fa'
-                                }}>
-                                    <CardContent sx={{textAlign: 'center', p: 4}}>
-                                        <GroupAddIcon sx={{fontSize: 54, color: 'secondary.main', mb: 1}}/>
-                                        <Typography variant="h6" gutterBottom fontWeight={800}>Follow Users</Typography>
-                                        <Typography color="text.secondary" sx={{color: '#e2cffa'}}>
-                                            Follow your friends and discover what they listen to and vote for.
-                                        </Typography>
-                                    </CardContent>
-                                </Card>
-                            </Grid>
-                            <Grid item xs={12} md={4}>
-                                <Card sx={{
-                                    backdropFilter: 'blur(12px)',
-                                    background: 'rgba(32,36,58,0.92)',
-                                    borderRadius: 6,
-                                    boxShadow: '0 8px 32px 0 #87e5dd33',
-                                    border: '2px solid #87e5dd',
-                                    color: '#e2f2fa'
-                                }}>
-                                    <CardContent sx={{textAlign: 'center', p: 4}}>
-                                        <PlaylistAddCheckIcon sx={{fontSize: 54, color: 'primary.main', mb: 1}}/>
-                                        <Typography variant="h6" gutterBottom fontWeight={800}>Private & Public
-                                            Playlists</Typography>
-                                        <Typography color="text.secondary" sx={{color: '#bdf6f2'}}>
-                                            Share playlists publicly or keep them just for yourself.
-                                        </Typography>
-                                    </CardContent>
-                                </Card>
-                            </Grid>
-                        </Grid>
-                    </FadeInSection>
-                </Container>
+    return () => {
+      document.documentElement.style.scrollBehavior = "auto";
+    };
+  }, []);
 
-                {/* TOP SONGS */}
-                <FadeInSection>
-                    <Container maxWidth="md" sx={{mb: 10}}>
-                        <Card sx={{
-                            p: 4,
-                            borderRadius: 6,
-                            background: 'rgba(32,36,58,0.98)',
-                            boxShadow: '0 8px 32px 0 #a171f822',
-                            mb: 2,
-                            border: '2px solid #a171f8'
-                        }}>
-                            <Stack direction="row" spacing={2} alignItems="center" mb={3} justifyContent="center">
-                                <EmojiEventsIcon sx={{fontSize: 44, color: 'warning.main'}}/>
-                                <Typography variant="h4" fontWeight={900} sx={{color: '#fff'}}>Top 3 Songs</Typography>
-                            </Stack>
-                            <Grid container spacing={3} justifyContent="center" alignItems="stretch">
-                                {[
-                                    {title: 'Blinding Lights', artist: 'The Weeknd', votes: 124},
-                                    {title: 'Levitating', artist: 'Dua Lipa', votes: 98},
-                                    {title: 'Shape of You', artist: 'Ed Sheeran', votes: 87}
-                                ].map((song, idx) => (
-                                    <Grid item xs={12} sm={4} key={song.title}>
-                                        <Card sx={{
-                                            background: 'rgba(135,229,221,0.10)',
-                                            borderRadius: 4,
-                                            textAlign: 'center',
-                                            height: '100%',
-                                            border: '2px solid #232526',
-                                            color: '#e2f2fa',
-                                            boxShadow: 'none'
-                                        }}>
-                                            <CardContent>
-                                                <Typography variant="h6"
-                                                            fontWeight={900}>{idx + 1}. {song.title}</Typography>
-                                                <Typography color="text.secondary"
-                                                            sx={{color: '#bdf6f2'}}>{song.artist}</Typography>
-                                                <Typography color="secondary" fontWeight={800}
-                                                            sx={{color: '#a171f8'}}>{song.votes} votes</Typography>
-                                            </CardContent>
-                                        </Card>
-                                    </Grid>
-                                ))}
-                            </Grid>
-                        </Card>
-                    </Container>
-                </FadeInSection>
+  return (
+    <>
+      <Head>
+        <title>Track Drop - Democratize Music at Your Events</title>
+        <meta name="description" content="Let your guests vote on their favorite tracks and create the perfect playlist for every event. Democratic voting, Spotify/YouTube integrations, real-time management." />
+        <meta name="keywords" content="music, events, voting, playlist, Spotify, YouTube, DJ, party, wedding, event" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-                {/* FRIENDS ACTIVITY */}
-                <FadeInSection>
-                    <Container maxWidth="md" sx={{pb: 10}}>
-                        <Card sx={{
-                            p: 4,
-                            borderRadius: 6,
-                            background: 'rgba(32,36,58,0.98)',
-                            boxShadow: '0 8px 32px 0 #87e5dd22',
-                            border: '2px solid #87e5dd'
-                        }}>
-                            <Stack direction="row" spacing={2} alignItems="center" mb={2}>
-                                <PeopleAltIcon sx={{fontSize: 40, color: 'primary.main'}}/>
-                                <Typography variant="h5" fontWeight={900} sx={{color: '#fff'}}>Friends
-                                    Activity</Typography>
-                            </Stack>
-                            <Stack spacing={2}>
-                                {[
-                                    {name: 'Anna', song: 'Blinding Lights', avatar: '/avatars/user1.png'},
-                                    {name: 'Mike', song: 'Levitating', avatar: '/avatars/user2.png'},
-                                    {name: 'Sara', song: 'Shape of You', avatar: '/avatars/user3.png'}
-                                ].map(user => (
-                                    <Stack direction="row" spacing={2} alignItems="center" key={user.name}>
-                                        <Avatar src={user.avatar}
-                                                sx={{width: 48, height: 48, border: '2px solid #a171f8'}}/>
-                                        <Box>
-                                            <Typography fontWeight={800}
-                                                        sx={{color: '#e2f2fa'}}>{user.name}</Typography>
-                                            <Typography color="text.secondary" fontSize="1rem" sx={{color: '#bdf6f2'}}>
-                                                Voted for: <b style={{color: '#a171f8'}}>{user.song}</b>
-                                            </Typography>
-                                        </Box>
-                                    </Stack>
-                                ))}
-                            </Stack>
-                        </Card>
-                    </Container>
-                </FadeInSection>
-            </Box>
-        </>
-    )
+        {/* Open Graph / Facebook */}
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://trackdrop.com/" />
+        <meta property="og:title" content="Track Drop - Democratize Music at Your Events" />
+        <meta property="og:description" content="Let your guests vote on their favorite tracks and create the perfect playlist for every event." />
+        <meta property="og:image" content="/favicon/web-app-manifest-512x512.png" />
+
+        {/* Twitter */}
+        <meta property="twitter:card" content="summary_large_image" />
+        <meta property="twitter:url" content="https://trackdrop.com/" />
+        <meta property="twitter:title" content="Track Drop - Democratize Music at Your Events" />
+        <meta property="twitter:description" content="Let your guests vote on their favorite tracks and create the perfect playlist for every event." />
+        <meta property="twitter:image" content="/favicon/web-app-manifest-512x512.png" />
+
+        {/* Favicon */}
+        <link rel="icon" href="/favicon/favicon.ico" />
+        <link rel="apple-touch-icon" href="/favicon/apple-touch-icon.png" />
+        <link rel="manifest" href="/favicon/site.webmanifest" />
+
+        {/* Theme Color */}
+        <meta name="theme-color" content="#87e5dd" />
+        <meta name="msapplication-TileColor" content="#87e5dd" />
+      </Head>
+
+      {/* Animated Background */}
+      <AnimatedBackground />
+
+      {/* Main Content */}
+      <div className="min-h-screen relative z-10">
+        {/* Hero Section */}
+        <section id="hero" className="relative">
+          <HeroSection />
+        </section>
+
+        {/* Problem & Solution Section */}
+        <section id="problem-solution" className="relative">
+          <ProblemSolution />
+        </section>
+
+        {/* Features Section */}
+        <section id="features" className="relative">
+          <FeaturesGrid />
+        </section>
+
+        {/* How It Works Section */}
+        <section id="how-it-works" className="relative">
+          <HowItWorks />
+        </section>
+
+        {/* FAQ Section */}
+        <section id="faq" className="relative">
+          <FAQ />
+        </section>
+
+        {/* Final CTA Section */}
+        <section id="final-cta" className="relative py-20 lg:py-32">
+          <div className="container mx-auto px-4 text-center">
+            <div className="max-w-4xl mx-auto">
+              <h2 className="font-black text-[#e2f2fa] mb-6 text-3xl md:text-5xl lg:text-6xl">Ready for the Music Revolution?</h2>
+              <p className="text-[#bdf6f2] text-lg md:text-xl mb-8 leading-relaxed">Join thousands of organizers who are already creating unforgettable musical experiences with Track Drop. Start free today!</p>
+
+              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
+                <button className="px-12 py-4 font-bold text-xl rounded-full shadow-[0_8px_32px_#a171f855] bg-gradient-to-r from-[#a171f8] to-[#87e5dd] text-[#181c2a] hover:from-[#a171f8] hover:to-[#87e5dd] hover:text-[#181c2a] transition-all duration-300 hover:shadow-[0_12px_40px_#a171f866] hover:scale-105">Start Free</button>
+                <button className="px-8 py-4 font-bold text-lg rounded-full border-2 border-[#87e5dd] text-[#87e5dd] bg-transparent hover:bg-[#87e5dd] hover:text-[#181c2a] transition-all duration-300 hover:scale-105">Watch Demo</button>
+              </div>
+
+              {/* Trust Indicators */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-2xl mx-auto opacity-80">
+                <div className="text-center">
+                  <div className="text-2xl md:text-3xl font-black text-[#87e5dd] mb-1">✓</div>
+                  <p className="text-[#bdf6f2] text-sm">Free Start</p>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl md:text-3xl font-black text-[#87e5dd] mb-1">✓</div>
+                  <p className="text-[#bdf6f2] text-sm">No Commitments</p>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl md:text-3xl font-black text-[#87e5dd] mb-1">✓</div>
+                  <p className="text-[#bdf6f2] text-sm">24/7 Support</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Background Elements */}
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-[#87e5dd]/10 to-[#a171f8]/10 rounded-full blur-3xl animate-pulse"></div>
+        </section>
+      </div>
+
+      {/* Structured Data for SEO */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            "name": "Track Drop",
+            "description": "Democratize music at your events. Let guests vote on their favorite tracks.",
+            "url": "https://trackdrop.com",
+            "applicationCategory": "MusicApplication",
+            "operatingSystem": "Web, iOS, Android",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "PLN",
+            },
+            "aggregateRating": {
+              "@type": "AggregateRating",
+              "ratingValue": "4.9",
+              "ratingCount": "1250",
+            },
+          }),
+        }}
+      />
+    </>
+  );
 }

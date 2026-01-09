@@ -1,5 +1,7 @@
-import {Box, Typography, Stack, Link as MuiLink} from "@mui/material";
-import GitHubIcon from "@mui/icons-material/GitHub";
+import { Typography } from "shadcn/typography";
+import { cn } from "@/lib/utils";
+import { Github as GitHubIcon } from "lucide-react";
+import Link from "next/link";
 
 const authors = [
     {name: "Guliveer", url: "https://github.com/Guliveer"},
@@ -10,76 +12,34 @@ const authors = [
 
 export default function Footer() {
     return (
-        <Box
-            component="footer"
-            id="site-footer"
-            sx={{
-                mt: "auto",
-                px: 2,
-                py: 3,
-                width: "100%",
-                background: "linear-gradient(90deg, #181c2a 60%, #20243a 100%)",
-                borderTop: "1px solid #282c40",
-                color: "text.secondary",
-                display: "flex",
-                flexDirection: {xs: "column", md: "row"},
-                alignItems: {xs: "center", md: "center"},
-                justifyContent: "space-between",
-                gap: 2,
-                fontSize: 15,
-                position: "relative",
-                zIndex: 10,
-            }}
-        >
-            {/* Repozytorium */}
-            <Stack direction="row" spacing={1.2} alignItems="center" mb={{xs: 1, md: 0}}>
-                <GitHubIcon fontSize="small" sx={{color: "text.secondary"}}/>
-                <MuiLink
-                    href="https://github.com/Guliveer/song-request"
-                    target="_blank"
-                    rel="noopener"
-                    color="inherit"
-                    underline="hover"
-                    sx={{fontWeight: 500}}
-                >
+        <footer id="site-footer"
+                className={cn("mt-auto px-4 py-6 w-full", "bg-gradient-to-r from-slate-800/90 to-slate-700/90", "border-t border-slate-600/50", "text-muted-foreground", "flex flex-col md:flex-row", "items-center justify-between", "gap-4 text-sm", "relative z-10")}>
+            {/* Repository */}
+            <div className="flex items-center gap-3 mb-2 md:mb-0">
+                <GitHubIcon className="w-4 h-4 text-muted-foreground"/>
+                <Link href="https://github.com/Guliveer/song-request" target="_blank" rel="noopener"
+                      className="text-inherit hover:text-primary hover:underline font-medium transition-colors">
                     Project repo
-                </MuiLink>
-            </Stack>
+                </Link>
+            </div>
 
-            {/* Autorzy */}
-            <Stack direction="row" spacing={2} alignItems="center" mb={{xs: 1, md: 0}}>
+            {/* Authors */}
+            <div className="flex items-center gap-4 mb-2 md:mb-0">
                 {authors.map((author) => (
-                    <MuiLink
-                        key={author.url}
-                        href={author.url}
-                        target="_blank"
-                        rel="noopener"
-                        color="inherit"
-                        underline="hover"
-                        sx={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: 0.5,
-                            px: 0.5,
-                            py: 0.2,
-                            borderRadius: 1,
-                            transition: "color 0.2s",
-                            "&:hover": {
-                                color: "primary.main",
-                                background: "none",
-                            },
-                        }}
-                    >
-                        <GitHubIcon fontSize="inherit" sx={{fontSize: 18}}/>
-                        <Typography variant="body2" sx={{fontWeight: 600}}>{author.name}</Typography>
-                    </MuiLink>
+                    <Link key={author.url} href={author.url} target="_blank" rel="noopener"
+                          className={cn("inline-flex items-center gap-1", "px-2 py-1 rounded", "text-inherit hover:text-primary", "transition-colors duration-200")}>
+                        <GitHubIcon className="w-4 h-4"/>
+                        <Typography variant="sm" className="font-semibold">
+                            {author.name}
+                        </Typography>
+                    </Link>
                 ))}
-            </Stack>
+            </div>
 
             {/* Copyright */}
-            <Typography sx={{fontWeight: 400, letterSpacing: 0.3, fontSize: 13}}>
+            <Typography variant="xs" className="font-normal tracking-wide">
                 © {new Date().getFullYear()} Track Drop
             </Typography>
-        </Box>
+        </footer>
     );
 }

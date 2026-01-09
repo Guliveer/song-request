@@ -1,32 +1,32 @@
-import { useState, useEffect, useRef } from 'react';
-import {
-    Box, Button, Dialog, DialogTitle, DialogContent,
-    Fab, Tooltip, Stack, useTheme, CircularProgress, Typography
-} from '@mui/material';
-import {
-    AddRounded as AddIcon,
-    PlaylistAddRounded as FormIcon,
-    SendRounded as SendIcon,
-    BlockRounded as BlockIcon,
-    DoneRounded as SuccessIcon,
-} from '@mui/icons-material';
-import { useRouter } from 'next/router';
-import {getJoinedPlaylists, playSound} from '@/utils/actions';
-import { keyframes } from '@mui/system';
-import { supabase } from '@/utils/supabase';
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/router";
+import { getJoinedPlaylists, playSound } from "@/lib/actions";
+import { supabase } from "@/lib/supabase";
 import { useUser } from "@/context/UserContext";
 import { FormField } from "@/components/Items";
-import { extractVideoId, fetchYouTubeMetadata } from "@/utils/youtube";
-import {extractSpotifyTrackId, fetchSpotifyMetadata} from "@/utils/spotify";
-import { whitelistedUrls } from "@/utils/whitelistedUrls";
+import { extractVideoId, fetchYouTubeMetadata } from "@/lib/youtube";
+import { extractSpotifyTrackId, fetchSpotifyMetadata } from "@/lib/spotify";
+import { whitelistedUrls } from "@/lib/whitelistedUrls";
 import PropTypes from "prop-types";
+import { Button } from "shadcn/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "shadcn/dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "shadcn/tooltip";
+import { Typography } from "shadcn/typography";
+import { Spinner } from "shadcn/spinner";
+import { cn } from "@/lib/utils";
+import {
+    Ban as BlockIcon,
+    Check as SuccessIcon,
+    ListMusic as FormIcon,
+    Plus as AddIcon,
+    Send as SendIcon
+} from "lucide-react";
 
-export default function AddSongForm({ playlist }) {
-    const theme = useTheme();
+export default function AddSongForm({playlist}) {
     const router = useRouter();
-    const { isLoggedIn } = useUser();
+    const {isLoggedIn} = useUser();
     const [open, setOpen] = useState(false);
-    const [formData, setFormData] = useState({ url: '' });
+    const [formData, setFormData] = useState({url: ""});
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [success, setSuccess] = useState(false);
     const [user, setUser] = useState(null);
@@ -36,7 +36,7 @@ export default function AddSongForm({ playlist }) {
 
     useEffect(() => {
         function updateFab() {
-            const footer = document.getElementById('site-footer');
+            const footer = document.getElementById("site-footer");
             const fab = fabRef.current;
             if (!footer || !fab) return;
 
@@ -58,23 +58,25 @@ export default function AddSongForm({ playlist }) {
         }
 
         updateFab();
-        window.addEventListener('scroll', updateFab, { passive: true });
-        window.addEventListener('resize', updateFab);
+        window.addEventListener("scroll", updateFab, {passive: true});
+        window.addEventListener("resize", updateFab);
         return () => {
-            window.removeEventListener('scroll', updateFab);
-            window.removeEventListener('resize', updateFab);
+            window.removeEventListener("scroll", updateFab);
+            window.removeEventListener("resize", updateFab);
         };
     }, []);
 
     useEffect(() => {
         const fetchUser = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
+            const {
+                data: {user},
+            } = await supabase.auth.getUser();
             setUser(user);
         };
 
         fetchUser();
 
-        const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+        const {data: listener} = supabase.auth.onAuthStateChange((_event, session) => {
             setUser(session?.user || null);
         });
 
@@ -84,7 +86,7 @@ export default function AddSongForm({ playlist }) {
     }, []);
 
     const handleChange = (event) => {
-        const { id, value } = event.target;
+        const {id, value} = event.target;
         setFormData((prev) => ({
             ...prev,
             [id]: value,
@@ -114,41 +116,36 @@ export default function AddSongForm({ playlist }) {
         }
 
         // Check ban status
-        const { data: userData, error: userError } = await supabase
-            .from('users')
-            .select('ban_status')
-            .eq('id', user.id)
-            .single();
+        const {
+            data: userData,
+            error: userError
+        } = await supabase.from("users").select("ban_status").eq("id", user.id).single();
 
         if (userError) {
-            console.error('Error checking account status.');
+            console.error("Error checking account status.");
             return;
         }
 
         if (userData.ban_status > 0) {
-            console.error('You cannot add songs because your account is banned.');
+            console.error("You cannot add songs because your account is banned.");
             return;
         }
 
         // Remove excessive GET data (except for YouTube's: ?v=)
         passedUrl.searchParams.forEach((_, key) => {
-            if (key !== 'v') {
+            if (key !== "v") {
                 passedUrl.searchParams.delete(key);
             }
-        })
+        });
 
         // Banowanie dla głównej tabeli banned_url
-        const { data: bannedGlobalUrl } = await supabase
-            .from('banned_url')
-            .select('id, banned_url')
-            .eq('url', passedUrl)
-            .maybeSingle();
+        const {data: bannedGlobalUrl} = await supabase.from("banned_url").select("id, banned_url").eq("url", passedUrl).maybeSingle();
 
         // Validate URL based on whitelisted URLs,
         // if formData.url doesn't start with (optional)
         // http(s)://(www.) and then one of the whitelisted URLs,
         // after which there are only alphanumeric characters, hyphens, or underscores
-        const urlPattern = new RegExp(`^(https?://)?(www\\.)?(${whitelistedUrls.join('|')})[a-zA-Z0-9-_$]+\\??$`);
+        const urlPattern = new RegExp(`^(https?://)?(www\\.)?(${whitelistedUrls.join("|")})[a-zA-Z0-9-_$]+\\??$`);
         if (!urlPattern.test(passedUrl.href)) {
             alert("Invalid URL. Please enter a valid YouTube or Spotify link.");
             alert(passedUrl.href);
@@ -156,11 +153,7 @@ export default function AddSongForm({ playlist }) {
         }
 
         // Check if URL is banned
-        const { data: bannedUrl } = await supabase
-            .from('playlists')
-            .select('id, banned_songs')
-            .eq('id', playlist)
-            .maybeSingle();
+        const {data: bannedUrl} = await supabase.from("playlists").select("id, banned_songs").eq("id", playlist).maybeSingle();
 
         // Check if the provided URL is in the returned array (bannedUrl -> banned_songs[])
         if (bannedUrl.banned_songs?.includes(passedUrl.href)) {
@@ -169,15 +162,13 @@ export default function AddSongForm({ playlist }) {
         }
 
         // Check if the song already exists
-        const { data: existing, error: existingError } = await supabase
-            .from('queue')
-            .select('id, title, author')
-            .eq('url', passedUrl.href)
-            .eq('playlist', playlist)
-            .maybeSingle();
+        const {
+            data: existing,
+            error: existingError
+        } = await supabase.from("queue").select("id, title, author").eq("url", passedUrl.href).eq("playlist", playlist).maybeSingle();
 
         if (existingError) {
-            console.error('Error checking for existing song.');
+            console.error("Error checking for existing song.");
             return;
         }
 
@@ -188,8 +179,8 @@ export default function AddSongForm({ playlist }) {
 
         setIsSubmitting(true);
 
-        let title = '';
-        let author = '';
+        let title = "";
+        let author = "";
         const url = passedUrl.href;
 
         if (url.includes("youtube")) {
@@ -214,16 +205,20 @@ export default function AddSongForm({ playlist }) {
             }
         }
 
-        const { error } = await supabase
-            .from('queue')
-            .insert([{ title, author, url: passedUrl.href, user_id: user.id, playlist }]);
+        const {error} = await supabase.from("queue").insert([{
+            title,
+            author,
+            url: passedUrl.href,
+            user_id: user.id,
+            playlist
+        }]);
 
         if (error) {
-            alert('Error while adding the song: ' + error.message);
+            alert("Error while adding the song: " + error.message);
         } else {
             setSuccess(true);
-            setFormData({ url: '' });
-            await playSound('success', 0.8);
+            setFormData({url: ""});
+            await playSound("success", 0.8);
             setOpen(false);
         }
 
@@ -231,152 +226,95 @@ export default function AddSongForm({ playlist }) {
         setTimeout(() => setSuccess(false), 1000);
     };
 
-    const fadeInBackground = keyframes`
-        from { opacity: 0; background-color: rgba(0, 0, 0, 0);}
-        to { opacity: 1; background-color: rgba(0, 0, 0, 0.2);}
-    `;
-
-    const fadeOutBackground = keyframes`
-        from { opacity: 1; background-color: rgba(0, 0, 0, 0.2);}
-        to { opacity: 0; background-color: rgba(0, 0, 0, 0);}
-    `;
-
     return (
         <>
-            <Tooltip title="Add song" placement="left">
-                <Fab
-                    ref={fabRef}
-                    color="primary"
-                    onClick={() => setOpen(true)}
-                    sx={{
-                        position: 'fixed',
-                        bottom: { xs: fabBottom, sm: fabBottom },
-                        right: { xs: 20, sm: 36 },
-                        zIndex: 1300,
-                        boxShadow: 4,
-                        transition: 'bottom 0.3s cubic-bezier(.4,2,.4,1)', // płynne
-                        '&:hover': {
-                            backgroundColor: theme.palette.primary.dark,
-                        },
-                    }}
-                >
-                    <AddIcon />
-                </Fab>
-            </Tooltip>
+            <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button
+                            ref={fabRef}
+                            size="icon"
+                            className={cn("fixed z-[1300] w-14 h-14 rounded-full shadow-lg transition-all duration-300 ease-out", "hover:shadow-xl hover:scale-105")}
+                            style={{
+                                bottom: `${fabBottom}px`,
+                                right: window.innerWidth < 640 ? "20px" : "36px",
+                            }}
+                            onClick={() => setOpen(true)}>
+                            <AddIcon className="w-6 h-6"/>
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="left">Add song</TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
 
-            <Dialog
-                open={open}
-                onClose={() => setOpen(false)}
-                fullWidth
-                maxWidth="sm"
-                sx={{
-                    backdropFilter: 'blur(6px)',
-                    animation: `${open ? fadeInBackground : fadeOutBackground} 0.3s ease-in-out`,
-                    backgroundColor: 'rgba(0,0,0,0.2)',
-                    '& .MuiDialog-paper': {
-                        borderRadius: 1,
-                        p: 2,
-                        position: 'relative',
-                        boxShadow: theme.shadows[12],
-                        backdropFilter: 'blur(16px)',
-                    },
-                }}
-            >
-                <DialogTitle
-                    sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 1,
-                        color: theme.palette.primary.main,
-                        fontWeight: 'bold',
-                    }}
-                >
-                    <FormIcon color="primary" />
-                    Add Song to Queue
-                </DialogTitle>
+            <Dialog open={open} onOpenChange={setOpen}>
+                <DialogContent className="sm:max-w-md backdrop-blur-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-primary">
+                            <FormIcon className="w-5 h-5"/>
+                            Add Song to Queue
+                        </DialogTitle>
+                    </DialogHeader>
 
-                <DialogContent>
-                    <Box
-                        component="form"
-                        onSubmit={handleSubmit}
-                        sx={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: 2,
-                            mt: 1,
-                        }}
-                    >
-                        <FormField
-                            required
-                            id="url"
-                            label="Spotify or YouTube URL"
-                            fullWidth
-                            disabled={!isLoggedIn}
-                            value={formData.url}
-                            onChange={handleChange}
-                        />
+                    <form onSubmit={handleSubmit} className="flex flex-col gap-4 mt-4">
+                        <FormField required id="url" placeholder="Spotify or YouTube URL" disabled={!isLoggedIn}
+                                   value={formData.url} onChange={handleChange}/>
 
-                        <Stack direction="row" justifyContent="center" mt={1}>
-                            <Tooltip
-                                title={!isLoggedIn ? "You must be logged in to add a song." : ""}
-                                arrow
-                                placement="top"
-                            >
-                                <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
-                                    <Button
-                                        type="submit"
-                                        variant="contained"
-                                        color="primary"
-                                        disabled={!isLoggedIn || isSubmitting}
-                                        startIcon={
-                                            success ? <SuccessIcon /> :
-                                                (!isLoggedIn ? <BlockIcon /> :
-                                                    (!isSubmitting ? <SendIcon /> : null))
-                                        }
-                                        sx={{
-                                            minWidth: '50%',
-                                            py: 1,
-                                            px: 2,
-                                            fontWeight: 600,
-                                            boxShadow: 4,
-                                            textTransform: 'none',
-                                        }}
-                                    >
-                                        {success ? "Done!" :
-                                            (isSubmitting ? <CircularProgress size={24} /> :
-                                                (isLoggedIn ? "Add to Queue" : "Login Required"))}
-                                    </Button>
-                                </Box>
-                            </Tooltip>
-                        </Stack>
-                    </Box>
+                        <div className="flex justify-center mt-2">
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <div className="w-full flex justify-center">
+                                            <Button type="submit" disabled={!isLoggedIn || isSubmitting}
+                                                    className="min-w-[50%] font-semibold shadow-lg">
+                                                {success ? (
+                                                    <>
+                                                        <SuccessIcon className="w-4 h-4 mr-2"/>
+                                                        Done!
+                                                    </>
+                                                ) : isSubmitting ? (
+                                                    <Spinner className="w-4 h-4"/>
+                                                ) : !isLoggedIn ? (
+                                                    <>
+                                                        <BlockIcon className="w-4 h-4 mr-2"/>
+                                                        Login Required
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <SendIcon className="w-4 h-4 mr-2"/>
+                                                        Add to Queue
+                                                    </>
+                                                )}
+                                            </Button>
+                                        </div>
+                                    </TooltipTrigger>
+                                    {!isLoggedIn &&
+                                        <TooltipContent>You must be logged in to add a song.</TooltipContent>}
+                                </Tooltip>
+                            </TooltipProvider>
+                        </div>
+                    </form>
                 </DialogContent>
             </Dialog>
 
             {/* Dialog for existing song */}
             {existingSong && (
-                <Dialog
-                    open={!!existingSong}
-                    onClose={() => setExistingSong(null)}
-                    fullWidth
-                    maxWidth="sm"
-                >
-                    <DialogTitle>Song Already Exists</DialogTitle>
-                    <DialogContent>
-                        <Typography>
-                            "{existingSong.title}" is already in the queue
-                        </Typography>
-                        <Button
-                            variant="contained"
-                            color="primary"
-                            onClick={() => {
-                                setExistingSong(null);
-                                router.push(`/song/${existingSong.id}`);
-                            }}
-                            sx={{ mt: 2 }}
-                        >
-                            Go to Song
-                        </Button>
+                <Dialog open={!!existingSong} onOpenChange={() => setExistingSong(null)}>
+                    <DialogContent className="sm:max-w-md">
+                        <DialogHeader>
+                            <DialogTitle>Song Already Exists</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                            <Typography>"{existingSong.title}" is already in the queue</Typography>
+                            <Button
+                                onClick={() => {
+                                    setExistingSong(null);
+                                    router.push(`/song/${existingSong.id}`);
+                                }}
+                                className="w-full">
+                                Go to Song
+                            </Button>
+                        </div>
                     </DialogContent>
                 </Dialog>
             )}
@@ -386,4 +324,4 @@ export default function AddSongForm({ playlist }) {
 
 AddSongForm.propTypes = {
     playlist: PropTypes.number.isRequired, // Ensure playlist is a string
-}
+};
